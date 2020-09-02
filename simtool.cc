@@ -5977,7 +5977,7 @@ bool tool_build_house_t::init( player_t * player)
 }
 
 
-const char *tool_build_house_t::work( player_t *player, koord k )
+const char *tool_build_house_t::work_on_ground( player_t *player, koord k )
 {
 	const grund_t* gr = welt->lookup_kartenboden(k);
 	if(gr==NULL) {
@@ -6102,7 +6102,7 @@ const char *tool_build_house_t::do_work( player_t *player, const koord3d &start,
 		k.x = start.x;
 		k.y = start.y;
 		if(  grund_t *gr=welt->lookup_kartenboden(k)  ) {
-			return work(player, k);
+			return work_on_ground(player, k);
 		}
 	}
 	else {
@@ -6120,7 +6120,7 @@ const char *tool_build_house_t::do_work( player_t *player, const koord3d &start,
 		for( k.x = start.x; k.x != (end.x+dx); k.x += dx) {
 			for( k.y = start.y; k.y != (end.y+dy); k.y += dy) {
 				if(  grund_t *gr=welt->lookup_kartenboden(k)  ) {
-					const char* err = work(player, k);
+					const char* err = work_on_ground(player, k);
 					if(  msg==NULL  ||  strcmp(msg,"")==0  ) {
 						msg = err;
 					}

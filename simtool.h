@@ -68,7 +68,7 @@ public:
 	char const* do_work(player_t*, koord3d const&, koord3d const&) OVERRIDE;
 	void mark_tiles(player_t*, koord3d const&, koord3d const&) OVERRIDE;
 	uint8 is_valid_pos(player_t*, koord3d const&, char const*&, koord3d const&) OVERRIDE {return 2;};
-	image_id get_icon(player_t *) const { return baum_t::get_count() > 0 ? icon : IMG_EMPTY; }
+	image_id get_icon(player_t *) const OVERRIDE { return baum_t::get_count() > 0 ? icon : IMG_EMPTY; }
 	bool init(player_t* player) OVERRIDE { two_click_tool_t::init(player); one_click = true; return true; }
 	bool exit(player_t* player) OVERRIDE { one_click = true; return two_click_tool_t::exit(player); }
 };
@@ -109,7 +109,7 @@ public:
 
 	bool update_pos_after_use() const OVERRIDE { return true; }
 
-	virtual char const* process(player_t* player, koord3d pos) { return ""; }
+	virtual char const* process(player_t* player, koord3d pos) = 0;
 	char const* do_work(player_t* player, koord3d const&, koord3d const& pos) OVERRIDE ;
 	void mark_tiles(player_t*, koord3d const&, koord3d const&) OVERRIDE;
 	uint8 is_valid_pos(player_t*, koord3d const&, char const*&, koord3d const&) OVERRIDE {return 2;};
@@ -563,7 +563,7 @@ public:
 	tool_build_house_t() : two_click_kartenboden_tool_t(TOOL_BUILD_HOUSE | GENERAL_TOOL) {one_click = true;}
 	char const* get_tooltip(player_t const*) const OVERRIDE { return translator::translate("Built random attraction"); }
 	bool init(player_t*) OVERRIDE;
-	char const* work(player_t*, koord);
+	char const* work_on_ground(player_t*, koord);
 	bool is_init_network_save() const OVERRIDE { return true; }
 
 	char const* do_work(player_t*, koord3d const&, koord3d const&) OVERRIDE;
