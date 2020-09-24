@@ -19,17 +19,17 @@ You should try OTRP because...
 The thread in Simutrans International Forum: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitter hashtag :  [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)  
 
-As of version 27, OTRP is based on Simutrans Standard nightly r9186.
+As of version 27_1, OTRP is based on Simutrans Standard nightly r9186.
 
 # Download
 In addition to the executable binary, the ribi-arrow pak is required. Please download it from https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg and put it in your pakset folder.  
 
-You can download the OTRP executable binary from the links below. **(2020 August 29th, updated to ver 27.)**  
-windows(GDI 32bit): https://osdn.net/projects/otrp/downloads/73508/sim-WinGDI-OTRPv27.exe/  
-mac: https://osdn.net/projects/otrp/downloads/73508/sim-mac-OTRPv27.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/73508/sim-linux-OTRPv27.zip/  
+You can download the OTRP executable binary from the links below. **(2020 September 25th, updated to ver 27_1.)**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/73628/sim-WinGDI64-OTRPv27_1.exe/  
+windows(GDI 32bit): https://osdn.net/projects/otrp/downloads/73628/sim-WinGDI-OTRPv27_1.exe/  
+mac: https://osdn.net/projects/otrp/downloads/73628/sim-mac-OTRPv27_1.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/73628/sim-linux-OTRPv27_1.zip/  
 source code: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
-Windows 64bit version is not available due to some severe problems. Please use the 32bit version.  
 
 There is no special makeobj for OTRP. Please use one made for Simutrans Standard.
 
