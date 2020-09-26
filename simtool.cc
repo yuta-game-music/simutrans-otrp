@@ -5117,7 +5117,7 @@ const char *tool_build_station_t::move( player_t *player, uint16 buttonstate, ko
 
 const char *tool_build_station_t::work( player_t *player, koord3d pos )
 {
-	two_click_tool_t::work( player, pos );
+	return two_click_tool_t::work( player, pos );
 }
 const char *tool_build_station_t::process( player_t *player, koord3d pos )
 {
@@ -5225,47 +5225,58 @@ const char *tool_build_station_t::do_work( player_t *player, const koord3d &star
 	}
 	one_click = true;
 	if(  end == koord3d::invalid  ) {
+		// single click
 		koord k;
 		k.x = start.x;
 		k.y = start.y;
 		if(  grund_t *gr=welt->lookup_kartenboden(k)  ) {
-			process(player, start);
+			return process(player, start);
 		}
+		return NULL; //TODO: set proper error message when gr is not available.
 	}
-	else {
-		koord wh, nw;
-		wh.x = abs(end.x-start.x)+1;
-		wh.y = abs(end.y-start.y)+1;
-		nw.x = min(start.x, end.x)+(wh.x/2);
-		nw.y = min(start.y, end.y)+(wh.y/2);
-		
-		int dx = (start.x < end.x) ? 1 : -1;
-		int dy = (start.y < end.y) ? 1 : -1;
-		
-		koord k;
-		for( k.x = start.x; k.x != (end.x+dx); k.x += dx) {
-			for( k.y = start.y; k.y != (end.y+dy); k.y += dy) {
-				if(  grund_t *gr=welt->lookup_kartenboden(k)  ) {
-					if( gr->ist_bruecke() ) {
-						sint8 slope = gr->get_grund_hang();
-						if (slope == slope_t::north || slope == slope_t::west || slope == slope_t::east || slope == slope_t::south) {
-							process(player, koord3d(k.x,k.y,start.z-1));
-						}
-						else if (slope == 8 || slope == 24 || slope == 56 || slope == 72) {
-							process(player, koord3d(k.x,k.y,start.z-2));
-						}
-						else {
-							process(player, koord3d(k.x,k.y,start.z));
-						}
-					}
-					else {
-						process(player, koord3d(k.x,k.y,start.z));
-					}
+	
+	// double click
+	koord wh, nw;
+	wh.x = abs(end.x-start.x)+1;
+	wh.y = abs(end.y-start.y)+1;
+	nw.x = min(start.x, end.x)+(wh.x/2);
+	nw.y = min(start.y, end.y)+(wh.y/2);
+	
+	int dx = (start.x < end.x) ? 1 : -1;
+	int dy = (start.y < end.y) ? 1 : -1;
+	
+	const char* error = NULL;
+	koord k;
+	for( k.x = start.x; k.x != (end.x+dx); k.x += dx) {
+		for( k.y = start.y; k.y != (end.y+dy); k.y += dy) {
+			grund_t *gr=welt->lookup_kartenboden(k);
+			if(  !gr  ) {
+				continue;
+			}
+			const char* e;
+			if( gr->ist_bruecke() ) {
+				sint8 slope = gr->get_grund_hang();
+				if (slope == slope_t::north || slope == slope_t::west || slope == slope_t::east || slope == slope_t::south) {
+					e = process(player, koord3d(k.x,k.y,start.z-1));
 				}
+				else if (slope == 8 || slope == 24 || slope == 56 || slope == 72) {
+					e = process(player, koord3d(k.x,k.y,start.z-2));
+				}
+				else {
+					e = process(player, koord3d(k.x,k.y,start.z));
+				}
+			}
+			else {
+				e = process(player, koord3d(k.x,k.y,start.z));
+			}
+			
+			if(  !error  ) {
+				// propagate error text
+				error = e;
 			}
 		}
 	}
-	return NULL;
+	return error;
 }
 
 
@@ -5965,7 +5976,7 @@ bool tool_build_house_t::init( player_t * player)
 }
 
 
-const char *tool_build_house_t::work( player_t *player, koord k )
+const char *tool_build_house_t::work_on_ground( player_t *player, koord k )
 {
 	const grund_t* gr = welt->lookup_kartenboden(k);
 	if(gr==NULL) {
@@ -6090,7 +6101,7 @@ const char *tool_build_house_t::do_work( player_t *player, const koord3d &start,
 		k.x = start.x;
 		k.y = start.y;
 		if(  grund_t *gr=welt->lookup_kartenboden(k)  ) {
-			return work(player, k);
+			return work_on_ground(player, k);
 		}
 	}
 	else {
@@ -6108,7 +6119,7 @@ const char *tool_build_house_t::do_work( player_t *player, const koord3d &start,
 		for( k.x = start.x; k.x != (end.x+dx); k.x += dx) {
 			for( k.y = start.y; k.y != (end.y+dy); k.y += dy) {
 				if(  grund_t *gr=welt->lookup_kartenboden(k)  ) {
-					const char* err = work(player, k);
+					const char* err = work_on_ground(player, k);
 					if(  msg==NULL  ||  strcmp(msg,"")==0  ) {
 						msg = err;
 					}
