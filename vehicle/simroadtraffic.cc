@@ -530,9 +530,6 @@ void private_car_t::rdwr(loadsave_t *file)
 		ms_traffic_jam = 0;
 		pos_prev = koord3d::invalid;
 	}
-	
-	// do not start with zero speed!
-	current_speed ++;
 }
 
 
