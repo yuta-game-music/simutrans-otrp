@@ -2073,73 +2073,136 @@ bool haltestelle_t::recall_ware( ware_t& w, uint32 menge )
 }
 
 
-
-void haltestelle_t::fetch_goods( slist_tpl<ware_t> &load, const goods_desc_t *good_category, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts)
-{
+void haltestelle_t::fetch_goods_nearest_first( slist_tpl<ware_t> &load, slist_tpl<ware_t> *wares, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts) {
 	// first iterate over the next stop, then over the ware
 	// might be a little slower, but ensures that passengers to nearest stop are served first
 	// this allows for separate high speed and normal service
-	slist_tpl<ware_t> *warray = cargo[good_category->get_catg_index()];
+	for(  uint32 i=0; i < destination_halts.get_count();  i++  ) {
+		halthandle_t plan_halt = destination_halts[i];
 
-	if(  warray  &&  !warray->empty()  ) {
-		for(  uint32 i=0; i < destination_halts.get_count();  i++  ) {
-			halthandle_t plan_halt = destination_halts[i];
+		// REMOVED: The random offset will ensure that all goods have an equal chance to be loaded.
+		for(  slist_tpl<ware_t>::iterator tmp = wares->begin();  tmp!=wares->end();  tmp++) {
+			// skip empty entries
+			if(tmp->menge==0) {
+				continue;
+			}
 
-			// REMOVED: The random offset will ensure that all goods have an equal chance to be loaded.
-			for(  slist_tpl<ware_t>::iterator tmp = warray->begin();  tmp!=warray->end();  tmp++) {
-				// skip empty entries
-				if(tmp->menge==0) {
+			// goods without route -> returning passengers/mail
+			if(  !tmp->get_zwischenziel().is_bound()  ) {
+				search_route_resumable(*tmp);
+				if (!tmp->get_ziel().is_bound()) {
+					// no route anymore
+					tmp->menge = 0;
 					continue;
 				}
+			}
 
-				// goods without route -> returning passengers/mail
-				if(  !tmp->get_zwischenziel().is_bound()  ) {
-					search_route_resumable(*tmp);
-					if (!tmp->get_ziel().is_bound()) {
-						// no route anymore
-						tmp->menge = 0;
+			// compatible car and right target stop?
+			if(  tmp->get_zwischenziel()==plan_halt  ) {
+				if(  plan_halt->is_overcrowded( tmp->get_index() )  ) {
+					if (welt->get_settings().is_avoid_overcrowding() && tmp->get_ziel() != plan_halt) {
+						// do not go for transfer to overcrowded transfer stop
 						continue;
 					}
 				}
 
-				// compatible car and right target stop?
-				if(  tmp->get_zwischenziel()==plan_halt  ) {
-					if(  plan_halt->is_overcrowded( tmp->get_index() )  ) {
-						if (welt->get_settings().is_avoid_overcrowding() && tmp->get_ziel() != plan_halt) {
-							// do not go for transfer to overcrowded transfer stop
-							continue;
-						}
-					}
+				// not too much?
+				ware_t neu(*tmp);
+				if(  tmp->menge > requested_amount  ) {
+					// not all can be loaded
+					neu.menge = requested_amount;
+					tmp->menge -= requested_amount;
+					requested_amount = 0;
+				}
+				else {
+					requested_amount -= tmp->menge;
+					// leave an empty entry => joining will more often work
+					tmp->menge = 0;
+				}
+				load.insert(neu);
 
-					// not too much?
-					ware_t neu(*tmp);
-					if(  tmp->menge > requested_amount  ) {
-						// not all can be loaded
-						neu.menge = requested_amount;
-						tmp->menge -= requested_amount;
-						requested_amount = 0;
-					}
-					else {
-						requested_amount -= tmp->menge;
-						// leave an empty entry => joining will more often work
-						tmp->menge = 0;
-					}
-					load.insert(neu);
+				book(neu.menge, HALT_DEPARTED);
+				resort_freight_info = true;
 
-					book(neu.menge, HALT_DEPARTED);
-					resort_freight_info = true;
-
-					if (requested_amount==0) {
-						return;
-					}
+				if (requested_amount==0) {
+					return;
 				}
 			}
+		}
 
-			// nothing there to load
+		// nothing there to load
+	}
+}
+
+
+void haltestelle_t::fetch_goods_FIFO( slist_tpl<ware_t> &load, slist_tpl<ware_t> *wares, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts) {
+	for(  slist_tpl<ware_t>::iterator ware = wares->begin();  ware!=wares->end();  ) {
+		// empty entry -> remove
+		if(ware->menge==0) {
+			ware = wares->erase(ware);
+			continue;
+		}
+
+		// goods without route -> returning passengers/mail
+		if(  !ware->get_zwischenziel().is_bound()  ) {
+			search_route_resumable(*ware);
+			if (!ware->get_ziel().is_bound()) {
+				// no route anymore
+				ware = wares->erase(ware);
+				continue;
+			}
+		}
+
+		// right target stop, and not overcrowding?
+		// do not go for transfer to overcrowded transfer stop
+		if(  
+			!destination_halts.is_contained(ware->get_zwischenziel())  ||
+			(welt->get_settings().is_avoid_overcrowding()  &&
+				ware->get_zwischenziel()->is_overcrowded( ware->get_index() )  &&
+				ware->get_ziel() != ware->get_zwischenziel())
+		) {
+			ware++;
+			continue;
+		}
+		
+		// not too much?
+		ware_t neu(*ware);
+		if(  ware->menge > requested_amount  ) {
+			// not all can be loaded
+			neu.menge = requested_amount;
+			ware->menge -= requested_amount;
+			requested_amount = 0;
+		}
+		else {
+			requested_amount -= ware->menge;
+			// leave an empty entry => joining will more often work
+			ware->menge = 0;
+			ware = wares->erase(ware);
+		}
+		load.insert(neu);
+
+		book(neu.menge, HALT_DEPARTED);
+		resort_freight_info = true;
+
+		if (requested_amount==0) {
+			return;
 		}
 	}
 }
 
+
+void haltestelle_t::fetch_goods( slist_tpl<ware_t> &load, const goods_desc_t *good_category, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts)
+{
+	slist_tpl<ware_t> *warray = cargo[good_category->get_catg_index()];
+	if(  !warray  ||  warray->empty()  ) {
+		return;
+	}
+	if(  world()->get_settings().get_first_come_first_serve()  ) {
+		fetch_goods_FIFO(load, warray, requested_amount, destination_halts);
+	} else {
+		fetch_goods_nearest_first(load, warray, requested_amount, destination_halts);
+	}
+}
 
 
 uint32 haltestelle_t::get_ware_summe(const goods_desc_t *wtyp) const
@@ -2188,20 +2251,26 @@ uint32 haltestelle_t::get_ware_fuer_zwischenziel(const goods_desc_t *wtyp, const
 
 bool haltestelle_t::vereinige_waren(const ware_t &ware)
 {
+	// merge cargos only when "load nearest first" policy is applied.
+	if(  world()->get_settings().get_first_come_first_serve()  ) {
+		return false;
+	}
+	
 	// pruefen ob die ware mit bereits wartender ware vereinigt werden kann
 	slist_tpl<ware_t> * warray = cargo[ware.get_desc()->get_catg_index()];
-	if(warray!=NULL) {
-		FOR(slist_tpl<ware_t>, & tmp, *warray) {
-			// join packets with same destination
-			if(ware.same_destination(tmp)) {
-				if(  ware.get_zwischenziel().is_bound()  &&  ware.get_zwischenziel()!=self  ) {
-					// update route if there is newer route
-					tmp.set_zwischenziel( ware.get_zwischenziel() );
-				}
-				tmp.menge += ware.menge;
-				resort_freight_info = true;
-				return true;
+	if(  !warray  ) {
+		return false;
+	}
+	FOR(slist_tpl<ware_t>, & tmp, *warray) {
+		// join packets with same destination
+		if(ware.same_destination(tmp)) {
+			if(  ware.get_zwischenziel().is_bound()  &&  ware.get_zwischenziel()!=self  ) {
+				// update route if there is newer route
+				tmp.set_zwischenziel( ware.get_zwischenziel() );
 			}
+			tmp.menge += ware.menge;
+			resort_freight_info = true;
+			return true;
 		}
 	}
 	return false;

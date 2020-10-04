@@ -333,6 +333,11 @@ private:
 	 * transfers all goods to given station
 	 */
 	void transfer_goods(halthandle_t halt);
+	
+	
+	void fetch_goods_FIFO( slist_tpl<ware_t> &load, slist_tpl<ware_t> *wares, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts);
+	
+	void fetch_goods_nearest_first( slist_tpl<ware_t> &load, slist_tpl<ware_t> *wares, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts);
 
 	/**
 	* parameter to ease sorting
