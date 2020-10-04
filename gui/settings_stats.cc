@@ -244,6 +244,7 @@ void settings_routing_stats_t::init(settings_t const* const sets)
 	INIT_NUM( "routecost_halt", sets->routecost_halt, 1, 250, 1, false );
 	SEPERATOR
 	INIT_BOOL( "advance_to_end", sets->get_advance_to_end() );
+	INIT_BOOL( "first_come_first_serve", sets->get_first_come_first_serve() );
 
 	INIT_END
 }
@@ -279,6 +280,7 @@ void settings_routing_stats_t::read(settings_t* const sets)
 	READ_NUM_VALUE( sets->routecost_wait );
 	READ_NUM_VALUE( sets->routecost_halt );
 	READ_BOOL_VALUE( sets->advance_to_end );
+	READ_BOOL_VALUE( sets->first_come_first_serve);
 }
 
 

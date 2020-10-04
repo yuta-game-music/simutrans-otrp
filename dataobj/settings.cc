@@ -309,6 +309,7 @@ settings_t::settings_t() :
 	citycar_route_weight_speed = 0;
 	
 	advance_to_end = true;
+	first_come_first_serve = false;
 	
 	routecost_wait = 8;
 	routecost_halt = 1;
@@ -928,6 +929,9 @@ void settings_t::rdwr(loadsave_t *file)
 			file->rdwr_byte(routecost_wait);
 			file->rdwr_byte(routecost_halt);
 			file->rdwr_short(spacing_shift_divisor);
+		}
+		if(  file->get_OTRP_version() >= 28  ) {
+			file->rdwr_bool(first_come_first_serve);
 		}
 		// otherwise the default values of the last one will be used
 	}
@@ -1584,6 +1588,7 @@ void settings_t::parse_simuconf( tabfile_t& simuconf, sint16& disp_width, sint16
 	}
 	
 	advance_to_end = contents.get_int("advance_to_end", advance_to_end);
+	first_come_first_serve = contents.get_int("first_come_first_serve", first_come_first_serve);
 	
 	routecost_wait = contents.get_int("routecost_wait", routecost_wait);
 	routecost_halt = contents.get_int("routecost_halt", routecost_halt);
