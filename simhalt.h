@@ -288,7 +288,7 @@ private:
 
 
 	// Array with different categories that contains all waiting goods at this stop
-	vector_tpl<ware_t> **cargo;
+	slist_tpl<ware_t> **cargo;
 
 	/**
 	 * Liste der angeschlossenen Fabriken
