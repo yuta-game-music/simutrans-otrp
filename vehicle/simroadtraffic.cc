@@ -561,12 +561,17 @@ bool private_car_t::ist_weg_frei(grund_t *gr)
 		rs = gr->find<roadsign_t>();
 		const roadsign_desc_t* rs_desc = rs->get_desc();
 		if(rs_desc->is_traffic_light()  &&  (rs->get_dir()&current_direction90)==0) {
-			direction = current_direction90;
-			calc_image();
-			// wait here
-			current_speed = 48;
-			weg_next = 0;
-			return false;
+			// red traffic light, but we go on, if we are already on a traffic light
+			const grund_t *gr_current = welt->lookup(get_pos());
+			const roadsign_t *rs_current = gr_current ? gr_current->find<roadsign_t>() : NULL;
+			if(  rs_current  &&  rs_current->get_desc()->is_traffic_light()  ) {
+				direction = current_direction90;
+				calc_image();
+				// wait here
+				current_speed = 48;
+				weg_next = 0;
+				return false;
+			}
 		}
 	}
 

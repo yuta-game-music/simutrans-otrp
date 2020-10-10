@@ -1664,7 +1664,7 @@ DBG_MESSAGE("vehicle_t::rdwr_from_convoi()","bought at %i/%i.",(purchase_time%12
 			ware_t ware(file);
 			if(  (desc==NULL  ||  ware.menge>0)  &&  welt->is_within_limits(ware.get_zielpos())  &&  ware.get_desc()  ) {
 				// also add, of the desc is unknown to find matching replacement
-				fracht.insert(ware);
+				fracht.append(ware);
 #ifdef CACHE_TRANSIT
 				if(  file->is_version_less(112, 1)  )
 #endif
@@ -2262,6 +2262,11 @@ bool road_vehicle_t::can_enter_tile(const grund_t *gr, sint32 &restart_speed, ui
 			if(  gr_current  &&  gr_current->ist_uebergang()  ) {
 				return true;
 			}
+			// always allow to leave traffic lights (avoid vehicles stuck on crossings directly after though)
+			const roadsign_t *rs = gr_current ? gr_current->find<roadsign_t>() : NULL;
+			if(  rs  &&  rs->get_desc()->is_traffic_light()  ) {
+				return true;
+			}
 		}
 
 		assert(gr);
@@ -2540,15 +2545,8 @@ bool road_vehicle_t::can_enter_tile(const grund_t *gr, sint32 &restart_speed, ui
 			if(  str->has_sign()  ) {
 				rs = gr->find<roadsign_t>();
 				if(  rs  ) {
-					// since at the corner, our direction may be diagonal, we make it straight
-					if(  rs->get_desc()->is_traffic_light()  &&  (rs->get_dir() & curr_90direction)==0  ) {
-						// wait here
-						restart_speed = 16;
-						return false;
-					}
 					// check, if we reached a choose point
-
-					else if(  rs->is_free_route(curr_90direction)  &&  !target_halt.is_bound()  ) {
+					if(  rs->is_free_route(curr_90direction)  &&  !target_halt.is_bound()  ) {
 						if(  second_check_count  ) {
 							return false;
 						}
