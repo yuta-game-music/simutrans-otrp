@@ -8284,35 +8284,35 @@ bool tool_change_traffic_light_t::init( player_t *player )
 		return false;
 	}
 	koord3d pos(pos2d, z);
-	if(  grund_t *gr = welt->lookup(pos)  ) {
-		if( roadsign_t *rs = gr->find<roadsign_t>()  ) {
-			if(  (  rs->get_desc()->is_traffic_light()  ||  rs->get_desc()->is_private_way()  )  &&  player_t::check_owner(rs->get_owner(),player)  ) {
-				if(  ns == 1  ) {
-					rs->set_ticks_ns( (uint8)ticks );
-				}
-				else if(  ns == 0  ) {
-					rs->set_ticks_ow( (uint8)ticks );
-				}
-				else if(  ns == 2  ) {
-					rs->set_ticks_offset( (uint8)ticks );
-				}
-				else if(  ns == 3  ) {
-					rs->set_open_direction( (uint8)ticks );
-				}
-				// update the window
-				if(  rs->get_desc()->is_traffic_light()  ) {
-					trafficlight_info_t* trafficlight_win = (trafficlight_info_t*)win_get_magic((ptrdiff_t)rs);
-					if (trafficlight_win) {
-						trafficlight_win->update_data();
-					}
-				}
-				else {
-					privatesign_info_t* trafficlight_win = (privatesign_info_t*)win_get_magic((ptrdiff_t)rs);
-					if (trafficlight_win) {
-						trafficlight_win->update_data();
-					}
-				}
-			}
+	const grund_t *gr = welt->lookup(pos);
+	roadsign_t *rs = gr ? gr->find<roadsign_t>() : NULL;
+	if(  !rs  ||  !player_t::check_owner(rs->get_owner(),player)  ) {
+		return false;
+	}
+	if(  !rs->get_desc()->is_traffic_light()  &&  !rs->get_desc()->is_private_way()  ) {
+		return false;
+	}
+	
+	if(  ns == 1  ) {
+		rs->set_ticks_ns( (uint8)ticks );
+	}
+	else if(  ns == 0  ) {
+		rs->set_ticks_ow( (uint8)ticks );
+	}
+	else if(  ns == 2  ) {
+		rs->set_ticks_offset( (uint8)ticks );
+	}
+	// update the window
+	if(  rs->get_desc()->is_traffic_light()  ) {
+		trafficlight_info_t* trafficlight_win = (trafficlight_info_t*)win_get_magic((ptrdiff_t)rs);
+		if (trafficlight_win) {
+			trafficlight_win->update_data();
+		}
+	}
+	else {
+		privatesign_info_t* trafficlight_win = (privatesign_info_t*)win_get_magic((ptrdiff_t)rs);
+		if (trafficlight_win) {
+			trafficlight_win->update_data();
 		}
 	}
 	return false;
