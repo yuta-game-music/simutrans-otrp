@@ -312,6 +312,8 @@ private:
 	// only for trains. If true, trains advance to the end of the platform.
 	bool advance_to_end;
 	
+	bool first_come_first_serve;
+	
 	// paramters for haltestelle_t::rebuild_connections()
 	uint8 routecost_halt;
 	uint8 routecost_wait;
@@ -364,8 +366,6 @@ public:
 	uint32 way_max_bridge_len;
 	sint32 way_count_leaving_road;
 
-	// true if active
-	bool player_active[MAX_PLAYER_COUNT];
 	// 0 = empty, otherwise some value from simplay
 	uint8 player_type[MAX_PLAYER_COUNT];
 
@@ -515,7 +515,6 @@ public:
 		language_code_names[2] = 0;
 	}
 
-	void set_player_active(uint8 i, bool b) { player_active[i] = b; }
 	void set_player_type(uint8 i, uint8 t) { player_type[i] = t; }
 	uint8 get_player_type(uint8 i) const { return player_type[i]; }
 
@@ -654,6 +653,8 @@ public:
 	
 	bool get_advance_to_end() const { return advance_to_end; }
 	void set_advance_to_end(bool b) { advance_to_end = b; }
+	
+	bool get_first_come_first_serve() const { return first_come_first_serve; }
 	
 	uint8 get_routecost_halt() const { return routecost_halt; }
 	uint8 get_routecost_wait() const { return routecost_wait; }
