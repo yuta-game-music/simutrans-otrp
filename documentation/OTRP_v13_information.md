@@ -19,16 +19,16 @@
 本家フォーラム: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitterハッシュタグ： [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)
 
-version27_2現在，simutrans standard nightly r9186をベースにしています．
+version28現在，simutrans standard stable 122.0をベースにしています．
 
 # ダウンロード
 実行には本体の他にribi-arrowアドオンが必要なので https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg からDLしてpakセットの中に突っ込んでください．  
 
-本体は下のリンクからどうぞ．**（2020年10月2日PM10時　ver27_2に更新）**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/73725/sim-WinGDI64-OTRPv27_2.exe/  
-windows(GDI 32bit): https://osdn.net/projects/otrp/downloads/73725/sim-WinGDI-OTRPv27_2.exe/  
-mac: https://osdn.net/projects/otrp/downloads/73725/sim-mac-OTRPv27_2.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/73725/sim-linux-OTRPv27_2.zip/  
+本体は下のリンクからどうぞ．**（2020年10月11日PM10時　ver28に更新）**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/73743/sim-WinGDI64-OTRPv28.exe/  
+windows(GDI 32bit): https://osdn.net/projects/otrp/downloads/73743/sim-WinGDI-OTRPv28.exe/  
+mac: https://osdn.net/projects/otrp/downloads/73743/sim-mac-OTRPv28.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/73743/sim-linux-OTRPv28.zip/  
 ソース: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 OTRP専用のmakeobjはありません．simutrans standardのmakeobjをご利用ください．
@@ -165,6 +165,7 @@ OTRPでは高度なスケジュール設定により，より柔軟な運行が�
 - **stop_at_intersection_without_traffic_light**（経済タブにあります）のチェックを入れることで，車両が信号機ナシ交差点の手前で特定の条件に従って一時停止するようになります．デフォルトでは無効です．
 - **advance_to_end**（ルートタブにあります）のチェックを外すことで列車のホームでの停車位置が実際に指定した位置になります．（デフォルトではstandardと同じく指定位置にかかわらず列車は先頭まで進みます．）なお指定した位置で編成がおさまらないときは編成全体がおさまるまで前進します．（extendedと同じです．）
 - **routecost_halt**, **routecost_wait** （ルートタブにあります）を変更することで，旅客の乗り換え駅を制御することができます．routecost_haltは1駅ごとのルートコスト，routecost_waitは1回乗り換えするごとのルートコストです．デフォルト値はそれぞれ1と8です．
+- **first_come_first_serve**（ルートタブにあります）のチェックを入れることで，駅，停留所に先に来た乗客から車両に乗るようになります．デフォルトでは無効です．
 
 # データの互換性
 ## アドオンの互換性
