@@ -1062,7 +1062,7 @@ bool haltestelle_t::reroute_goods(sint16 &units_remaining)
 		// if something left
 		// re-route goods to adapt to changes in world layout,
 		// remove all goods whose destination was removed from the map
-		for(  slist_tpl<ware_t>::iterator ware;  ware!=warray->end();  ) {
+		for(  slist_tpl<ware_t>::iterator ware = warray->begin();  ware!=warray->end();  ) {
 			search_route_resumable(*ware);
 			if(  ware->get_ziel()==halthandle_t()  ) {
 				// remove invalid destinations
