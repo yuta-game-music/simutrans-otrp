@@ -2384,7 +2384,7 @@ bool road_vehicle_t::can_enter_tile(const grund_t *gr, sint32 &restart_speed, ui
 
 		// do not block intersections
 		const bool drives_on_left = welt->get_settings().is_drive_left();
-		bool int_block = ribi_t::is_threeway(str->get_ribi_unmasked())  &&  (((drives_on_left ? ribi_t::rotate90l(curr_90direction) : ribi_t::rotate90(curr_90direction)) & str->get_ribi_unmasked())  ||  curr_90direction != next_90direction  ||  (rs  &&  rs->get_desc()->is_traffic_light()));
+		bool int_block = (rs  &&  rs->get_desc()->is_traffic_light())  ||  ribi_t::is_threeway(str->get_ribi_unmasked());
 
 		// do we have to stop before entering the intersection?
 		// we consider prior direction of the intersection.
@@ -2586,7 +2586,7 @@ bool road_vehicle_t::can_enter_tile(const grund_t *gr, sint32 &restart_speed, ui
 			}
 
 			// check for blocking intersection
-			int_block = ribi_t::is_threeway(str->get_ribi_unmasked())  &&  (((drives_on_left ? ribi_t::rotate90l(curr_90direction) : ribi_t::rotate90(curr_90direction)) & str->get_ribi_unmasked())  ||  curr_90direction != next_90direction  ||  (rs  &&  rs->get_desc()->is_traffic_light()));
+			int_block = (rs  &&  rs->get_desc()->is_traffic_light())  ||  ribi_t::is_threeway(str->get_ribi_unmasked());
 
 			test_index++;
 		}
