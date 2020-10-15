@@ -1141,7 +1141,7 @@ int simu_main(int argc, char** argv)
 	pakset_info_t::calculate_checksum();
 	pakset_info_t::debug();
 
-	if(  !overlaid_warning.empty()  &&  (show_overlaid_warning  ||  env_t::server)  ) {
+	if(  !overlaid_warning.empty()  &&  show_overlaid_warning  ) {
 		overlaid_warning.append( "<p>Continue by ESC, SPACE, or BACKSPACE.<br>" );
 		help_frame_t *win = new help_frame_t();
 		win->set_text( overlaid_warning.c_str() );
