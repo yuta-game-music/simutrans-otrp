@@ -5432,7 +5432,7 @@ const char* tool_build_roadsign_t::check_pos_intern(player_t *player, koord3d po
 
 		const bool two_way = desc->is_single_way()  ||  desc->is_signal_type();
 
-		if(!(desc->is_traffic_light() || two_way)  ||  (two_way  &&  ribi_t::is_twoway(dir))  ||  (desc->is_traffic_light()  &&  ribi_t::is_threeway(dir))) {
+		if(  !two_way  ||  (two_way  &&  ribi_t::is_twoway(dir))  ) {
 			roadsign_t* rs;
 			if(  desc->is_signal_type()  ) {
 				// if there is already a signal, we might need to inverse the direction
@@ -5714,7 +5714,7 @@ const char *tool_build_roadsign_t::place_sign_intern( player_t *player, grund_t*
 
 		const bool two_way = desc->is_single_way() || desc->is_signal_type();
 
-		if(!(desc->is_traffic_light() || two_way)  ||  (two_way  &&  ribi_t::is_twoway(dir))  ||  (desc->is_traffic_light()  &&  ribi_t::is_threeway(dir))) {
+		if(  !two_way  ||  (two_way  &&  ribi_t::is_twoway(dir))  ) {
 			roadsign_t* rs;
 			if (desc->is_signal_type()) {
 				// if there is already a signal, we might need to inverse the direction
