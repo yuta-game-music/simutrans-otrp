@@ -5432,7 +5432,7 @@ const char* tool_build_roadsign_t::check_pos_intern(player_t *player, koord3d po
 
 		const bool two_way = desc->is_single_way()  ||  desc->is_signal_type();
 
-		if(!(desc->is_traffic_light() || two_way)  ||  (two_way  &&  ribi_t::is_twoway(dir))  ||  (desc->is_traffic_light()  &&  ribi_t::is_threeway(dir))) {
+		if(  !two_way  ||  (two_way  &&  ribi_t::is_twoway(dir))  ) {
 			roadsign_t* rs;
 			if(  desc->is_signal_type()  ) {
 				// if there is already a signal, we might need to inverse the direction
@@ -5714,7 +5714,7 @@ const char *tool_build_roadsign_t::place_sign_intern( player_t *player, grund_t*
 
 		const bool two_way = desc->is_single_way() || desc->is_signal_type();
 
-		if(!(desc->is_traffic_light() || two_way)  ||  (two_way  &&  ribi_t::is_twoway(dir))  ||  (desc->is_traffic_light()  &&  ribi_t::is_threeway(dir))) {
+		if(  !two_way  ||  (two_way  &&  ribi_t::is_twoway(dir))  ) {
 			roadsign_t* rs;
 			if (desc->is_signal_type()) {
 				// if there is already a signal, we might need to inverse the direction
@@ -6723,7 +6723,7 @@ const char *tool_forest_t::do_work( player_t *player, const koord3d &start, cons
 	nw.x = min(start.x, end.x)+(wh.x/2);
 	nw.y = min(start.y, end.y)+(wh.y/2);
 
-	sint64 costs = baum_t::create_forest( nw, wh );
+	sint64 costs = baum_t::create_forest( nw, wh, 0, 0, welt->get_size().x, welt->get_size().y );
 	player_t::book_construction_costs(player, costs * welt->get_settings().cst_remove_tree, end.get_2d(), ignore_wt);
 
 	return NULL;
