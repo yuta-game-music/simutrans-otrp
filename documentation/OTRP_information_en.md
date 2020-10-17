@@ -41,7 +41,7 @@ There is no special makeobj for OTRP. Please use one made for Simutrans Standard
 
 ## For mac & linux users
 OTRP executable binaries require a library called zstd.  
-Mac: Install [homebrew](https://brew.sh/index_ja) and execute command `brew install zstd`  
+Mac: Install [homebrew](https://brew.sh/index_ja) and execute command `brew install sdl2 libpng miniupnpc freetype zstd`  
 Linux：Compile [zstd](https://github.com/facebook/zstd) from the source code and `make install`. Version 1.4.4 or later is required.
 
 # How to use

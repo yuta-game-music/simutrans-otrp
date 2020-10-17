@@ -42,7 +42,7 @@ standard版のsveファイルを上書きしないように気をつけましょ
 
 ## mac・linuxユーザーの皆さまへ
 OTRPの動作にはzstdというライブラリのインストールが必要です．  
-macの場合：[homebrew](https://brew.sh/index_ja)をインストールの上，ターミナルで`brew install zstd`を実行してください．  
+macの場合：[homebrew](https://brew.sh/index_ja)をインストールの上，ターミナルで`brew install sdl2 libpng miniupnpc freetype zstd`を実行してください．  
 linuxの場合：[zstd](https://github.com/facebook/zstd)をソースからコンパイルの上，`make install`してください．バージョン1.4.4以上が必要です．
 
 ## ja.tabについて

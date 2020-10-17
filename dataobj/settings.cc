@@ -931,6 +931,9 @@ void settings_t::rdwr(loadsave_t *file)
 		if(  file->get_OTRP_version() >= 28  ) {
 			file->rdwr_bool(first_come_first_serve);
 		}
+		if(  file->is_version_atleast(122, 1)  ) {
+			file->rdwr_enum(climate_generator);
+		}
 		// otherwise the default values of the last one will be used
 	}
 }
