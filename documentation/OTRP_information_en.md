@@ -80,19 +80,6 @@ However, lane changes can fail when there is heavy traffic.
 
 For citycars, lane assignment signs are valid only when the distance between the sign and the next intersection is less than citycar_max_look_forward (described further below.)
 
-## Traffic lights
-In Simutrans, traffic lights only control traffic on one tile. This works for Simutrans Standard, where all intersections cover only one tile. However, with OTRP, you can build four-lane roads. Therefore, intersections with these roads will cover at least two tiles. 
-
-To control such intersections, you will need to place traffic lights on all tiles of the intersection. But doing so in Simutrans Standard will prevent vehicles from making turns that cross the opposite side of the road; as shown in the image above, the timing of the traffic lights will conflict with each other. Phase offsets can be used as a workaround in Simutrans Standard, but are difficult to manage and not a good permanent solution.
-
-![TrafficLightGraphicsPart1](images/TrafficLightGraphicsPart1.png)  
-
-In OTRP, you can configure the directions from which vehicles can enter tiles during each phase of a traffic light. By adding specific entrance directions to each phase of all traffic lights in an intersection, you can resolve signal conflicts and allow traffic to turn properly. For example, in the image above, when the southern traffic light allows traffic to flow from the east to the west, it also allows traffic from the north, therefore allowing eastbound traffic to make right turns, while still blocking north-south traffic. Conversely, the northern traffic light allows traffic to enter from the south during the west-east phase, allowing westbound traffic to turn right.
-
-![TrafficLightSimuPart2](images/TrafficLightSimuPart2.png)
-
-To confirm a traffic light's current status, open its window and check the "directions" display. A number will be assigned to each direction: 1 for north, 2 for east, 4 for south, and 8 for west. The direction display will show the sum of the numbers assigned to all currently valid entrance directions. For example, if traffic is currently allowed to enter the intersection from the north and south, 5 (1+4) will be displayed.
-
 ## Change vehicle drawing position
 <img src="images/SetOffset.png" width="397">  
 
@@ -145,7 +132,7 @@ Finally, toggling "use same departure time for all stops" applies all departure 
 - Hold the shift key down to select multiple items in the city building construction window. City buildings are randomly chosen from the selected items and are constructed in the designated area.
 - Press the control key while selecting the wayobj construction tool in order to configure the spacing of wayobj placement.
 - Press the control key while selecting any elevated way construction tool in order to specify a height offset. This is useful for building elevated ways at very high altitudes.
-- The warning about duplicate add-on names is disabled in OTRP. The warning will be shown if Simutrans is launched with the **-showoverlay** option enabled or is launched in network mode.
+- The warning about duplicate add-on names is disabled in OTRP. The warning will be shown if Simutrans is launched with the **-showoverlay** option enabled.
 - In OTRP, long block signals reserve all tiles between it and the next signal, even if by doing so it reserves a path beyond the end of the convoy's route or next stop. This is a preliminary implementation of a feature that was discussed in the international Simutrans forum.
 - With the `-snapshot x,y,z,f` option, Simutrans takes a snapshot and immediately quits. x, y, and z are the central coordinates, and f is the zoom factor, which can range from 0 to 9.
 - The replacement seed button automates convoy replacement. In a depot, select a convoy that you wish to replace other convoys with and set it as the replacement seed. The vehicles of convoys that subsequently arrive at the depot will be replaced with vehicles of the replacement seed. Press "unregister replacement" while the seed is selected in order to end convoy replacement.
