@@ -24,11 +24,11 @@ version28_1現在，simutrans standard nightly r9281をベースにしていま�
 # ダウンロード
 実行には本体の他にribi-arrowアドオンが必要なので https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg からDLしてpakセットの中に突っ込んでください．  
 
-本体は下のリンクからどうぞ．**（2020年10月16日AM0時　ver28_1に更新）**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/73812/sim-WinGDI64-OTRPv28_1.exe/  
-windows(GDI 32bit): https://osdn.net/projects/otrp/downloads/73812/sim-WinGDI-OTRPv28_1.exe/  
-mac: https://osdn.net/projects/otrp/downloads/73812/sim-mac-OTRPv28_1.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/73812/sim-linux-OTRPv28_1.zip/  
+本体は下のリンクからどうぞ．**（2020年10月25日PM3時　ver28_2に更新）**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/73846/sim-WinGDI64-OTRPv28_2.exe/  
+windows(GDI 32bit): https://osdn.net/projects/otrp/downloads/73846/sim-WinGDI-OTRPv28_2.exe/  
+mac: https://osdn.net/projects/otrp/downloads/73846/sim-mac-OTRPv28_2.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/73846/sim-linux-OTRPv28_2.zip/  
 ソース: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 OTRP専用のmakeobjはありません．simutrans standardのmakeobjをご利用ください．
@@ -141,7 +141,7 @@ OTRPでは高度なスケジュール設定により，より柔軟な運行が�
 - ctrlキーを押しながら土地上げ下げツールを使うと，選択された範囲が始点と同じ高度になります．（[shingoushori][1]氏による実装）
 - ctrlキーを押しながらwayobj（架線）建設ツールを使うと，wayobjの設置間隔を設定できます．景観架線で架線柱を2マスごとに置く時などに便利です．
 - ctrlキーを押しながら高架建設ツールを使うと，高架の高度オフセットを指定できます．1高度だけ地面から浮いた高架や，高高度の高架を建設するときに便利です．
-- 起動時に出現するアドオン名重複警告はOTRPでは無効化されています．ただし，**-showoverlay** オプションをつけて起動したとき及びサーバーモードで起動したときはアドオン名重複警告が表示されます．
+- 起動時に出現するアドオン名重複警告はOTRPでは無効化されています．ただし，**-showoverlay** オプションをつけて起動したときはアドオン名重複警告が表示されます．
 - longblocksignal（多閉塞信号）は検査した範囲をすべて予約するようになっています．すなはち，停車駅をこえて次の信号まで予約するようになっています．これは本家フォーラムで議論中の機能の先行実装です．
 - 起動時に`-snapshot x,y,z,f`オプションで起動すると，スナップショットを撮影して終了します．x,y,zは中心座標，fはズーム率（0から9まで）です．異なるセーブファイルである固定地点のスクリーンショットを撮りたいときなどに便利です．
 - 車庫画面で「置換編成に登録」を押すと，車庫に到着した編成の組成をその編成と同じにします．
