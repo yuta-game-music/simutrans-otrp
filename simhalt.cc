@@ -2289,15 +2289,7 @@ void haltestelle_t::add_ware_to_halt(ware_t ware)
 		warray = new slist_tpl<ware_t>();
 		cargo[ware.get_desc()->get_catg_index()] = warray;
 	}
-	// the ware will be put into the first entry with menge==0
 	resort_freight_info = true;
-	FOR(slist_tpl<ware_t>, & i, *warray) {
-		if (i.menge == 0) {
-			i = ware;
-			return;
-		}
-	}
-	// here, if no free entries found
 	warray->append(ware);
 }
 
