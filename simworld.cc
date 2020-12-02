@@ -5679,7 +5679,7 @@ DBG_MESSAGE("karte_t::load()", "init player");
 			grund_t * gr = lookup(cnv->get_pos());
 			depot_t *dep = gr ? gr->get_depot() : 0;
 			if(dep) {
-				cnv->betrete_depot(dep);
+				cnv->betrete_depot(dep, true);
 			}
 			else {
 				dbg->error("karte_t::load()", "no depot for convoi, blocks may now be wrongly reserved!");

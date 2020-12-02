@@ -1677,7 +1677,7 @@ void convoi_t::new_month()
 }
 
 
-void convoi_t::betrete_depot(depot_t *dep)
+void convoi_t::betrete_depot(depot_t *dep, bool is_loading)
 {
 	// first remove reservation, if train is still on track
 	unreserve_route();
@@ -1699,7 +1699,7 @@ void convoi_t::betrete_depot(depot_t *dep)
 
 	maxspeed_average_count = 0;
 	state = INITIAL;
-	dep->convoi_arrived(self, get_schedule());
+	dep->convoi_arrived(self, !is_loading  &&  get_schedule());
 }
 
 
