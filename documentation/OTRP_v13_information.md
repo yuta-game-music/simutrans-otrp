@@ -19,16 +19,15 @@
 本家フォーラム: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitterハッシュタグ： [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)
 
-version28_1現在，simutrans standard nightly r9281をベースにしています．
+version28_3現在，simutrans standard nightly r9281をベースにしています．
 
 # ダウンロード
 実行には本体の他にribi-arrowアドオンが必要なので https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg からDLしてpakセットの中に突っ込んでください．  
 
-本体は下のリンクからどうぞ．**（2020年10月25日PM3時　ver28_2に更新）**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/73846/sim-WinGDI64-OTRPv28_2.exe/  
-windows(GDI 32bit): https://osdn.net/projects/otrp/downloads/73846/sim-WinGDI-OTRPv28_2.exe/  
-mac: https://osdn.net/projects/otrp/downloads/73846/sim-mac-OTRPv28_2.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/73846/sim-linux-OTRPv28_2.zip/  
+本体は下のリンクからどうぞ．**（2020年12月5日PM5時　ver28_3に更新）**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74041/sim-WinGDI64-OTRPv28_3.exe/   
+mac: https://osdn.net/projects/otrp/downloads/74041/sim-mac-OTRPv28_3.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/74041/sim-linux-OTRPv28_3.zip/  
 ソース: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 OTRP専用のmakeobjはありません．simutrans standardのmakeobjをご利用ください．
@@ -156,7 +155,6 @@ OTRPでは高度なスケジュール設定により，より柔軟な運行が�
 - citycarは渋滞などにより交差点手前で停車している時，一定間隔（1倍速で約2秒おき）でルートの再検索を行います．適切に設定されたパラメータのもとでは，これによりデッドロックを予防することができます．
 
 ## その他
-- **stop_at_intersection_without_traffic_light**（経済タブにあります）のチェックを入れることで，車両が信号機ナシ交差点の手前で特定の条件に従って一時停止するようになります．デフォルトでは無効です．
 - **advance_to_end**（ルートタブにあります）のチェックを外すことで列車のホームでの停車位置が実際に指定した位置になります．（デフォルトではstandardと同じく指定位置にかかわらず列車は先頭まで進みます．）なお指定した位置で編成がおさまらないときは編成全体がおさまるまで前進します．（extendedと同じです．）
 - **routecost_halt**, **routecost_wait** （ルートタブにあります）を変更することで，旅客の乗り換え駅を制御することができます．routecost_haltは1駅ごとのルートコスト，routecost_waitは1回乗り換えするごとのルートコストです．デフォルト値はそれぞれ1と8です．
 - **first_come_first_serve**（ルートタブにあります）のチェックを入れることで，駅，停留所に先に来た乗客から車両に乗るようになります．デフォルトでは無効です．

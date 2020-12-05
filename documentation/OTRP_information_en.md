@@ -19,16 +19,15 @@ You should try OTRP because...
 The thread in Simutrans International Forum: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitter hashtag :  [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)  
 
-As of version 28_1, OTRP is based on Simutrans Standard nightly r9281.
+As of version 28_3, OTRP is based on Simutrans Standard nightly r9281.
 
 # Download
 In addition to the executable binary, the ribi-arrow pak is required. Please download it from https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg and put it in your pakset folder.  
 
-You can download the OTRP executable binary from the links below. **(2020 October 25th, updated to ver 28_2.)**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/73846/sim-WinGDI64-OTRPv28_2.exe/  
-windows(GDI 32bit): https://osdn.net/projects/otrp/downloads/73846/sim-WinGDI-OTRPv28_2.exe/  
-mac: https://osdn.net/projects/otrp/downloads/73846/sim-mac-OTRPv28_2.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/73846/sim-linux-OTRPv28_2.zip/  
+You can download the OTRP executable binary from the links below. **(2020 December 5th, updated to ver 28_3.)**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74041/sim-WinGDI64-OTRPv28_3.exe/   
+mac: https://osdn.net/projects/otrp/downloads/74041/sim-mac-OTRPv28_3.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/74041/sim-linux-OTRPv28_3.zip/  
 source code: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 There is no special makeobj for OTRP. Please use one made for Simutrans Standard.
@@ -150,7 +149,6 @@ Most of these are stored in-game.
 	- When the road is empty, the weight is calculated by multiplying the **speed limit of the road** by *sp**, the product of which is then added to **va**. The default value of va is 100, and the default value of sp is 0.
 	
 ## Other
-- **stop_at_intersection_without_traffic_light**: When this is enabled, road vehicles will stop at all intersections without traffic lights. This is disabled by default.	
 - **advance_to_end** : When this is enabled, trains always advance to the ends of platforms. When false, trains stop at the exact coordinates specified in the schedule as long as the platform is long enough to accomodate the entire convoy. This is the same behavior as in Simutrans Standard, and is enabled by default.
 - **routecost_halt**, **routecost_wait**: These settings determine passenger routing behavior. A cost is assigned to each stop and transfer made along a journey, with passengers choosing journeys with the lowest cost. routecost_halt is the cost of each stop; the default value is 1. routecost_wait is the cost of each transfer, with a default value of 8.
 - **first_come_first_serve** : By changing it, the first passenger who arrives at the station or stop gets on the train first. This is disabled by default.
