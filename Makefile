@@ -427,7 +427,6 @@ SOURCES += gui/vehiclelist_frame.cc
 SOURCES += gui/welt.cc
 SOURCES += gui/simple_number_input.cc
 SOURCES += network/checksum.cc
-SOURCES += network/otrp_log_sender.cc
 SOURCES += network/memory_rw.cc
 SOURCES += network/network.cc
 SOURCES += network/network_address.cc

@@ -70,7 +70,6 @@
 #include "dataobj/translator.h"
 #include "dataobj/repositioning.h"
 #include "network/pakset_info.h"
-#include "network/otrp_log_sender.h"
 
 #include "descriptor/reader/obj_reader.h"
 #include "descriptor/sound_desc.h"
@@ -1087,10 +1086,6 @@ int simu_main(int argc, char** argv)
 	setsimrand(dr_time(), dr_time());
 	clear_random_mode( 7 );	// allow all
 	
-	// send launch log (OTRP)
-	otrp_log_sender_t log_sender;
-	log_sender.send_launch_log();
-	
 	// THLeaderH: show overlaid_warning only when requested.
 	bool show_overlaid_warning = false;
 	if(  gimme_arg(argc, argv, "-showoverlay", 0)  ) {
@@ -1525,8 +1520,6 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 	}
 
 	intr_disable();
-	
-	log_sender.save_statistics();
 
 	// save setting ...
 	dr_chdir( env_t::user_dir );
