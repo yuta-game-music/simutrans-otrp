@@ -789,6 +789,7 @@ void convoi_t::calc_acceleration(uint32 delta_t)
 			c->reset_recalc_min_top_speed();
 			c = c->get_coupling_convoi();
 		}
+		recalc_data = true;
 	}
 
 	// only compute this if a vehicle in the convoi hopped
