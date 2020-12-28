@@ -19,15 +19,19 @@
 本家フォーラム: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitterハッシュタグ： [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)
 
-version28_3現在，simutrans standard nightly r9281をベースにしています．
+version29現在，simutrans standard nightly r9281をベースにしています．  
+加えて，以下のコミットを追加で取り込んでいます．
+- https://github.com/teamhimeh/simutrans/commit/f3a24143e5efa86f70fe3e402db66b955524b558
+- https://github.com/teamhimeh/simutrans/commit/afa34316f08de7c27e8405d83d2dc48865c6d63c
+- https://github.com/teamhimeh/simutrans/commit/809ffc7b26475d502d60ed82c1e656def0b20850
 
 # ダウンロード
 実行には本体の他にribi-arrowアドオンが必要なので https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg からDLしてpakセットの中に突っ込んでください．  
 
-本体は下のリンクからどうぞ．**（2020年12月5日PM5時　ver28_3に更新）**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74041/sim-WinGDI64-OTRPv28_3.exe/   
-mac: https://osdn.net/projects/otrp/downloads/74041/sim-mac-OTRPv28_3.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/74041/sim-linux-OTRPv28_3.zip/  
+本体は下のリンクからどうぞ．**（2020年12月28日PM11時　ver29に更新）**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74138/sim-WinGDI64-OTRPv29.exe/   
+mac: https://osdn.net/projects/otrp/downloads/74138/sim-mac-OTRPv29.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/74138/sim-linux-OTRPv29.zip/  
 ソース: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 OTRP専用のmakeobjはありません．simutrans standardのmakeobjをご利用ください．
