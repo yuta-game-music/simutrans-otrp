@@ -17,12 +17,9 @@
 #include "../utils/simstring.h"
 
 
-script_generator_frame_t::script_generator_frame_t(tool_generate_script_t* tl) : savegame_frame_t(NULL, true, NULL, false)
+script_generator_frame_t::script_generator_frame_t(tool_generate_script_t* tl) : savegame_frame_t(".nut", false, "generated-scripts/", false)
 {
 	this->tool = tl;
-	cbuffer_t dir_str;
-	dir_str.printf("%sgenerated-scripts/", env_t::program_dir);
-	this->add_path(dir_str);
 
 	set_name(translator::translate("Save generated script"));
 	set_focus(NULL);
