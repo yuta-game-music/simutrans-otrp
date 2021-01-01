@@ -143,9 +143,8 @@ bool tool_generate_script_t::save_script(const char* fullpath) const {
 	fs::create_directory(dir_buf.get_str());
   FILE* file;
   file = dr_fopen(fullpath, "w");
-  printf("save at %s\n", fullpath);
   if(  file==NULL  ) {
-    printf("cannot open the file %s\n", fullpath);
+    dbg->error("tool_generate_script_t::save_script()", "cannot save file %s", fullpath);
     return false;
   }
   fprintf(file, "%s", buf.get_str());
