@@ -1,5 +1,6 @@
 
 #include "simtool-script-generator.h"
+#include "dataobj/environment.h"
 #include "descriptor/building_desc.h"
 #include "descriptor/ground_desc.h"
 #include "gui/script_generator_frame.h"
@@ -7,8 +8,10 @@
 #include "obj/zeiger.h"
 #include "obj/gebaeude.h"
 #include "dataobj/koord3d.h"
+#include <filesystem>
 
 
+namespace fs = std::__fs::filesystem;
 #define dr_fopen fopen
 
 void tool_generate_script_t::mark_tiles(  player_t *, const koord3d &start, const koord3d &end )
@@ -135,6 +138,9 @@ char const* tool_generate_script_t::do_work(player_t* , const koord3d &start, co
 
 
 bool tool_generate_script_t::save_script(const char* fullpath) const {
+	cbuffer_t dir_buf;
+	dir_buf.printf("%sgenerated-scripts", env_t::program_dir);
+	fs::create_directory(dir_buf.get_str());
   FILE* file;
   file = dr_fopen(fullpath, "w");
   printf("save at %s\n", fullpath);
