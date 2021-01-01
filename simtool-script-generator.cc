@@ -22,6 +22,9 @@ void tool_generate_script_t::mark_tiles(  player_t *, const koord3d &start, cons
 	for(  k.x = k1.x;  k.x <= k2.x;  k.x++  ) {
 		for(  k.y = k1.y;  k.y <= k2.y;  k.y++  ) {
 			grund_t *gr = welt->lookup( koord3d(k.x, k.y, start.z) );
+      if(  !gr  ) {
+        continue;
+      }
 			zeiger_t *marker = new zeiger_t(gr->get_pos(), NULL );
       
       const uint8 grund_hang = gr->get_grund_hang();
@@ -42,8 +45,8 @@ void tool_generate_script_t::mark_tiles(  player_t *, const koord3d &start, cons
 
 
 void write_station_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
-  grund_t* gr = world()->lookup(pos);
-  gebaeude_t* obj = gr ? obj_cast<gebaeude_t>(gr->first_obj()) : NULL;
+  const grund_t* gr = world()->lookup(pos);
+  const gebaeude_t* obj = gr ? obj_cast<gebaeude_t>(gr->first_obj()) : NULL;
   const building_desc_t* desc = obj ? obj->get_tile()->get_desc() : NULL;
   if(  !desc  ||  desc->get_type()!=building_desc_t::generic_stop  ) {
     return;
@@ -54,11 +57,60 @@ void write_station_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
 }
 
 
-void write_stations(cbuffer_t &buf, const koord start, const koord end, const koord3d origin) {
+void write_slope_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
+  const grund_t* gr = world()->lookup(pos);
+  if(  !gr  ||  !gr->ist_karten_boden()  ) {
+    return;
+  }
+  const koord3d pb = pos - origin;
+  sint8 diff = pb.z;
+  while(  diff!=0  ) {
+    if(  diff>0  ) {
+      // raise the land
+      buf.printf("\thm_slope_tl(hm_slope.UP,[%d,%d,%d])\n", pb.x, pb.y, pb.z-diff);
+      diff -= 1;
+    } else  {
+      // lower the land
+      buf.printf("\thm_slope_tl(hm_slope.DOWN,[%d,%d,%d])\n", pb.x, pb.y, pb.z-diff);
+      diff += 1;
+    }
+  }
+  // check slopes
+  const slope_t::type slp = gr->get_weg_hang();
+  if(  slp>0  ) {
+    buf.printf("\thm_slope_tl(%d,[%d,%d,%d])\n", slp, pb.x, pb.y, pb.z);
+  }
+}
+
+
+void write_way_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
+  const grund_t* gr = world()->lookup(pos);
+  const weg_t* weg0 = gr ? gr->get_weg_nr(0) : NULL;
+  if(  !weg0  ) {
+    return;
+  }
+  const grund_t* gr_base = gr->get_typ()==grund_t::monorailboden ? world()->lookup(pos-koord3d(0,0,2)) : gr;
+  const koord3d pb = gr_base->get_pos() - origin;
+  ribi_t::ribi dirs[] = {ribi_t::north, ribi_t::west};
+  for(uint8 i=0;  i<2;  i++) {
+    grund_t* to = NULL;
+    gr->get_neighbour(to, weg0->get_waytype(), dirs[i]);
+    if(  to  &&  to->get_typ()==gr->get_typ()  ) {
+      koord3d tp = to->get_pos()-origin;
+      if(  to->get_typ()==grund_t::monorailboden  ) {
+        tp = tp - koord3d(0,0,2);
+      }
+      buf.printf("\thm_way_tl(\"%s\",[%d,%d,%d],[%d,%d,%d])\n", to->get_weg_nr(0)->get_desc()->get_name(), pb.x, pb.y, pb.z, tp.x, tp.y, tp.z);
+    }
+  }
+}
+
+
+void write_command(cbuffer_t &buf, void (*func)(cbuffer_t &, const koord3d, const koord3d), const koord start, const koord end, const koord3d origin) {
   for(sint8 z=-128;  z<127;  z++) { // iterate for all height
     for(sint16 x=start.x;  x<=end.x;  x++) {
       for(sint16 y=start.y;  y<=end.y;  y++) {
-        write_station_at(buf, koord3d(x, y, z), origin);
+        func(buf, koord3d(x, y, z), origin);
       }
     }
   }
@@ -72,7 +124,9 @@ char const* tool_generate_script_t::do_work(player_t* , const koord3d &start, co
   buf.clear();
   buf.append("include(\"hm_toolkit_v1\")\n\nfunction hm_build() {\n"); // header
   
-  write_stations(buf, k1, k2, start);
+  write_command(buf, write_slope_at, k1, k2, start);
+  write_command(buf, write_way_at, k1, k2, start);
+  write_command(buf, write_station_at, k1, k2, start);
   
   buf.append("}\n"); // footer
   create_win(new script_generator_frame_t(this), w_info, magic_script_generator);
