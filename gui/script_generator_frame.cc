@@ -48,7 +48,7 @@ bool script_generator_frame_t::ok_action(const char *fullpath)
 
 const char *script_generator_frame_t::get_info(const char *)
 {
-	return NULL;
+	return "";
 }
 
 

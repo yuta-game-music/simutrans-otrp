@@ -1,9 +1,11 @@
 
 #include "simtool-script-generator.h"
+#include "descriptor/building_desc.h"
 #include "descriptor/ground_desc.h"
 #include "gui/script_generator_frame.h"
 #include "gui/simwin.h"
 #include "obj/zeiger.h"
+#include "obj/gebaeude.h"
 #include "dataobj/koord3d.h"
 
 
@@ -39,16 +41,41 @@ void tool_generate_script_t::mark_tiles(  player_t *, const koord3d &start, cons
 }
 
 
+void write_station_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
+  grund_t* gr = world()->lookup(pos);
+  gebaeude_t* obj = gr ? obj_cast<gebaeude_t>(gr->first_obj()) : NULL;
+  const building_desc_t* desc = obj ? obj->get_tile()->get_desc() : NULL;
+  if(  !desc  ||  desc->get_type()!=building_desc_t::generic_stop  ) {
+    return;
+  }
+  // now this pos has a stop.
+  koord3d diff = pos - origin;
+  buf.printf("\thm_station_tl(\"%s\",[%d,%d,%d])\n", desc->get_name(), diff.x, diff.y, diff.z);
+}
+
+
+void write_stations(cbuffer_t &buf, const koord start, const koord end, const koord3d origin) {
+  for(sint8 z=-128;  z<127;  z++) { // iterate for all height
+    for(sint16 x=start.x;  x<=end.x;  x++) {
+      for(sint16 y=start.y;  y<=end.y;  y++) {
+        write_station_at(buf, koord3d(x, y, z), origin);
+      }
+    }
+  }
+}
+
+
 char const* tool_generate_script_t::do_work(player_t* , const koord3d &start, const koord3d &end) {
-  printf("start: %s ", start.get_str());
-  printf("end: %s\n", end.get_str());
+  koord3d e = end==koord3d::invalid ? start : end;
+  koord k1 = koord(min(start.x, e.x), min(start.y, e.y));
+  koord k2 = koord(max(start.x, e.x), max(start.y, e.y));
   buf.clear();
   buf.append("include(\"hm_toolkit_v1\")\n\nfunction hm_build() {\n"); // header
   
-  buf.append("print(\"Hello World!\")\n"); // sample
+  write_stations(buf, k1, k2, start);
   
   buf.append("}\n"); // footer
-  create_win(new script_generator_frame_t(this), w_info, magic_save_t);
+  create_win(new script_generator_frame_t(this), w_info, magic_script_generator);
   return NULL;
 }
 
@@ -61,8 +88,6 @@ bool tool_generate_script_t::save_script(const char* fullpath) const {
     printf("cannot open the file %s\n", fullpath);
     return false;
   }
-  
-  // write default offset
   fprintf(file, "%s", buf.get_str());
   fclose(file);
   return true;
