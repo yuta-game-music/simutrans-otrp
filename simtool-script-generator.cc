@@ -91,7 +91,7 @@ void write_way_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
   if(  !weg0  ) {
     return;
   }
-  const grund_t* gr_base = gr->get_typ()==grund_t::monorailboden ? world()->lookup(pos-koord3d(0,0,2)) : gr;
+  const grund_t* gr_base = gr->get_typ()==grund_t::monorailboden ? world()->lookup(pos-koord3d(0,0,world()->get_settings().get_way_height_clearance())) : gr;
   const koord3d pb = gr_base->get_pos() - origin;
   ribi_t::ribi dirs[] = {ribi_t::north, ribi_t::west};
   for(uint8 i=0;  i<2;  i++) {
@@ -100,7 +100,7 @@ void write_way_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
     if(  to  &&  to->get_typ()==gr->get_typ()  ) {
       koord3d tp = to->get_pos()-origin;
       if(  to->get_typ()==grund_t::monorailboden  ) {
-        tp = tp - koord3d(0,0,2);
+        tp = tp - koord3d(0,0,world()->get_settings().get_way_height_clearance());
       }
       buf.printf("\thm_way_tl(\"%s\",[%d,%d,%d],[%d,%d,%d])\n", to->get_weg_nr(0)->get_desc()->get_name(), pb.x, pb.y, pb.z, tp.x, tp.y, tp.z);
     }
