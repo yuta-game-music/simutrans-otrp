@@ -19,19 +19,16 @@
 本家フォーラム: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitterハッシュタグ： [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)
 
-version29現在，simutrans standard nightly r9281をベースにしています．  
-加えて，以下のコミットを追加で取り込んでいます．
-- https://github.com/teamhimeh/simutrans/commit/f3a24143e5efa86f70fe3e402db66b955524b558
-- https://github.com/teamhimeh/simutrans/commit/afa34316f08de7c27e8405d83d2dc48865c6d63c
-- https://github.com/teamhimeh/simutrans/commit/809ffc7b26475d502d60ed82c1e656def0b20850
+version29_1現在，simutrans standard nightly r9281をベースにしています．  
+追加で取り込んでいるコミットについては [こちらを参照](cherry-picked-commits.txt) してください．
 
 # ダウンロード
 実行には本体の他にribi-arrowアドオンが必要なので https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg からDLしてpakセットの中に突っ込んでください．  
 
-本体は下のリンクからどうぞ．**（2020年12月28日PM11時　ver29に更新）**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74138/sim-WinGDI64-OTRPv29.exe/   
-mac: https://osdn.net/projects/otrp/downloads/74138/sim-mac-OTRPv29.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/74138/sim-linux-OTRPv29.zip/  
+本体は下のリンクからどうぞ．**（2021年1月2日AM11時　ver29_1に更新）**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74173/sim-WinGDI64-OTRPv29_1.exe/   
+mac: https://osdn.net/projects/otrp/downloads/74173/sim-mac-OTRPv29_1.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/74173/sim-linux-OTRPv29_1.zip/  
 ソース: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 OTRP専用のmakeobjはありません．simutrans standardのmakeobjをご利用ください．
@@ -157,6 +154,16 @@ OTRPでは高度なスケジュール設定により，より柔軟な運行が�
     - 道路が空いているときの重みは**va + speed × sp** となります．speedは道路の制限速度です．デフォルト値はva=100, sp=0です．  
     例) cr=20, va=100, sp=1, 道路の制限速度が60km/hのとき，その道路上に車が存在していなければ選択の重みはva + speed × sp = 100 + 60 × 1 = 160 となります．
 - citycarは渋滞などにより交差点手前で停車している時，一定間隔（1倍速で約2秒おき）でルートの再検索を行います．適切に設定されたパラメータのもとでは，これによりデッドロックを予防することができます．
+
+## スクリプトジェネレーター
+マップ内の線路や駅舎などを建設スクリプト化する機能です．スロープ（坂），way，駅舎がSquirrel script化されます．  
+出力されるスクリプトの動作には[ひめしツールキット](https://www.japanese.simutrans.com/index.php?%A5%B9%A5%AF%A5%EA%A5%D7%A5%C8%B3%AB%C8%AF#q6664af6)が必要です．ダウンロードした上で，ライブラリファイルを同梱してお使いください．
+
+### 使い方
+1. general_tool[44]を呼び出します．（menuconf.tabでキーを割り当ててください．例：`general_tool[44]=,,,|` で「|」キーが割り当てられます． ）
+1. スクリプト化する範囲をドラッグで選択してください．ドラッグの起点が基準点になります．
+1. 保存ダイアログが出現するので，ファイル名を入力し保存してください．拡張子「.nut」は自動で付加されます．
+1. ファイルは`simutrans/generated-scripts/`に出力されます．適当なdescription.tabを書いた上で，hm_toolkit_v1.nutと合わせてご利用ください．
 
 ## その他
 - **advance_to_end**（ルートタブにあります）のチェックを外すことで列車のホームでの停車位置が実際に指定した位置になります．（デフォルトではstandardと同じく指定位置にかかわらず列車は先頭まで進みます．）なお指定した位置で編成がおさまらないときは編成全体がおさまるまで前進します．（extendedと同じです．）

@@ -19,19 +19,16 @@ You should try OTRP because...
 The thread in Simutrans International Forum: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitter hashtag :  [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)  
 
-As of version 29, OTRP is based on Simutrans Standard nightly r9281.
-The following commits are cherry-picked.
-- https://github.com/teamhimeh/simutrans/commit/f3a24143e5efa86f70fe3e402db66b955524b558
-- https://github.com/teamhimeh/simutrans/commit/afa34316f08de7c27e8405d83d2dc48865c6d63c
-- https://github.com/teamhimeh/simutrans/commit/809ffc7b26475d502d60ed82c1e656def0b20850
+As of version 29_1, OTRP is based on Simutrans Standard nightly r9281.
+ [Please refer here](cherry-picked-commits.txt) for the cherry-picked commits.
 
 # Download
 In addition to the executable binary, the ribi-arrow pak is required. Please download it from https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg and put it in your pakset folder.  
 
-You can download the OTRP executable binary from the links below. **(2020 December 28th, updated to ver 28_3.)**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74138/sim-WinGDI64-OTRPv29.exe/   
-mac: https://osdn.net/projects/otrp/downloads/74138/sim-mac-OTRPv29.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/74138/sim-linux-OTRPv29.zip/  
+You can download the OTRP executable binary from the links below. **(2021 January 2nd, updated to ver 29_1.)**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74173/sim-WinGDI64-OTRPv29_1.exe/   
+mac: https://osdn.net/projects/otrp/downloads/74173/sim-mac-OTRPv29_1.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/74173/sim-linux-OTRPv29_1.zip/  
 source code: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 There is no special makeobj for OTRP. Please use one made for Simutrans Standard.
@@ -151,6 +148,16 @@ Most of these are stored in-game.
 	- U-turns at intersections are given a weight of **1**.
 	- **cr** sets the weight given when there is a car stopped on the road. The default value is 20.
 	- When the road is empty, the weight is calculated by multiplying the **speed limit of the road** by *sp**, the product of which is then added to **va**. The default value of va is 100, and the default value of sp is 0.
+	
+## Script Generator
+This is a feature to convert the slopes, ways and stations in the map to a squirrel script.
+[hm_toolkit](https://www.japanese.simutrans.com/index.php?%A5%B9%A5%AF%A5%EA%A5%D7%A5%C8%B3%AB%C8%AF#q6664af6)is required to use the script.
+
+### How to use
+1. Call general_tool[44]. (Assign an appropriate key to general_tool[44] in menuconf.tab.)
+1. Drag the region for conversion.
+1. The save dialog appears. Enter the file name and save. The extension ".nut" will be added automatically.
+1. The file is output to `simutrans/generated-scripts/`. Use it with your description.tab and hm_toolkit_v1.nut.
 	
 ## Other
 - **advance_to_end** : When this is enabled, trains always advance to the ends of platforms. When false, trains stop at the exact coordinates specified in the schedule as long as the platform is long enough to accomodate the entire convoy. This is the same behavior as in Simutrans Standard, and is enabled by default.
