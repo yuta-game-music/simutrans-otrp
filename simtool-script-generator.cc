@@ -85,7 +85,13 @@ void write_slope_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
 }
 
 
-void write_way_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
+struct {
+	koord3d start;
+	koord3d end;
+	const char* desc_name;
+}typedef script_cmd;
+
+void write_way_at(script_cmd(&cmds)[2], const koord3d pos, const koord3d origin) {
   const grund_t* gr = world()->lookup(pos);
   const weg_t* weg0 = gr ? gr->get_weg_nr(0) : NULL;
   if(  !weg0  ) {
@@ -102,7 +108,7 @@ void write_way_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
       if(  to->get_typ()==grund_t::monorailboden  ) {
         tp = tp - koord3d(0,0,world()->get_settings().get_way_height_clearance());
       }
-      buf.printf("\thm_way_tl(\"%s\",[%d,%d,%d],[%d,%d,%d])\n", to->get_weg_nr(0)->get_desc()->get_name(), pb.x, pb.y, pb.z, tp.x, tp.y, tp.z);
+			cmds[i] = script_cmd{pb, tp, to->get_weg_nr(0)->get_desc()->get_name()};
     }
   }
 }
@@ -119,6 +125,52 @@ void write_command(cbuffer_t &buf, void (*func)(cbuffer_t &, const koord3d, cons
 }
 
 
+void write_path_command(const char* cmd_str, cbuffer_t &buf, void (*func)(script_cmd(&)[2], const koord3d, const koord3d), const koord start, const koord end, const koord3d origin) {
+	// for functions which need concatenation
+	vector_tpl<script_cmd> commands;
+	const script_cmd empty_cmd = {koord3d::invalid, koord3d::invalid, NULL};
+  for(sint8 z=-128;  z<127;  z++) { // iterate for all height
+    for(sint16 x=start.x;  x<=end.x;  x++) {
+      for(sint16 y=start.y;  y<=end.y;  y++) {
+				script_cmd cmds[2] = {empty_cmd, empty_cmd};
+        func(cmds, koord3d(x, y, z), origin);
+				for(uint8 i=0;  i<2;  i++) {
+					if(cmds[i].start!=koord3d::invalid) {
+						commands.append(cmds[i]);
+					}
+				}
+      }
+    }
+  }
+	// concatenate the command
+	while(  !commands.empty()  ) {
+		script_cmd cmd = commands.pop_back();
+		bool adjacent_found = true;
+		while(  adjacent_found  ) {
+			adjacent_found = false;
+			for(uint32 i=0;  i<commands.get_count();  i++) {
+				if(  commands[i].desc_name!=cmd.desc_name  ) {
+					continue;
+				}
+				if(  cmd.end==commands[i].start  ) {
+					cmd.end = commands[i].end;
+					adjacent_found = true;
+				} else if(  cmd.start==commands[i].end  ) {
+					cmd.start = commands[i].start;
+					adjacent_found = true;
+				}
+				if(  adjacent_found  ) {
+					commands.remove_at(i);
+					break;
+				}
+			}
+		}
+		// all adjacent entries were concatenated.
+		buf.printf("\t%s(\"%s\",[%d,%d,%d],[%d,%d,%d])\n", cmd_str, cmd.desc_name, cmd.start.x, cmd.start.y, cmd.start.z, cmd.end.x, cmd.end.y, cmd.end.z);
+	}
+}
+
+
 char const* tool_generate_script_t::do_work(player_t* , const koord3d &start, const koord3d &end) {
   koord3d e = end==koord3d::invalid ? start : end;
   koord k1 = koord(min(start.x, e.x), min(start.y, e.y));
@@ -127,7 +179,7 @@ char const* tool_generate_script_t::do_work(player_t* , const koord3d &start, co
   buf.append("include(\"hm_toolkit_v1\")\n\nfunction hm_build() {\n"); // header
   
   write_command(buf, write_slope_at, k1, k2, start);
-  write_command(buf, write_way_at, k1, k2, start);
+  write_path_command("hm_way_tl", buf, write_way_at, k1, k2, start);
   write_command(buf, write_station_at, k1, k2, start);
   
   buf.append("}\n"); // footer
