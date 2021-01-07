@@ -3,6 +3,7 @@
 #include "dataobj/environment.h"
 #include "descriptor/building_desc.h"
 #include "descriptor/ground_desc.h"
+#include "gui/messagebox.h"
 #include "gui/script_generator_frame.h"
 #include "gui/simwin.h"
 #include "obj/zeiger.h"
@@ -196,9 +197,11 @@ bool tool_generate_script_t::save_script(const char* fullpath) const {
   file = dr_fopen(fullpath, "w");
   if(  file==NULL  ) {
     dbg->error("tool_generate_script_t::save_script()", "cannot save file %s", fullpath);
+		create_win( new news_img("The script cannot be saved!\n"), w_time_delete, magic_none);
     return false;
   }
   fprintf(file, "%s", buf.get_str());
   fclose(file);
+	create_win( new news_img("The generated script was saved!\n"), w_time_delete, magic_none);
   return true;
 }
