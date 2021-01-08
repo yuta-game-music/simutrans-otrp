@@ -98,8 +98,10 @@ void write_way_at(script_cmd(&cmds)[2], const koord3d pos, const koord3d origin)
   if(  !weg0  ) {
     return;
   }
-  const grund_t* gr_base = gr->get_typ()==grund_t::monorailboden ? world()->lookup(pos-koord3d(0,0,world()->get_settings().get_way_height_clearance())) : gr;
-  const koord3d pb = gr_base->get_pos() - origin;
+  koord3d pb = pos - origin; // relative base pos
+	if(  gr->get_typ()==grund_t::monorailboden  ) {
+		pb.z -= world()->get_settings().get_way_height_clearance();
+	}
   ribi_t::ribi dirs[] = {ribi_t::north, ribi_t::west};
   for(uint8 i=0;  i<2;  i++) {
     grund_t* to = NULL;
