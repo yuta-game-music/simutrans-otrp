@@ -92,7 +92,7 @@ struct {
 	const char* desc_name;
 }typedef script_cmd;
 
-void write_way_at(script_cmd(&cmds)[2], const koord3d pos, const koord3d origin) {
+void write_way_at(script_cmd(&cmds)[2], const koord3d pos, const koord3d origin, const ribi_t::ribi(&dirs)[2]) {
   const grund_t* gr = world()->lookup(pos);
   const weg_t* weg0 = gr ? gr->get_weg_nr(0) : NULL;
   if(  !weg0  ) {
@@ -102,8 +102,10 @@ void write_way_at(script_cmd(&cmds)[2], const koord3d pos, const koord3d origin)
 	if(  gr->get_typ()==grund_t::monorailboden  ) {
 		pb.z -= world()->get_settings().get_way_height_clearance();
 	}
-  ribi_t::ribi dirs[] = {ribi_t::north, ribi_t::west};
   for(uint8 i=0;  i<2;  i++) {
+		if(  dirs[i]==ribi_t::none  ) {
+			continue;
+		}
     grund_t* to = NULL;
     gr->get_neighbour(to, weg0->get_waytype(), dirs[i]);
     if(  to  &&  to->get_typ()==gr->get_typ()  ) {
@@ -128,7 +130,7 @@ void write_command(cbuffer_t &buf, void (*func)(cbuffer_t &, const koord3d, cons
 }
 
 
-void write_path_command(const char* cmd_str, cbuffer_t &buf, void (*func)(script_cmd(&)[2], const koord3d, const koord3d), const koord start, const koord end, const koord3d origin) {
+void write_path_command(const char* cmd_str, cbuffer_t &buf, void (*func)(script_cmd(&)[2], const koord3d, const koord3d, const ribi_t::ribi(&)[2]), const koord start, const koord end, const koord3d origin) {
 	// for functions which need concatenation
 	vector_tpl<script_cmd> commands;
 	const script_cmd empty_cmd = {koord3d::invalid, koord3d::invalid, NULL};
@@ -136,7 +138,10 @@ void write_path_command(const char* cmd_str, cbuffer_t &buf, void (*func)(script
     for(sint16 x=start.x;  x<=end.x;  x++) {
       for(sint16 y=start.y;  y<=end.y;  y++) {
 				script_cmd cmds[2] = {empty_cmd, empty_cmd};
-        func(cmds, koord3d(x, y, z), origin);
+				ribi_t::ribi dirs[2];
+				dirs[0] = x>start.x ? ribi_t::west : ribi_t::none;
+				dirs[1] = y>start.y ? ribi_t::north : ribi_t::none;
+        func(cmds, koord3d(x, y, z), origin, dirs);
 				for(uint8 i=0;  i<2;  i++) {
 					if(cmds[i].start!=koord3d::invalid) {
 						commands.append(cmds[i]);
