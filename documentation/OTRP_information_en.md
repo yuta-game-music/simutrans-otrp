@@ -19,16 +19,16 @@ You should try OTRP because...
 The thread in Simutrans International Forum: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitter hashtag :  [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)  
 
-As of version 29_1, OTRP is based on Simutrans Standard nightly r9281.
+As of version 29_2, OTRP is based on Simutrans Standard nightly r9281.
  [Please refer here](cherry-picked-commits.txt) for the cherry-picked commits.
 
 # Download
 In addition to the executable binary, the ribi-arrow pak is required. Please download it from https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg and put it in your pakset folder.  
 
-You can download the OTRP executable binary from the links below. **(2021 January 2nd, updated to ver 29_1.)**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74173/sim-WinGDI64-OTRPv29_1.exe/   
-mac: https://osdn.net/projects/otrp/downloads/74173/sim-mac-OTRPv29_1.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/74173/sim-linux-OTRPv29_1.zip/  
+You can download the OTRP executable binary from the links below. **(2021 January 12th, updated to ver 29_2.)**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74225/sim-WinGDI64-OTRPv29_2.exe/   
+mac: https://osdn.net/projects/otrp/downloads/74225/sim-mac-OTRPv29_2.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/74225/sim-linux-OTRPv29_2.zip/  
 source code: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 There is no special makeobj for OTRP. Please use one made for Simutrans Standard.
@@ -150,7 +150,7 @@ Most of these are stored in-game.
 	- When the road is empty, the weight is calculated by multiplying the **speed limit of the road** by *sp**, the product of which is then added to **va**. The default value of va is 100, and the default value of sp is 0.
 	
 ## Script Generator
-This is a feature to convert the slopes, ways and stations in the map to a squirrel script.
+This is a feature to convert the slopes, ways, wayobjs, signs, and stations in the map to a squirrel script.
 [hm_toolkit](https://www.japanese.simutrans.com/index.php?%A5%B9%A5%AF%A5%EA%A5%D7%A5%C8%B3%AB%C8%AF#q6664af6)is required to use the script.
 
 ### How to use

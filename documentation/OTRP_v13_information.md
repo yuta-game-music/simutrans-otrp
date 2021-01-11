@@ -19,16 +19,16 @@
 本家フォーラム: https://forum.simutrans.com/index.php?topic=16659.0  
 Twitterハッシュタグ： [#OTRPatch](https://twitter.com/hashtag/OTRPatch?src=hash)
 
-version29_1現在，simutrans standard nightly r9281をベースにしています．  
+version29_2現在，simutrans standard nightly r9281をベースにしています．  
 追加で取り込んでいるコミットについては [こちらを参照](cherry-picked-commits.txt) してください．
 
 # ダウンロード
 実行には本体の他にribi-arrowアドオンが必要なので https://drive.google.com/open?id=0B_rSte9xAhLDanhta1ZsSVcwdzg からDLしてpakセットの中に突っ込んでください．  
 
-本体は下のリンクからどうぞ．**（2021年1月2日AM11時　ver29_1に更新）**  
-windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74173/sim-WinGDI64-OTRPv29_1.exe/   
-mac: https://osdn.net/projects/otrp/downloads/74173/sim-mac-OTRPv29_1.zip/  
-Linux: https://osdn.net/projects/otrp/downloads/74173/sim-linux-OTRPv29_1.zip/  
+本体は下のリンクからどうぞ．**（2021年1月12日AM0時　ver29_2に更新）**  
+windows(GDI 64bit): https://osdn.net/projects/otrp/downloads/74225/sim-WinGDI64-OTRPv29_2.exe/   
+mac: https://osdn.net/projects/otrp/downloads/74225/sim-mac-OTRPv29_2.zip/  
+Linux: https://osdn.net/projects/otrp/downloads/74225/sim-linux-OTRPv29_2.zip/  
 ソース: https://github.com/teamhimeh/simutrans/tree/OTRP-distribute  
 
 OTRP専用のmakeobjはありません．simutrans standardのmakeobjをご利用ください．
@@ -156,7 +156,7 @@ OTRPでは高度なスケジュール設定により，より柔軟な運行が�
 - citycarは渋滞などにより交差点手前で停車している時，一定間隔（1倍速で約2秒おき）でルートの再検索を行います．適切に設定されたパラメータのもとでは，これによりデッドロックを予防することができます．
 
 ## スクリプトジェネレーター
-マップ内の線路や駅舎などを建設スクリプト化する機能です．スロープ（坂），way，駅舎がSquirrel script化されます．  
+マップ内の線路や駅舎などを建設スクリプト化する機能です．スロープ（坂），way，wayobj，標識・信号，駅舎がSquirrel script化されます．  
 出力されるスクリプトの動作には[ひめしツールキット](https://www.japanese.simutrans.com/index.php?%A5%B9%A5%AF%A5%EA%A5%D7%A5%C8%B3%AB%C8%AF#q6664af6)が必要です．ダウンロードした上で，ライブラリファイルを同梱してお使いください．
 
 ### 使い方
