@@ -12,6 +12,7 @@
 #include "../simtypes.h"
 #include "../simmesg.h"
 #include "koord3d.h"
+#include "../simcity.h"
 
 #include "../utils/simrandom.h"
 void rdwr_win_settings(loadsave_t *file); // simwin
@@ -98,6 +99,8 @@ bool env_t::hide_trees;
 uint8 env_t::hide_buildings;
 bool env_t::hide_under_cursor;
 uint16 env_t::cursor_hide_range;
+bool env_t::highlight_city;
+stadt_t *env_t::highlighted_city;
 bool env_t::use_transparency_station_coverage;
 uint8 env_t::station_coverage_show;
 sint32 env_t::show_names;
@@ -193,6 +196,9 @@ void env_t::init()
 	hide_buildings = env_t::NOT_HIDE;
 	hide_under_cursor = false;
 	cursor_hide_range = 5;
+	
+	highlight_city = false;
+	highlighted_city = NULL;
 
 	visualize_schedule = true;
 

@@ -27,3 +27,7 @@
 *.patch
 *.log
 /doxygen
+.*
+configure
+autom4te.cache
+simres.d
