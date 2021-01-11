@@ -6,8 +6,9 @@
 #include "gui/messagebox.h"
 #include "gui/script_generator_frame.h"
 #include "gui/simwin.h"
-#include "obj/zeiger.h"
+#include "obj/wayobj.h"
 #include "obj/gebaeude.h"
+#include "obj/zeiger.h"
 #include "dataobj/koord3d.h"
 #include "sys/simsys.h"
 
@@ -86,39 +87,6 @@ void write_slope_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
 }
 
 
-struct {
-	koord3d start;
-	koord3d end;
-	const char* desc_name;
-}typedef script_cmd;
-
-void write_way_at(script_cmd(&cmds)[2], const koord3d pos, const koord3d origin, const ribi_t::ribi(&dirs)[2]) {
-  const grund_t* gr = world()->lookup(pos);
-  const weg_t* weg0 = gr ? gr->get_weg_nr(0) : NULL;
-  if(  !weg0  ) {
-    return;
-  }
-  koord3d pb = pos - origin; // relative base pos
-	if(  gr->get_typ()==grund_t::monorailboden  ) {
-		pb.z -= world()->get_settings().get_way_height_clearance();
-	}
-  for(uint8 i=0;  i<2;  i++) {
-		if(  dirs[i]==ribi_t::none  ) {
-			continue;
-		}
-    grund_t* to = NULL;
-    gr->get_neighbour(to, weg0->get_waytype(), dirs[i]);
-    if(  to  &&  to->get_typ()==gr->get_typ()  ) {
-      koord3d tp = to->get_pos()-origin;
-      if(  to->get_typ()==grund_t::monorailboden  ) {
-        tp = tp - koord3d(0,0,world()->get_settings().get_way_height_clearance());
-      }
-			cmds[i] = script_cmd{pb, tp, to->get_weg_nr(0)->get_desc()->get_name()};
-    }
-  }
-}
-
-
 void write_command(cbuffer_t &buf, void (*func)(cbuffer_t &, const koord3d, const koord3d), const koord start, const koord end, const koord3d origin) {
   for(sint8 z=-128;  z<127;  z++) { // iterate for all height
     for(sint16 x=start.x;  x<=end.x;  x++) {
@@ -130,53 +98,142 @@ void write_command(cbuffer_t &buf, void (*func)(cbuffer_t &, const koord3d, cons
 }
 
 
-void write_path_command(const char* cmd_str, cbuffer_t &buf, void (*func)(script_cmd(&)[2], const koord3d, const koord3d, const ribi_t::ribi(&)[2]), const koord start, const koord end, const koord3d origin) {
-	// for functions which need concatenation
+// for functions which need concatenation
+class write_path_command_t {
+protected:
+	struct {
+		koord3d start;
+		koord3d end;
+		const char* desc_name;
+	}typedef script_cmd;
 	vector_tpl<script_cmd> commands;
-	const script_cmd empty_cmd = {koord3d::invalid, koord3d::invalid, NULL};
-  for(sint8 z=-128;  z<127;  z++) { // iterate for all height
-    for(sint16 x=start.x;  x<=end.x;  x++) {
-      for(sint16 y=start.y;  y<=end.y;  y++) {
-				script_cmd cmds[2] = {empty_cmd, empty_cmd};
-				ribi_t::ribi dirs[2];
-				dirs[0] = x>start.x ? ribi_t::west : ribi_t::none;
-				dirs[1] = y>start.y ? ribi_t::north : ribi_t::none;
-        func(cmds, koord3d(x, y, z), origin, dirs);
-				for(uint8 i=0;  i<2;  i++) {
-					if(cmds[i].start!=koord3d::invalid) {
-						commands.append(cmds[i]);
+	cbuffer_t& buf;
+	const char* cmd_str;
+	koord start, end;
+	koord3d origin;
+	virtual void append_command(koord3d pos, const ribi_t::ribi(&dirs)[2]) = 0;
+	virtual bool can_concatnate(script_cmd& a, script_cmd& b) = 0;
+	
+public:
+	write_path_command_t(cbuffer_t& b,koord s, koord e, koord3d o ) :
+	buf(b), start(s), end(e), origin(o) { };
+	
+	void write() {
+	  for(sint8 z=-128;  z<127;  z++) { // iterate for all height
+	    for(sint16 x=start.x;  x<=end.x;  x++) {
+	      for(sint16 y=start.y;  y<=end.y;  y++) {
+					ribi_t::ribi dirs[2];
+					dirs[0] = x>start.x ? ribi_t::west : ribi_t::none;
+					dirs[1] = y>start.y ? ribi_t::north : ribi_t::none;
+					append_command(koord3d(x, y, z), dirs);
+	      }
+	    }
+	  }
+		// concatenate the command
+		while(  !commands.empty()  ) {
+			script_cmd cmd = commands.pop_back();
+			bool adjacent_found = true;
+			while(  adjacent_found  ) {
+				adjacent_found = false;
+				for(uint32 i=0;  i<commands.get_count();  i++) {
+					if(  !can_concatnate(commands[i], cmd)  ) {
+						continue;
+					}
+					if(  cmd.end==commands[i].start  ) {
+						cmd.end = commands[i].end;
+						adjacent_found = true;
+					} else if(  cmd.start==commands[i].end  ) {
+						cmd.start = commands[i].start;
+						adjacent_found = true;
+					}
+					if(  adjacent_found  ) {
+						commands.remove_at(i);
+						break;
 					}
 				}
-      }
-    }
-  }
-	// concatenate the command
-	while(  !commands.empty()  ) {
-		script_cmd cmd = commands.pop_back();
-		bool adjacent_found = true;
-		while(  adjacent_found  ) {
-			adjacent_found = false;
-			for(uint32 i=0;  i<commands.get_count();  i++) {
-				if(  commands[i].desc_name!=cmd.desc_name  ) {
-					continue;
-				}
-				if(  cmd.end==commands[i].start  ) {
-					cmd.end = commands[i].end;
-					adjacent_found = true;
-				} else if(  cmd.start==commands[i].end  ) {
-					cmd.start = commands[i].start;
-					adjacent_found = true;
-				}
-				if(  adjacent_found  ) {
-					commands.remove_at(i);
-					break;
-				}
 			}
+			// all adjacent entries were concatenated.
+			buf.printf("\t%s(\"%s\",[%d,%d,%d],[%d,%d,%d])\n", cmd_str, cmd.desc_name, cmd.start.x, cmd.start.y, cmd.start.z, cmd.end.x, cmd.end.y, cmd.end.z);
 		}
-		// all adjacent entries were concatenated.
-		buf.printf("\t%s(\"%s\",[%d,%d,%d],[%d,%d,%d])\n", cmd_str, cmd.desc_name, cmd.start.x, cmd.start.y, cmd.start.z, cmd.end.x, cmd.end.y, cmd.end.z);
 	}
-}
+};
+
+class write_way_command_t : public write_path_command_t {
+protected:
+	void append_command(koord3d pos, const ribi_t::ribi(&dirs)[2]) OVERRIDE {
+		const grund_t* gr = world()->lookup(pos);
+	  const weg_t* weg0 = gr ? gr->get_weg_nr(0) : NULL;
+	  if(  !weg0  ) {
+	    return;
+	  }
+	  koord3d pb = pos - origin; // relative base pos
+		if(  gr->get_typ()==grund_t::monorailboden  ) {
+			pb.z -= world()->get_settings().get_way_height_clearance();
+		}
+	  for(uint8 i=0;  i<2;  i++) {
+			if(  dirs[i]==ribi_t::none  ) {
+				continue;
+			}
+	    grund_t* to = NULL;
+	    gr->get_neighbour(to, weg0->get_waytype(), dirs[i]);
+	    if(  to  &&  to->get_typ()==gr->get_typ()  ) {
+	      koord3d tp = to->get_pos()-origin;
+	      if(  to->get_typ()==grund_t::monorailboden  ) {
+	        tp = tp - koord3d(0,0,world()->get_settings().get_way_height_clearance());
+	      }
+				commands.append(script_cmd{pb, tp, to->get_weg_nr(0)->get_desc()->get_name()});
+	    }
+	  }
+	}
+	
+	bool can_concatnate(script_cmd& a, script_cmd& b) OVERRIDE {
+		return strcmp(a.desc_name, b.desc_name)==0  &&
+			ribi_type(a.start, a.end)==ribi_type(b.start, b.end);
+	}
+	
+public:
+	write_way_command_t(cbuffer_t& b,koord s, koord e, koord3d o ) :
+	write_path_command_t(b, s, e, o)
+	{ 
+		cmd_str = "hm_way_tl";
+	}
+};
+
+
+class write_wayobj_command_t : public write_path_command_t {
+protected:
+	void append_command(koord3d pos, const ribi_t::ribi(&dirs)[2]) OVERRIDE {
+		const grund_t* gr = world()->lookup(pos);
+	  const weg_t* weg0 = gr ? gr->get_weg_nr(0) : NULL;
+		const wayobj_t* wayobj = weg0 ? gr->get_wayobj(weg0->get_waytype()) : NULL;
+	  if(  !wayobj  ) {
+	    return;
+	  }
+		const waytype_t type = weg0->get_waytype();
+	  for(uint8 i=0;  i<2;  i++) {
+			if(  dirs[i]==ribi_t::none  ) {
+				continue;
+			}
+	    grund_t* to = NULL;
+	    gr->get_neighbour(to, type, dirs[i]);
+			const wayobj_t* t_obj = to ? to->get_wayobj(type) : NULL;
+	    if(  t_obj   &&  t_obj->get_desc()==wayobj->get_desc()  ) {
+				commands.append(script_cmd{pos-origin, to->get_pos()-origin, wayobj->get_desc()->get_name()});
+	    }
+	  }
+	}
+	
+	bool can_concatnate(script_cmd& a, script_cmd& b) OVERRIDE {
+		return strcmp(a.desc_name, b.desc_name)==0;
+	}
+	
+public:
+	write_wayobj_command_t(cbuffer_t& b,koord s, koord e, koord3d o ) :
+	write_path_command_t(b, s, e, o)
+	{ 
+		cmd_str = "hm_wayobj_tl";
+	}
+};
 
 
 char const* tool_generate_script_t::do_work(player_t* , const koord3d &start, const koord3d &end) {
@@ -187,7 +244,8 @@ char const* tool_generate_script_t::do_work(player_t* , const koord3d &start, co
   buf.append("include(\"hm_toolkit_v1\")\n\nfunction hm_build() {\n"); // header
   
   write_command(buf, write_slope_at, k1, k2, start);
-  write_path_command("hm_way_tl", buf, write_way_at, k1, k2, start);
+	write_way_command_t(buf, k1, k2, start).write();
+	write_wayobj_command_t(buf, k1, k2, start).write();
   write_command(buf, write_station_at, k1, k2, start);
   
   buf.append("}\n"); // footer
