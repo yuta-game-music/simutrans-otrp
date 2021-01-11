@@ -8,6 +8,7 @@
 #include "gui/simwin.h"
 #include "obj/wayobj.h"
 #include "obj/gebaeude.h"
+#include "obj/signal.h"
 #include "obj/zeiger.h"
 #include "dataobj/koord3d.h"
 #include "sys/simsys.h"
@@ -58,6 +59,39 @@ void write_station_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
   // now this pos has a stop.
   koord3d diff = pos - origin;
   buf.printf("\thm_station_tl(\"%s\",[%d,%d,%d])\n", desc->get_name(), diff.x, diff.y, diff.z);
+}
+
+
+void write_sign_at(cbuffer_t &buf, const koord3d pos, const koord3d origin) {
+  const grund_t* gr = world()->lookup(pos);
+	const weg_t* weg = gr ? gr->get_weg_nr(0) : NULL;
+	if(  !weg  ||  (!weg->has_sign()  &&  !weg->has_signal())  ) {
+		return;
+	}
+	// now this tile should have a sign.
+	roadsign_t* sign = NULL;
+	if(  signal_t* s = gr->find<signal_t>()  ) {
+		sign = s;
+	} else {
+		// a sign should exists.
+		sign = gr->find<roadsign_t>();
+	}
+	if(  sign  ) {
+		// now this pos has a stop.
+		uint8 cnt = 1;
+		const ribi_t::ribi d = sign->get_dir();
+		const bool ow = sign->get_desc()->is_single_way();
+		if(  !ribi_t::is_single(d)  ) {
+			cnt = 1;
+		}
+		else if(  ribi_t::is_straight(weg->get_ribi_unmasked())  ) {
+			cnt = (d==ribi_t::north  ||  d==ribi_t::east) ^ ow ? 2 : 3;
+		} else if(  ribi_t::is_bend(weg->get_ribi_unmasked())  ) {
+			cnt = (d==ribi_t::north  ||  d==ribi_t::south) ^ ow ? 2 : 3;
+		}
+	  koord3d diff = pos - origin;
+	  buf.printf("\thm_sign_tl(\"%s\",%d,[%d,%d,%d])\n", sign->get_desc()->get_name(), cnt, diff.x, diff.y, diff.z);
+	}
 }
 
 
@@ -246,6 +280,7 @@ char const* tool_generate_script_t::do_work(player_t* , const koord3d &start, co
   write_command(buf, write_slope_at, k1, k2, start);
 	write_way_command_t(buf, k1, k2, start).write();
 	write_wayobj_command_t(buf, k1, k2, start).write();
+	write_command(buf, write_sign_at, k1, k2, start);
   write_command(buf, write_station_at, k1, k2, start);
   
   buf.append("}\n"); // footer
