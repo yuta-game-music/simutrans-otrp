@@ -5,3 +5,12 @@ revision  URL
 9517  https://github.com/aburch/simutrans/commit/04538d80425aff6eb21230eb64dfb457265089ac
 9518  https://github.com/aburch/simutrans/commit/40f23d7884fe26627f2e1b74d6e760082c3ecb97
 9520  https://github.com/aburch/simutrans/commit/60f18a38768475c9bf81bca4c0753c6ac4528e8c
+9521
+9528
+9529
+9530
+9531
+9535
+9536
+9537
+9539
