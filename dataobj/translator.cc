@@ -360,7 +360,7 @@ void translator::load_language_file(FILE* file)
 			if(  strcmp(buffer1,"PROP_FONT_FILE") == 0  ) {
 				fgets_line( buffer1, sizeof(buffer1), file );
 				// HACK: so we guess about latin2 from the font name!
-				langs[single_instance.lang_count].is_latin2_based = strcmp( buffer1, "prop-latin2.fnt" ) == 0;
+				langs[single_instance.lang_count].is_latin2_based = STRNICMP( buffer1+5, "latin2", 6 )==0;
 				// we must register now a unicode font
 				langs[single_instance.lang_count].texts.set( "PROP_FONT_FILE", "cyr.bdf" );
 				break;
