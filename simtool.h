@@ -728,6 +728,22 @@ public:
 };
 
 
+class tool_change_city_of_citybuilding_t : public two_click_tool_t {
+public:
+	tool_change_city_of_citybuilding_t() : two_click_tool_t(TOOL_CHANGE_CITY_OF_CITYBUILDING | GENERAL_TOOL) {}
+	char const *get_tooltip(player_t const *) const OVERRIDE { return translator::translate("change city of citybuilding"); }
+	bool is_init_network_safe() const OVERRIDE { return true; }
+
+private:
+	char const *do_work(player_t*, koord3d const &, koord3d const &) OVERRIDE;
+	void mark_tiles(player_t*, koord3d const &, koord3d const &) OVERRIDE {}
+	uint8 is_valid_pos(player_t*, koord3d const &, char const *&, koord3d const &) OVERRIDE;
+	image_id get_marker_image() const OVERRIDE;
+
+	void read_start_position(player_t *player, const koord3d &pos);
+};
+
+
 /********************* one click tools ****************************/
 
 class tool_pause_t : public tool_t {
