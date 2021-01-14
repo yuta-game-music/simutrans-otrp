@@ -3237,7 +3237,7 @@ void convoi_t::calc_gewinn()
 
 // a helper function to compare two ticks considering ticks overflow
 bool is_first_ticks_bigger(uint32 v1, uint32 v2) {
-	return (v1 > v2)  &&  (v1 - v2 < (1<<30));
+	return (v1>v2  &&  v1-v2<(1<<30))  ||  (v2>v1  &&  v2-v1>(1<<30));
 }
 
 
