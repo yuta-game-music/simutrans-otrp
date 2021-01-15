@@ -1180,8 +1180,8 @@ sint32 haltestelle_t::rebuild_connections()
 	bool lines = true;
 	uint32 current_index = 0;
 	// Is unload_all applied for this halt?
-	// HACK: When unload_all_applied is true, is_transfer is true regardless of connections.
-	bool unload_all_applied = false;
+	// HACK: When unload_all, no_load or no_unload is applied, is_transfer is true regardless of connections.
+	bool force_transfer_search = false;
 	while(  lines  ||  current_index < registered_convoys.get_count()  ) {
 
 		// Now, collect the "schedule", "owner" and "add_catg_index" from line resp. convoy.
@@ -1244,7 +1244,7 @@ sint32 haltestelle_t::rebuild_connections()
 		uint16 aggregate_weight = WEIGHT_WAIT;
 		const schedule_entry_t start_entry = schedule->entries[start_index-1];
 		bool no_load_section = start_entry.is_no_load();
-		unload_all_applied |= start_entry.is_unload_all();
+		force_transfer_search |= (start_entry.is_unload_all()  ||  start_entry.is_no_load()  ||  start_entry.is_no_unload());
 		for(  uint8 j=0;  j<schedule->get_count();  ++j  ) {
 
 			const schedule_entry_t current_entry = schedule->entries[(start_index+j)%schedule->get_count()];
@@ -1264,7 +1264,7 @@ sint32 haltestelle_t::rebuild_connections()
 				}
 				// reset aggregate weight and no_load_section
 				aggregate_weight = WEIGHT_WAIT;
-			 	unload_all_applied |= current_entry.is_unload_all();
+			 	force_transfer_search |= (current_entry.is_unload_all()  ||  current_entry.is_no_load()  ||  current_entry.is_no_unload());
 				no_load_section = current_entry.is_no_load();
 				no_unload_halts.clear();
 				continue;
@@ -1310,7 +1310,7 @@ sint32 haltestelle_t::rebuild_connections()
 		// one schedule reaches all consecutive halts -> this is not transfer halt
 		all_links[i].is_transfer = !consecutive_halts[i].empty()  &&
 			(consecutive_halts[i].get_count() != max_consecutive_halts_schedule[i]  ||
-			unload_all_applied);
+			force_transfer_search);
 	}
 	return connections_searched;
 }
