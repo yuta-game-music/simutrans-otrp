@@ -1219,6 +1219,11 @@ sint32 haltestelle_t::rebuild_connections()
 		while(  start_index < schedule->get_count()  &&  get_halt( schedule->entries[start_index].pos, owner ) != self  ) {
 			++start_index;
 		}
+		if(  start_index==schedule->get_count()  ) {
+			// self halt entry was not found.
+			dbg->error("haltestelle_t::rebuild_connections()", "The self halt was not found for the schedule at %s. Type: %d, number of halts: %d", get_name(), schedule->get_type(), schedule->get_count());
+			continue;
+		}
 		++start_index;	// the next index after self halt; it's okay to be out-of-range
 
 		// determine goods category indices supported by this halt
