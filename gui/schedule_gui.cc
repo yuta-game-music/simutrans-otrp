@@ -465,6 +465,11 @@ void schedule_gui_t::init(schedule_t* schedule_, player_t* player, convoihandle_
 	}
 	end_table();
 	
+	bt_load_before_departure.init(button_t::square_automatic, "Load before departure");
+	bt_load_before_departure.set_tooltip("Do not load cargos until the departure time comes.");
+	bt_load_before_departure.add_listener(this);
+	add_component(&bt_load_before_departure);
+	
 	bt_same_dep_time.init(button_t::square_automatic, "Use same departure time for all stops");
 	bt_same_dep_time.set_tooltip("Use one spacing, shift and delay tolerance value for all stops in schedule.");
 	bt_same_dep_time.add_listener(this);
@@ -564,6 +569,7 @@ void schedule_gui_t::update_selection()
 	numimp_spacing.disable();
 	numimp_spacing_shift.disable();
 	numimp_delay_tolerance.disable();
+	bt_load_before_departure.disable();
 
 	if(  !schedule->empty()  ) {
 		schedule->set_current_stop( min(schedule->get_count()-1,schedule->get_current_stop()) );
@@ -581,6 +587,7 @@ void schedule_gui_t::update_selection()
 			bt_no_unload.pressed = schedule->entries[current_stop].is_no_unload();
 			bt_unload_all.enable();
 			bt_unload_all.pressed = schedule->entries[current_stop].is_unload_all();
+			bt_load_before_departure.pressed = schedule->entries[current_stop].is_load_before_departure();
 			
 			// wait_for_time releated things
 			const bool wft = schedule->entries[current_stop].get_wait_for_time();
@@ -593,6 +600,7 @@ void schedule_gui_t::update_selection()
 				numimp_spacing.enable();
 				numimp_spacing_shift.enable();
 				numimp_delay_tolerance.enable();
+				bt_load_before_departure.enable();
 			}
 			else {
 				// disable departure time settings and enable minimum loading
@@ -854,6 +862,12 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 			update_selection();
 		}
 	}
+	else if(comp == &bt_load_before_departure) {
+		if (!schedule->empty()) {
+			schedule->entries[schedule->get_current_stop()].set_load_before_departure(bt_load_before_departure.pressed);
+			update_selection();
+		}
+	}
 	else if(comp == &bt_same_dep_time) {
 		schedule->set_same_dep_time(!schedule->is_same_dep_time());
 		bt_same_dep_time.pressed = schedule->is_same_dep_time();
@@ -1029,6 +1043,7 @@ void schedule_gui_t::extract_advanced_settings(bool yesno) {
 	numimp_delay_tolerance.set_visible(yesno);
 	numimp_max_speed.set_visible(yesno);
 	bt_same_dep_time.set_visible(yesno);
+	bt_load_before_departure.set_visible(yesno);
 	
 	const bool coupling_waytype = schedule->get_waytype()!=road_wt  &&  schedule->get_waytype()!=air_wt  &&  schedule->get_waytype()!=water_wt;
 	bt_wait_for_child.set_visible(coupling_waytype  &&  yesno);

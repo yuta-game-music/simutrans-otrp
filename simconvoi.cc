@@ -3418,6 +3418,11 @@ station_tile_search_ready: ;
 
 	// cargo type of previous vehicle that could not be filled
 	const goods_desc_t* cargo_type_prev = NULL;
+	bool loading_needed = !no_load  &&  !next_depot;
+	// When load_before_departure is enabled, load cargos only when the departure time condition is satisfied.
+	if(  schedule->get_current_entry().get_wait_for_time()  &&  schedule->get_current_entry().is_load_before_departure()  ) {
+		loading_needed &= (scheduled_departure_time!=0  &&  is_first_ticks_bigger(welt->get_ticks(), scheduled_departure_time - time));
+	}
 
 	for(unsigned i=0; i<vehicles_loading; i++) {
 		vehicle_t* v = fahr[i];
@@ -3433,7 +3438,7 @@ station_tile_search_ready: ;
 
 		uint16 amount = v->unload_cargo(halt, next_depot  );
 
-		if(  !no_load  &&  !next_depot  &&  v->get_total_cargo() < v->get_cargo_max()  ) {
+		if(  loading_needed  &&  v->get_total_cargo() < v->get_cargo_max()  ) {
 			// load if: unloaded something (might go back) or previous non-filled car requested different cargo type
 			if (amount>0  ||  cargo_type_prev==NULL  ||  !cargo_type_prev->is_interchangeable(v->get_cargo_type())) {
 				// load
