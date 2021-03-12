@@ -144,6 +144,7 @@ script_vm_t::script_vm_t(const char* include_path_, const char* log_name)
 	sqstd_register_stringlib(vm);
 	sqstd_register_mathlib(vm);
 	sqstd_register_systemlib(vm);
+	sqstd_register_iolib(vm);
 	sq_pop(vm, 1);
 	// export include command
 	export_include(vm, include_path);
