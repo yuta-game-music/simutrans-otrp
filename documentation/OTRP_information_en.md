@@ -129,7 +129,7 @@ From OTRP v29_5，the [I/O library](http://www.squirrel-lang.org/squirreldoc/std
 - `file.readstr(n)` ... Read up to n（`integer` ）bytes from the file and return text as `String` .
 - `file.writestr(str)` ... Write `str` (`String`) to the file.
 
-例）
+example)
 
 ```squirrel
 local myfile = file("myfile.txt","r")
