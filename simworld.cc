@@ -3064,10 +3064,6 @@ bool karte_t::change_player_tool(uint8 cmd, uint8 player_nr, uint16 param, bool 
 			if(  player_nr >= PLAYER_UNOWNED  ||   get_player(player_nr)  ) {
 				return false;
 			}
-			// only server can start scripted AI
-			if(  param == player_t::AI_SCRIPTED  &&  env_t::networkmode  &&  env_t::server == 0) {
-				return false;
-			}
 			if(exec) {
 				init_new_player( player_nr, (uint8) param );
 				// activate/deactivate AI immediately
@@ -6030,7 +6026,7 @@ void karte_t::calc_climate(koord k, bool recalc)
 			if( beach ) {
 				pl->set_climate( desert_climate );
 			}
-			else if(  default_cl>water_climate  &&  default_cl<=arctic_climate  &&  settings.get_climate_borders(default_cl,false)<=gr->get_pos().z  &&  settings.get_climate_borders(default_cl,true)>=gr->get_pos().z  ) {
+			else if(  default_cl>water_climate  &&  default_cl<=arctic_climate  &&  settings.get_climate_borders(default_cl,false)<=gr->get_pos().z  &&  settings.get_climate_borders(default_cl,true)>gr->get_pos().z  ) {
 				// if possible keep (or revert) to original climate
 				pl->set_climate( default_cl );
 			}
@@ -6256,7 +6252,7 @@ void karte_t::calc_climate_map_region( sint16 xtop, sint16 ytop, sint16 xbottom,
 							allowed.clear();
 							sint8 hgt = lookup_hgt_nocheck( x, y );
 							for( int cl=1;  cl<MAX_CLIMATES;  cl++ ) {
-								if(  hgt >= settings.get_climate_borders( cl, 0 )  &&  hgt <= settings.get_climate_borders( cl, 1 )  ) {
+								if(  hgt >= settings.get_climate_borders( cl, 0 )  &&  hgt < settings.get_climate_borders( cl, 1 )  ) {
 									allowed.append(cl);
 								}
 							}

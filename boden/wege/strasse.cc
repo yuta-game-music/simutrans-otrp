@@ -347,7 +347,7 @@ FLAGGED_PIXVAL strasse_t::get_outline_colour() const {
 }
 
 image_id strasse_t::get_front_image() const {
-	if(  show_masked_ribi  &&  overtaking_mode<=oneway_mode  ) {
+	if(  skinverwaltung_t::ribi_arrow!=NULL  &&  show_masked_ribi  &&  (!env_t::show_oneway_ribi_only  ||  overtaking_mode<=oneway_mode)  ) {
 		return skinverwaltung_t::ribi_arrow->get_image_id(get_ribi());
 	} else {
 		return weg_t::get_front_image();
