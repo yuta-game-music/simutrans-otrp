@@ -93,6 +93,12 @@ void_t close_all_windows()
 	return void_t();
 }
 
+void_t take_screenshot()
+{
+	display_snapshot( 0, 0, display_get_width(), display_get_height() );
+	return void_t();
+}
+
 void export_gui(HSQUIRRELVM vm, bool scenario)
 {
 	/**
@@ -175,5 +181,10 @@ void export_gui(HSQUIRRELVM vm, bool scenario)
 	* Close all windows on the view.
 	*/
 	STATIC register_method(vm, &close_all_windows, "close_all_windows");
+	
+	/**
+	* Take a screen shot.
+	*/
+	STATIC register_method(vm, &take_screenshot, "take_screenshot");
 	end_class(vm);
 }
