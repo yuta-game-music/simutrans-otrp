@@ -99,6 +99,13 @@ void_t take_screenshot()
 	return void_t();
 }
 
+void_t set_zoom(uint8 val)
+{
+	set_zoom_factor_safe(val);
+	welt->get_viewport()->metrics_updated();
+	return void_t();
+}
+
 void export_gui(HSQUIRRELVM vm, bool scenario)
 {
 	/**
@@ -186,5 +193,12 @@ void export_gui(HSQUIRRELVM vm, bool scenario)
 	* Take a screen shot.
 	*/
 	STATIC register_method(vm, &take_screenshot, "take_screenshot");
+	
+	/**
+	* Set zoom factor.
+	*
+	* @param zoom Zoom factor to set.
+	*/
+	STATIC register_method(vm, &set_zoom, "set_zoom");
 	end_class(vm);
 }
