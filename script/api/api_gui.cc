@@ -14,6 +14,8 @@
 #include "../../simmenu.h"
 #include "../../simworld.h"
 #include "../../dataobj/scenario.h"
+#include "../../display/viewport.h"
+#include "../../gui/simwin.h"
 #include "../../player/simplay.h"
 
 #include "../../dataobj/environment.h"
@@ -74,6 +76,21 @@ void_t open_info_win_at(const char* tab)
 void_t open_info_win()
 {
 	return open_info_win_client("", PLAYER_UNOWNED);
+}
+
+bool jump(koord pos)
+{
+	if(welt->is_within_limits(pos)) {
+		welt->get_viewport()->change_world_position(koord3d(pos,welt->min_hgt(pos)));
+		return true;
+	}
+	return false;
+}
+
+void_t close_all_windows()
+{
+	destroy_all_win(true);
+	return void_t();
 }
 
 void export_gui(HSQUIRRELVM vm, bool scenario)
@@ -144,5 +161,19 @@ void export_gui(HSQUIRRELVM vm, bool scenario)
 		*/
 		STATIC register_method(vm, &add_ai_message_at, "add_message_at");
 	}
+	
+	/**
+	* Jump view to given position.
+	* This function succeeds only when the pos is within the map.
+	*
+	* @param position Position of the view on the map to jump to.
+	* @return true if succeeded.
+	*/
+	STATIC register_method(vm, &jump, "jump");
+	
+	/**
+	* Close all windows on the view.
+	*/
+	STATIC register_method(vm, &close_all_windows, "close_all_windows");
 	end_class(vm);
 }
