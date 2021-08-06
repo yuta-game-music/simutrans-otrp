@@ -124,6 +124,7 @@ tool_t *create_general_tool(int toolnr)
 		case TOOL_EXEC_SCRIPT:                 tool = new tool_exec_script_t();         break;
 		case TOOL_EXEC_TWO_CLICK_SCRIPT:       tool = new tool_exec_two_click_script_t(); break;
 		case TOOL_GENERATE_SCRIPT:             tool = new tool_generate_script_t();     break;
+		case TOOL_CHANGE_CITY_OF_CITYBUILDING: tool = new tool_change_city_of_citybuilding_t(); break;
 		default:
 			dbg->error("create_general_tool()","cannot satisfy request for general_tool[%i]!",toolnr);
 			return NULL;
