@@ -278,6 +278,12 @@ city_info_t::~city_info_t()
 		}
 	}
 	city->stadtinfo_options = flags;
+	
+	env_t::highlight_city = false;
+	env_t::highlighted_city = NULL;
+
+	welt->set_dirty();
+	welt->set_tool( tool_t::general_tool[TOOL_QUERY], welt->get_public_player());
 }
 
 
@@ -420,6 +426,7 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		env_t::highlighted_city = NULL;
 
 		welt->set_dirty();
+		welt->set_tool( tool_t::general_tool[TOOL_QUERY], welt->get_public_player());
 
 		return true;
 	}
