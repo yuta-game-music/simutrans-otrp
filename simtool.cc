@@ -6964,14 +6964,14 @@ const char* tool_change_city_of_citybuilding_t::do_work(player_t*, koord3d const
 
 			gebaeude_t* gb = gr->find<gebaeude_t>();
 
-			if (!gb->is_city_building()) {
+			if (!gb || !gb->is_city_building()) {
 				continue;
 			}
 
 			stadt_t* old_city = gb->get_stadt();
 			stadt_t* new_city = env_t::highlighted_city;
 
-			if (!old_city || !new_city) {
+			if (!(old_city && new_city)) {
 				return "Building doesn't have city or no city highlighted";
 			} else if (old_city == new_city) {
 				continue;
