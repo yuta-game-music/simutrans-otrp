@@ -78,6 +78,7 @@ roadsign_t::roadsign_t(player_t *player, koord3d pos, ribi_t::ribi dir, const ro
 	state = 0;
 	ticks_ns = ticks_ow = 16;
 	ticks_offset = 0;
+	ticks_yellow_ns = ticks_yellow_ow = 2;
 	lane_affinity = 4;
 	guide_signal = false;
 	set_owner( player );
@@ -487,7 +488,7 @@ sync_result roadsign_t::sync_step(uint32 /*delta_t*/)
 	}
 	else {
 		// Must not overflow if ticks_ns+ticks_ow+ticks_yellow_ns+ticks_yellow_ow=256
-        uint32 ticks = ((welt->get_ticks()>>10)+ticks_offset) % ((uint32)ticks_ns+(uint32)ticks_ow+(uint32)ticks_yellow_ns+(uint32)ticks_yellow_ow);
+		uint32 ticks = ((welt->get_ticks()>>10)+ticks_offset) % ((uint32)ticks_ns+(uint32)ticks_ow+(uint32)ticks_yellow_ns+(uint32)ticks_yellow_ow);
 
 		uint8 new_state = 0;
 		//traffic light transition: e-w dir -> yellow e-w -> n-s dir -> yellow n-s -> ...
@@ -497,7 +498,7 @@ sync_result roadsign_t::sync_step(uint32 /*delta_t*/)
 		else if(  ticks < ticks_ow+ticks_yellow_ow  ) {
 		  new_state = 2;
 		}
-		else if(  ticks < ticks_ow+ticks_yellow_ow+ticks_ns  ) {
+		else if(  ticks < (uint32)ticks_ow+ticks_yellow_ow+ticks_ns  ) {
 		  new_state = 1;
 		}
 		else {
@@ -619,12 +620,12 @@ void roadsign_t::rdwr(loadsave_t *file)
 		file->rdwr_byte(dummy);
 	}
 
-	if( file->is_version_atleast(122,2) ) {
+	if( file->is_version_atleast(122,2)  ||  file->get_OTRP_version() >= 30  ) {
 		file->rdwr_byte(ticks_yellow_ns);
 		file->rdwr_byte(ticks_yellow_ow);
 	}
 	else if( file->is_loading() ){
-		ticks_yellow_ns = ticks_yellow_ow = 2;
+		ticks_yellow_ns = ticks_yellow_ow = 0;
 	}
 
 	dummy = state;

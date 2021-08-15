@@ -37,13 +37,13 @@ trafficlight_info_t::trafficlight_info_t(roadsign_t* s) :
 
 	add_table(2,1);
 	{
-	  yellow_ns.set_limits( 1, 255 );
+	  yellow_ns.set_limits( 0, 255 );
 	  yellow_ns.set_value( s->get_ticks_yellow_ns() );
 	  yellow_ns.wrap_mode( false );
 	  yellow_ns.add_listener( this );
 	  add_component( &yellow_ns );
 	  
-	  yellow_ow.set_limits( 1, 255 );
+	  yellow_ow.set_limits( 0, 255 );
 	  yellow_ow.set_value( s->get_ticks_yellow_ow() );
 	  yellow_ow.wrap_mode( false );
 	  yellow_ow.add_listener( this );
