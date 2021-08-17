@@ -112,6 +112,7 @@ citylist_frame_t::citylist_frame_t() :
 	sorteddir.add_listener(this);
 	list.add_component(&sorteddir);
 
+	// add copy csv button
 	bt_copy_csv.init(button_t::roundbox | button_t::flexible, translator::translate("Copy csv format"));
 	bt_copy_csv.set_tooltip("Copy station names and journey time to clipboard in csv format.");
 	bt_copy_csv.add_listener(this);
@@ -242,19 +243,27 @@ bool citylist_frame_t::action_triggered( gui_action_creator_t *comp, value_t)
 	return true;
 }
 
-
+// copy citylist and respective populations to clipboard
 void citylist_frame_t::copy_csv_format() {
 	// copy in csv format. separator is \t.
 	cbuffer_t clipboard;
-	clipboard.append("City\tpopulation\n");
-	player_t *pl = (filter_by_owner.pressed  &&  filterowner.get_selection()>0) ? world()->get_player(filterowner.get_selection()) : NULL;
-	FOR( const weighted_vector_tpl<stadt_t *>, city, world()->get_cities() ) {
-		if( pl == NULL || city->is_within_players_network( pl ) ) {
-			clipboard.printf( "%s\t", city->get_name() );
-			clipboard.printf( "%d\n", city->get_einwohner());
-		}
-	}
 	
+	// append header
+	clipboard.append("City\tpopulation\n");
+	
+	// loop over the cities shown in the city list and add the name/population size
+	for (int i = 0; i < scrolly.get_count(); i++) {
+
+		// get city from city list
+		const citylist_stats_t* element = dynamic_cast<const citylist_stats_t*>(scrolly.get_element(i));
+		stadt_t* city = element->get_city();
+
+		// add to clipboard
+		clipboard.printf( "%s\t", city->get_name() );
+		clipboard.printf( "%d\n", city->get_einwohner());
+	}
+
+	// tell user if successfull or not
 	if(  clipboard.len()>0  ) {
 		dr_copy( clipboard, clipboard.len() );
 		create_win( new news_img("Population data was copied to clipboard.\n"), w_time_delete, magic_none );
