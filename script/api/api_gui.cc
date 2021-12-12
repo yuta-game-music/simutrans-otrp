@@ -14,6 +14,8 @@
 #include "../../simmenu.h"
 #include "../../simworld.h"
 #include "../../dataobj/scenario.h"
+#include "../../display/viewport.h"
+#include "../../gui/simwin.h"
 #include "../../player/simplay.h"
 
 #include "../../dataobj/environment.h"
@@ -23,32 +25,31 @@
 using namespace script_api;
 
 
-void_t add_scenario_message_at(const char* text, koord pos)
-{
-	if (text) {
-		message_t *msg = welt->get_message();
-		msg->add_message(text, pos, message_t::scenario, PLAYER_FLAG|welt->get_active_player()->get_player_nr());
-	}
-	return void_t();
-}
-
-void_t add_ai_message_at(player_t *player, const char* text, koord pos)
-{
-	if (text) {
-		message_t *msg = welt->get_message();
-		msg->add_message(text, pos, message_t::ai, PLAYER_FLAG|player->get_player_nr());
-	}
-	return void_t();
-}
-
-
-call_tool_init add_scenario_message(player_t* player, const char* text)
+call_tool_work add_scenario_message_at(const char* text, koord pos)
 {
 	// build param string (see tool_add_message_t::init)
 	cbuffer_t buf;
 	buf.printf("%d,%s", message_t::scenario, text);
 
-	return call_tool_init(TOOL_ADD_MESSAGE | SIMPLE_TOOL, (const char*)buf, 0, player ? player : welt->get_active_player());
+	return call_tool_work(TOOL_ADD_MESSAGE | GENERAL_TOOL, (const char*)buf, 0, welt->get_active_player(), koord3d(pos, 0));
+}
+
+call_tool_work add_ai_message_at(player_t *player, const char* text, koord pos)
+{
+	// build param string (see tool_add_message_t::init)
+	cbuffer_t buf;
+	buf.printf("%d,%s", message_t::ai, text);
+
+	return call_tool_work(TOOL_ADD_MESSAGE | GENERAL_TOOL, (const char*)buf, 0, player, koord3d(pos, 0));
+}
+
+call_tool_work add_scenario_message(player_t* player, const char* text)
+{
+	// build param string (see tool_add_message_t::init)
+	cbuffer_t buf;
+	buf.printf("%d,%s", message_t::scenario, text);
+
+	return call_tool_work(TOOL_ADD_MESSAGE | GENERAL_TOOL, (const char*)buf, 0, player ? player : welt->get_active_player(), koord3d::invalid);
 }
 
 void_t open_info_win_client(const char* tab, uint8 player_nr)
@@ -74,6 +75,34 @@ void_t open_info_win_at(const char* tab)
 void_t open_info_win()
 {
 	return open_info_win_client("", PLAYER_UNOWNED);
+}
+
+bool jump(koord pos)
+{
+	if(welt->is_within_limits(pos)) {
+		welt->get_viewport()->change_world_position(koord3d(pos,welt->min_hgt(pos)));
+		return true;
+	}
+	return false;
+}
+
+void_t close_all_windows()
+{
+	destroy_all_win(true);
+	return void_t();
+}
+
+void_t take_screenshot()
+{
+	display_snapshot( scr_rect(0, 0, display_get_width(), display_get_height()) );
+	return void_t();
+}
+
+void_t set_zoom(uint8 val)
+{
+	set_zoom_factor_safe(val);
+	welt->get_viewport()->metrics_updated();
+	return void_t();
 }
 
 void export_gui(HSQUIRRELVM vm, bool scenario)
@@ -114,7 +143,6 @@ void export_gui(HSQUIRRELVM vm, bool scenario)
 		*
 		* @param text Text to be shown. Has to be a translated string or a translatable string.
 		* @param position Position of the view on the map. Clicking on the message will center viewport at this position.
-		* @warning Message only shown on server, but stored in savegame.
 		* @note Only available in scenario mode.
 		* @ingroup scen_only
 		*/
@@ -139,10 +167,35 @@ void export_gui(HSQUIRRELVM vm, bool scenario)
 		* @param player sending this message
 		* @param text Text to be shown. Has to be a translated string or a translatable string.
 		* @param position Position of the view on the map. Clicking on the message will center viewport at this position.
-		* @warning Message only shown on server, but stored in savegame.
 		* @ingroup ai_only
 		*/
 		STATIC register_method(vm, &add_ai_message_at, "add_message_at");
 	}
+	
+	/**
+	* Jump view to given position.
+	* This function succeeds only when the pos is within the map.
+	*
+	* @param position Position of the view on the map to jump to.
+	* @return true if succeeded.
+	*/
+	STATIC register_method(vm, &jump, "jump");
+	
+	/**
+	* Close all windows on the view.
+	*/
+	STATIC register_method(vm, &close_all_windows, "close_all_windows");
+	
+	/**
+	* Take a screen shot.
+	*/
+	STATIC register_method(vm, &take_screenshot, "take_screenshot");
+	
+	/**
+	* Set zoom factor.
+	*
+	* @param zoom Zoom factor to set.
+	*/
+	STATIC register_method(vm, &set_zoom, "set_zoom");
 	end_class(vm);
 }
