@@ -16,12 +16,16 @@
 #include "components/gui_combobox.h"
 #include "components/gui_tab_panel.h"
 
+
 /**
  * Menu with display settings
  */
-class gui_settings_t : public gui_aligned_container_t
+class gui_settings_t : public gui_aligned_container_t, public action_listener_t
 {
 private:
+	gui_numberinput_t screen_scale_numinp;
+	button_t screen_scale_auto;
+
 	gui_label_buf_t
 		frame_time_value_label,
 		idle_time_value_label,
@@ -33,8 +37,11 @@ public:
 	borderless, put_below_others;
 
 	gui_settings_t();
+
 	void draw( scr_coord offset ) OVERRIDE;
+	bool action_triggered( gui_action_creator_t *comp, value_t v) OVERRIDE;
 };
+
 
 class map_settings_t : public gui_aligned_container_t, public action_listener_t
 {

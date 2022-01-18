@@ -19,6 +19,7 @@ void rdwr_win_settings(loadsave_t *file); // simwin
 
 sint16 env_t::menupos = MENU_TOP;
 sint16 env_t::fullscreen = WINDOWED;
+sint16 env_t::display_scale_percent = 100;
 bool env_t::reselect_closes_tool = true;
 
 sint8 env_t::pak_tile_height_step = 16;
@@ -610,6 +611,10 @@ void env_t::rdwr(loadsave_t *file)
 	}
 	if (file->get_OTRP_version()>=33) {
 		file->rdwr_bool(scroll_infinite);
+	}
+
+	if( file->is_version_atleast(123, 1) ) {
+		file->rdwr_short(display_scale_percent);
 	}
 
 	// server settings are not saved, since they are server specific
