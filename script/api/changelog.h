@@ -20,6 +20,7 @@
  * - Added @ref bridge_x, @ref tunnel_x
  * - Added @ref factory_x::get_fields_list, @ref world::get_label_list
  * - Added @ref schedule_x::current.
+ * - Added @ref change_climate_at
  *
  * @section api-123 Release 123.0
  *

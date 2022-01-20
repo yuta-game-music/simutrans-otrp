@@ -612,6 +612,13 @@ void export_commands(HSQUIRRELVM vm)
 	 * @param wayobj type of wayobj to be built
 	 */
 	STATIC register_method(vm, build_wayobj, "build_wayobj", false, true);
+	/**
+	 * Change climate of tile
+	 * @param pl player to pay for the work
+	 * @param pos coordinate of tile
+	 * @param climate new climate, possible values see @ref climates
+	 */
+	STATIC register_method(vm, change_climate_at, "change_climate_at", false, true);
 
 	/**
 	 * Lower grid point
