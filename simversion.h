@@ -78,13 +78,13 @@
 #else
 #	define OTRP_VERSION_MINOR_STRING
 #endif
-# define OTRP_STRING "  OTRP v" QUOTEME(OTRP_VERSION_MAJOR) OTRP_VERSION_MINOR_STRING
+# define OTRP_STRING "Simutrans OTRP v" QUOTEME(OTRP_VERSION_MAJOR) OTRP_VERSION_MINOR_STRING
 
 # define UNOFFICIAL_MESSAGE " Unofficial_" QUOTEME(UNOFFICIAL_REVISION)
 
 # define KUTA_MESSAGE QUOTEME(KUTA_REVISION)
 
-#	define SIM_TITLE "Simutrans KUTA " KUTA_MESSAGE
+#	define SIM_TITLE OTRP_STRING
 
 
 /*********************** Settings related to network games ********************/
