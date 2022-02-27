@@ -1189,8 +1189,8 @@ public:
 /* switch to public player*/
 class tool_switch_public_player_t : public tool_t {
 public:
-	tool_switch_public_player_t() : tool_t(TOOL_SWITCH_PLAYER | SIMPLE_TOOL) {}
-	char const* get_tooltip(player_t const*) const OVERRIDE { return translator::translate("Change player"); }
+	tool_switch_public_player_t() : tool_t(TOOL_SWITCH_PUBLIC_PLAYER | SIMPLE_TOOL) {}
+	char const* get_tooltip(player_t const*) const OVERRIDE { return translator::translate("Change to public player"); }
 	bool init( player_t * ) OVERRIDE {
 		if (welt->get_active_player_nr() == 1){
 			welt->switch_active_player( env_t::before_active_player_nr, true );
