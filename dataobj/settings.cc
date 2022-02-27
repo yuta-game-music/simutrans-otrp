@@ -307,6 +307,7 @@ settings_t::settings_t() :
 	
 	advance_to_end = true;
 	first_come_first_serve = false;
+	waiting_limit_for_first_come_first_serve = 500000;
 	
 	routecost_wait = 8;
 	routecost_halt = 1;
@@ -939,6 +940,9 @@ void settings_t::rdwr(loadsave_t *file)
 		}
 		if(  file->get_OTRP_version() >= 28  ) {
 			file->rdwr_bool(first_come_first_serve);
+		}
+		if(  file->get_OTRP_version() >= 31  ) {
+			file->rdwr_long(waiting_limit_for_first_come_first_serve);
 		}
 		if(  file->is_version_atleast(122, 1)  ) {
 			file->rdwr_enum(climate_generator);
@@ -1625,6 +1629,8 @@ void settings_t::parse_simuconf( tabfile_t& simuconf, sint16& disp_width, sint16
 	
 	advance_to_end = contents.get_int("advance_to_end", advance_to_end);
 	first_come_first_serve = contents.get_int("first_come_first_serve", first_come_first_serve);
+	waiting_limit_for_first_come_first_serve 
+		= contents.get_int("waiting_limit_for_first_come_first_serve", waiting_limit_for_first_come_first_serve);
 	
 	routecost_wait = contents.get_int("routecost_wait", routecost_wait);
 	routecost_halt = contents.get_int("routecost_halt", routecost_halt);

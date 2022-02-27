@@ -329,6 +329,10 @@ private:
 	
 	bool first_come_first_serve;
 	
+	// When the amount of waiting goods/passengers exceeds this value,
+	// first_come_first_serve is no longer applied to reduce the calculation load.
+	uint32 waiting_limit_for_first_come_first_serve;
+	
 	// paramters for haltestelle_t::rebuild_connections()
 	uint8 routecost_halt;
 	uint8 routecost_wait;
@@ -685,6 +689,8 @@ public:
 	void set_advance_to_end(bool b) { advance_to_end = b; }
 	
 	bool get_first_come_first_serve() const { return first_come_first_serve; }
+	uint32 get_waiting_limit_for_first_come_first_serve() const 
+		{ return waiting_limit_for_first_come_first_serve; }
 	
 	uint8 get_routecost_halt() const { return routecost_halt; }
 	uint8 get_routecost_wait() const { return routecost_wait; }

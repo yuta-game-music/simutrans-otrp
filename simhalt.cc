@@ -2267,7 +2267,9 @@ uint32 haltestelle_t::get_ware_fuer_zwischenziel(const goods_desc_t *wtyp, const
 bool haltestelle_t::vereinige_waren(const ware_t &ware)
 {
 	// merge cargos only when "load nearest first" policy is applied.
-	if(  world()->get_settings().get_first_come_first_serve()  ) {
+	const settings_t &settings = world()->get_settings();
+	if(  settings.get_first_come_first_serve()  &&  
+  		get_ware_summe(ware.get_desc()) <= settings.get_waiting_limit_for_first_come_first_serve()  ) {
 		return false;
 	}
 
