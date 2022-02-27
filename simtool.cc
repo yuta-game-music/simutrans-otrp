@@ -8022,7 +8022,7 @@ bool tool_change_convoi_t::init( player_t *player )
 
 		case 'e':
 		{
-			cnv->set_is_recovery();
+			cnv->toggle_delay_recovery();
 			cnv->must_recalc_speed_limit();
 		}
 		break;

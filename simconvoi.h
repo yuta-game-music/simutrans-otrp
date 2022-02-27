@@ -328,7 +328,7 @@ private:
 	uint8 speed_magnification;
 	uint8 acceleration_magnification;
 
-	bool recovery = false;
+	bool in_delay_recovery;
 	
 	typedef struct {
 		bool valid;
@@ -967,8 +967,8 @@ public:
 	void register_journey_time();
 	void set_time_last_arrived(uint32 t) { time_last_arrived = t; }
 
-	void set_is_recovery() { recovery = !recovery; }
-	bool get_is_recovery() const { return recovery; }
+	void toggle_delay_recovery() { in_delay_recovery = !in_delay_recovery; }
+	bool is_in_delay_recovery() const { return in_delay_recovery; }
 
 	void set_owner(player_t* p) { owner = p; }
 	void trade_convoi();

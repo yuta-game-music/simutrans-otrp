@@ -182,6 +182,8 @@ void convoi_t::init(player_t *player)
 
 	speed_magnification = atoi(translator::translate("speed_magnification"))!=0 ? atoi(translator::translate("speed_magnification")) : 100;
 	acceleration_magnification = atoi(translator::translate("acceleration_magnification"))!=0 ? atoi(translator::translate("acceleration_magnification")) : 100;
+	
+	in_delay_recovery = false;
 }
 
 
@@ -826,7 +828,7 @@ void convoi_t::calc_acceleration(uint32 delta_t)
 			//When yielding lane, speed_limit is 15 kmph lower.
 			speed_limit -= kmh_to_speed(15);
 		}
-		if ( recovery ){
+		if (  in_delay_recovery  ){
 			speed_limit += kmh_to_speed(5);
 		}
 		recalc_data = recalc_speed_limit = false;
@@ -2998,6 +3000,10 @@ void convoi_t::rdwr(loadsave_t *file)
 	
 	if(  file->get_OTRP_version()>=24  ) {
 		file->rdwr_long( scheduled_departure_time );
+	}
+	
+	if(  file->get_OTRP_version()>=31  ) {
+		file->rdwr_bool( in_delay_recovery );
 	}
 
 	if(  file->is_loading()  ) {

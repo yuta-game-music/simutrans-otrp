@@ -1917,7 +1917,7 @@ void vehicle_t::display_after(int xpos, int ypos, bool is_global) const
 						tstrncpy( tooltip_text, translator::translate("no load"), lengthof(tooltip_text) );
 						color = color_idx_to_rgb(COL_GREEN);
 					}
-					else if(  cnv->get_is_recovery()  ) {
+					else if(  cnv->is_in_delay_recovery()  ) {
 						tstrncpy( tooltip_text, translator::translate("recovery"), lengthof(tooltip_text) );
 						color = color_idx_to_rgb(COL_GREEN);
 					}

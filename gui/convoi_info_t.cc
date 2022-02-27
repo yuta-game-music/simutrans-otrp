@@ -378,7 +378,7 @@ void convoi_info_t::draw(scr_coord pos, scr_size size)
 		}
 		no_load_button.pressed = cnv->get_no_load();
 		no_load_button.enable();
-		set_recovery_button.pressed = cnv->get_is_recovery();
+		set_recovery_button.pressed = cnv->is_in_delay_recovery();
 		set_recovery_button.enable();
 		next_stop_button.enable();
 	}
