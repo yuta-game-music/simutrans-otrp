@@ -1189,7 +1189,7 @@ void vehicle_t::hop(grund_t* gr)
 
 	// check if arrived at waypoint, and update schedule to next destination
 	// route search through the waypoint is already complete
-	if(  get_pos()==cnv->get_schedule_target()  ) {
+	if(  get_pos()==cnv->get_schedule_target()  &&  !cnv->is_coupled()  ) {
 		if(  route_index >= cnv->get_route()->get_count()  ) {
 			// we end up here after loading a game or when a waypoint is reached which crosses next itself
 			cnv->set_schedule_target( koord3d::invalid );
