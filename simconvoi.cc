@@ -3567,7 +3567,9 @@ station_tile_search_ready: ;
 		departure_cond = can_depart(self, halt, arrived_time,
 			 time, need_coupling_at_this_stop, scheduled_departure_time);
 			 
-		if( coupling_cond && self->get_schedule()->get_current_entry().get_wait_for_time()){
+		if(  scheduled_departure_time>0  ){
+			// The convoy should depart in the next or later step
+			// to load cargo and do coupling.
 			departure_cond = false;
 		}
 
@@ -3619,10 +3621,10 @@ station_tile_search_ready: ;
 	// at least wait the minimum time for loading
 	if(  !is_coupled()  &&  scheduled_departure_time>0  ) {
 		const sint32 ticks_remain = scheduled_departure_time - time - welt->get_ticks();
-		if(  ticks_remain>0  &&  ticks_remain<(sint32)time  ) {
+		if(  ticks_remain<(sint32)time  ) {
 			// this convoy is about to start. we don't want to wait for 2000 ms or more.
 			// just wait for ticks_remain
-			time = ticks_remain;
+			time = max(0, ticks_remain);
 		}
 	}
 	wait_lock = time;
