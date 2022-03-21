@@ -192,6 +192,7 @@ koord3d env_t::commandline_snapshot_world_position;
 sint8   env_t::commandline_snapshot_zoom_factor = 3; // ZOOM_NEUTRAL (3)
 
 bool env_t::show_oneway_ribi_only;
+bool env_t::put_new_toolbar_below_others;
 
 uint8 env_t::before_active_player_nr = 0;
 uint8 env_t::last_active_player_nr = 0;
@@ -340,6 +341,7 @@ void env_t::init()
 	
 	sprintf(otrp_statistics_log, "");
 	show_oneway_ribi_only = false;
+	put_new_toolbar_below_others = false;
 }
 
 
@@ -580,6 +582,10 @@ void env_t::rdwr(loadsave_t *file)
 	
 	if (file->get_OTRP_version()>=29) {
 		file->rdwr_bool(show_oneway_ribi_only);
+	}
+	
+	if (file->get_OTRP_version()>=32) {
+		file->rdwr_bool(put_new_toolbar_below_others);
 	}
 
 	if( file->is_version_atleast( 122, 1 ) ) {

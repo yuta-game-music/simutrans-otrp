@@ -495,6 +495,9 @@ public:
 	/// show ribi arrow on twoway_mode road or not.
 	/// true -> oneway or halt mode only.
 	static bool show_oneway_ribi_only;
+	
+	/// put a newly created toolbar below other toolbars.
+	static bool put_new_toolbar_below_others;
 
 	/// initialize with default values
 	static void init();

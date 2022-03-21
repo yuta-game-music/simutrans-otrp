@@ -723,6 +723,28 @@ void win_clamp_xywh_position( scr_coord_val &x, scr_coord_val &y, scr_size wh, b
 }
 
 
+// a helper function of create_win
+void calculate_window_pos(scr_coord_val &x, scr_coord_val &y, bool &move_to_full_view, gui_frame_t* const gui, wintype const wt) {
+	if(  !env_t::put_new_toolbar_below_others  ||  !(wt & w_no_overlap)  ) {
+		move_to_full_view = true;
+		x = get_mouse_x() - gui->get_windowsize().w / 2;
+		y = get_mouse_y() - gui->get_windowsize().h - get_tile_raster_width()/4;
+		return;
+	}
+	
+	sint16 const menu_height = env_t::iconsize.h;
+	// try to keep the toolbar below all other toolbars
+	// we go for left
+	x = 0;
+	y = menu_height;
+	for( uint32 i=0;  i<wins.get_count()-1;  i++  ) {
+		const bool is_toolbar = (wins[i].wt & w_no_overlap) > 0;
+		const sint16 lower_y = wins[i].pos.y + wins[i].gui->get_windowsize().h;
+		if(  is_toolbar  &&  lower_y>y  ) {
+			y = lower_y;
+		}
+	}
+}
 
 
 int create_win(scr_coord_val x, scr_coord_val y, gui_frame_t* const gui, wintype const wt, ptrdiff_t const magic, bool move_to_full_view)
@@ -842,9 +864,7 @@ int create_win(scr_coord_val x, scr_coord_val y, gui_frame_t* const gui, wintype
 
 		// try to go next to mouse bar
 		if (x == -1) {
-			move_to_full_view = true;
-			x = get_mouse_x() - gui->get_windowsize().w / 2;
-			y = get_mouse_y() - gui->get_windowsize().h - get_tile_raster_width()/4;
+			calculate_window_pos(x, y, move_to_full_view, gui, wt);
 		}
 
 		// make sure window is on screen

@@ -95,7 +95,7 @@ gui_settings_t::gui_settings_t()
 	add_component( buttons + IDBTN_CHANGE_FONT );
 
 	// add controls to info container
-	add_table(2,4);
+	add_table(2,5);
 	set_alignment(ALIGN_LEFT);
 
 	// position of menu
@@ -121,6 +121,10 @@ gui_settings_t::gui_settings_t()
 	reselect_closes_tool.init( button_t::square_state, "Reselect closes tools" );
 	reselect_closes_tool.pressed = env_t::reselect_closes_tool;
 	add_component( &reselect_closes_tool, 2 );
+	
+	put_below_others.init( button_t::square_state, "Put new toolbar below others" );
+	put_below_others.pressed = env_t::put_new_toolbar_below_others;
+	add_component( &put_below_others, 2 );
 
 	// Frame time label
 	new_component<gui_label_t>("Frame time:");
@@ -523,6 +527,7 @@ color_gui_t::color_gui_t() :
 	gui_settings.fullscreen.add_listener( this );
 	gui_settings.borderless.add_listener( this );
 	gui_settings.reselect_closes_tool.add_listener(this);
+	gui_settings.put_below_others.add_listener(this);
 
 	set_resizemode(diagonal_resize);
 	set_min_windowsize( scr_size(D_DEFAULT_WIDTH,get_min_windowsize().h+map_settings.get_size().h) );
@@ -569,6 +574,12 @@ bool color_gui_t::action_triggered( gui_action_creator_t *comp, value_t p)
 	if(  comp == &gui_settings.reselect_closes_tool  ) {
 		env_t::reselect_closes_tool = !env_t::reselect_closes_tool;
 		gui_settings.reselect_closes_tool.pressed = env_t::reselect_closes_tool;
+		return true;
+	}
+	
+	if(  comp == &gui_settings.put_below_others  ) {
+		env_t::put_new_toolbar_below_others = !env_t::put_new_toolbar_below_others;
+		gui_settings.put_below_others.pressed = env_t::put_new_toolbar_below_others;
 		return true;
 	}
 
