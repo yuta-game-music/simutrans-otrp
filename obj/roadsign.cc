@@ -198,7 +198,7 @@ void roadsign_t::show_info()
 			create_win(new onewaysign_info_t(this, intersection_pos), w_info, (ptrdiff_t)this );
 		}
 	}
-	else if(  desc->is_signal_type()  &&  desc->is_choose_sign()  ) {
+	else if(  desc->is_signal_type()  ) {
 		// this should be a signal.
 		signal_t* s = dynamic_cast<signal_t*>(this);
 		if(  !s  ) {

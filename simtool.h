@@ -732,6 +732,15 @@ private:
 	image_id get_marker_image() const OVERRIDE;
 };
 
+// removes signal from tile
+class tool_remove_signal_t : public tool_t {
+public:
+	tool_remove_signal_t() : tool_t(TOOL_REMOVE_SIGNAL | GENERAL_TOOL) {}
+	char const* get_tooltip(player_t const*) const OVERRIDE { return translator::translate("remove signal"); }
+	char const* work(player_t*, koord3d) OVERRIDE;
+	bool is_init_network_safe() const OVERRIDE { return true; }
+};
+
 // internal tool: show error message at specific coordinate
 // used for scenario error messages send by server
 class tool_error_message_t : public tool_t {
