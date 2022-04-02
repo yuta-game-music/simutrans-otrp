@@ -373,6 +373,14 @@ void export_factory(HSQUIRRELVM vm)
 	 * @returns factory descriptor
 	 */
 	register_method(vm, &fabrik_t::get_desc, "get_desc");
+	/**
+	 * @returns factory rotation
+	 */
+	register_method(vm, &fabrik_t::get_rotate, "get_rotate");
+	/**
+	 * @returns factory base production
+	 */
+	register_method(vm, &fabrik_t::get_base_production, "get_base_production");
 	// pop class
 	end_class(vm);
 
