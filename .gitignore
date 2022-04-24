@@ -33,3 +33,4 @@ revision.h
 .idea
 *.d
 *.res
+.DS_Store
