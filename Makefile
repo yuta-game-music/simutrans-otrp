@@ -613,6 +613,7 @@ SOURCES += utils/sha1.cc
 SOURCES += utils/sha1_hash.cc
 SOURCES += utils/simrandom.cc
 SOURCES += utils/simstring.cc
+SOURCES += utils/simstring+money.cc
 SOURCES += utils/simthread.cc
 SOURCES += vehicle/movingobj.cc
 SOURCES += vehicle/pedestrian.cc
