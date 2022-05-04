@@ -16,6 +16,7 @@
 *.rej
 /simutrans/*pak*
 /simutrans/pak*
+/simutrans/PAK*
 /simutrans/text
 *.bdf
 *.zip
@@ -30,4 +31,7 @@
 autom4te.cache/
 configure
 revision.h
-simres.d
+.vs/
+.idea
+*.d
+*.res
