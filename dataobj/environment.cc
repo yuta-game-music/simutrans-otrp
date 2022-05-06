@@ -78,6 +78,7 @@ std::string env_t::nickname = "";
 // this is explicitly and interactively set by user => we do not touch it on init
 const char *env_t::language_iso = "en";
 sint16 env_t::scroll_multi = -1; // start with same scrool as mouse as nowadays standard
+bool env_t::scroll_infinite = false; // since it fails with touch devices
 sint16 env_t::global_volume = 127;
 uint32 env_t::sound_distance_scaling;
 sint16 env_t::midi_volume = 127;
@@ -231,6 +232,8 @@ void env_t::init()
 	hide_buildings = env_t::NOT_HIDE;
 	hide_under_cursor = false;
 	cursor_hide_range = 5;
+
+	scroll_infinite = false;
 
 	highlight_city = false;
 	highlighted_city = NULL;
@@ -616,6 +619,7 @@ void env_t::rdwr(loadsave_t *file)
 	
 	if( file->is_version_atleast(123, 1) ) {
 		file->rdwr_short(display_scale_percent);
+		file->rdwr_bool(scroll_infinite);
 	}
 
 	// server settings are not saved, since they are server specific
