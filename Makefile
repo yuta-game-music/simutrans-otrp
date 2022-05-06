@@ -785,7 +785,7 @@ CXXFLAGS += $(CFLAGS)
 
 BUILDDIR ?= build/$(CFG)
 PROGDIR  ?= $(BUILDDIR)
-PROG     ?= sim
+PROG     ?= sim-OTRP
 
 
 .DEFAULT_GOAL := simutrans

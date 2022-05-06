@@ -146,7 +146,7 @@ sint32 y_scale = SCALE_NEUTRAL_Y;
 #define SCREEN_RESCALE_Y(y) (((y) * SCALE_NEUTRAL_Y) / y_scale)
 
 // no autoscaling yet
-bool dr_auto_scale(bool)
+bool dr_set_screen_scale(sint16 /*scale_percent*/)
 {
 #ifdef __ANDROID__
 	// SDL 1.2 does not support scaling, but the libSDL Android rendering layer
@@ -177,6 +177,11 @@ bool dr_auto_scale(bool)
 	y_scale = SCALE_NEUTRAL_Y;
 	return false;
 #endif
+}
+
+sint16 dr_get_screen_scale()
+{
+	return 100;
 }
 
 /*

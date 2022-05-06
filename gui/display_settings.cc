@@ -85,18 +85,32 @@ public:
 
 gui_settings_t::gui_settings_t()
 {
-	set_table_layout( 1, 0 );
+	set_table_layout( 3, 0 );
+
 	// Show thememanager
 	buttons[ IDBTN_SHOW_THEMEMANAGER ].init( button_t::roundbox_state | button_t::flexible, "Select a theme for display" );
-	add_component( buttons + IDBTN_SHOW_THEMEMANAGER );
+	add_component( buttons + IDBTN_SHOW_THEMEMANAGER, 3 );
 
 	// Change font
 	buttons[ IDBTN_CHANGE_FONT ].init( button_t::roundbox_state | button_t::flexible, "Select display font" );
-	add_component( buttons + IDBTN_CHANGE_FONT );
+	add_component( buttons + IDBTN_CHANGE_FONT, 3 );
 
-	// add controls to info container
-	add_table(2,5);
-	set_alignment(ALIGN_LEFT);
+	// screen scale number input
+	new_component<gui_label_t>("Screen scale: ");
+
+	add_table(2,0);
+	{
+		screen_scale_numinp.init(dr_get_screen_scale(), 25, 400, 25, false);
+		screen_scale_numinp.add_listener(this);
+		add_component(&screen_scale_numinp);
+
+		screen_scale_auto.init(button_t::roundbox_state, "Auto");
+		screen_scale_auto.add_listener(this);
+		add_component(&screen_scale_auto);
+	}
+	end_table();
+
+	new_component<gui_fill_t>();
 
 	// position of menu
 	new_component<gui_label_t>("Toolbar position:");
@@ -106,47 +120,46 @@ gui_settings_t::gui_settings_t()
 		case MENU_BOTTOM: toolbar_pos.init(button_t::arrowdown, NULL); break;
 		case MENU_RIGHT: toolbar_pos.init(button_t::arrowright, NULL); break;
 	}
-	add_component(&toolbar_pos);
+	add_component(&toolbar_pos, 2 );
 
 	fullscreen.init( button_t::square_state, "Fullscreen (changed after restart)" );
 	fullscreen.pressed = ( dr_get_fullscreen() == FULLSCREEN );
 	fullscreen.enable(dr_has_fullscreen());
-	add_component( &fullscreen, 2 );
+	add_component( &fullscreen, 3 );
 
 	borderless.init( button_t::square_state, "Borderless (disabled on fullscreen)" );
 	borderless.enable ( dr_get_fullscreen() != FULLSCREEN );
 	borderless.pressed = ( dr_get_fullscreen() == BORDERLESS );
-	add_component( &borderless, 2 );
+	add_component( &borderless, 3 );
 
 	reselect_closes_tool.init( button_t::square_state, "Reselect closes tools" );
 	reselect_closes_tool.pressed = env_t::reselect_closes_tool;
-	add_component( &reselect_closes_tool, 2 );
+	add_component( &reselect_closes_tool, 3 );
 	
 	put_below_others.init( button_t::square_state, "Put new toolbar below others" );
 	put_below_others.pressed = env_t::put_new_toolbar_below_others;
-	add_component( &put_below_others, 2 );
+	add_component( &put_below_others, 3 );
 
 	// Frame time label
 	new_component<gui_label_t>("Frame time:");
 	frame_time_value_label.buf().printf(" 9999 ms");
 	frame_time_value_label.update();
-	add_component( &frame_time_value_label );
+	add_component( &frame_time_value_label, 2 );
 	// Idle time label
 	new_component<gui_label_t>("Idle:");
 	idle_time_value_label.buf().printf(" 9999 ms");
 	idle_time_value_label.update();
-	add_component( &idle_time_value_label );
+	add_component( &idle_time_value_label, 2 );
 	// FPS label
 	new_component<gui_label_t>("FPS:");
 	fps_value_label.buf().printf(" 99.9 fps");
 	fps_value_label.update();
-	add_component( &fps_value_label );
+	add_component( &fps_value_label, 2 );
 	// Simloops label
 	new_component<gui_label_t>("Sim:");
 	simloops_value_label.buf().printf(" 999.9");
 	simloops_value_label.update();
-	add_component( &simloops_value_label );
-	end_table();
+	add_component( &simloops_value_label, 2 );
 }
 
 void gui_settings_t::draw(scr_coord offset)
@@ -187,6 +200,19 @@ void gui_settings_t::draw(scr_coord offset)
 	gui_aligned_container_t::draw(offset);
 }
 
+bool gui_settings_t::action_triggered(gui_action_creator_t *comp, value_t)
+{
+	if (comp == &screen_scale_numinp) {
+		const sint16 new_value = screen_scale_numinp.get_value();
+		dr_set_screen_scale(new_value);
+	}
+	else if (comp == &screen_scale_auto) {
+		dr_set_screen_scale(-1);
+		screen_scale_numinp.set_value(dr_get_screen_scale());
+	}
+
+	return true;
+}
 
 map_settings_t::map_settings_t()
 {
