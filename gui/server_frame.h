@@ -92,7 +92,9 @@ private:
 	 * Display depends on the state of the show_mismatched and
 	 * show_offline checkboxes
 	 */
-	bool update_serverlist ();
+	void update_serverlist ();
+	
+	void update_serverlist_threaded();
 
 public:
 	server_frame_t();

@@ -26,6 +26,8 @@
 #include "help_frame.h"
 #include "components/gui_divider.h"
 
+#include <thread>
+
 static char nick_buf[256];
 
 // char server_frame_t::newserver_name[2048];
@@ -300,8 +302,15 @@ PIXVAL server_frame_t::update_info()
 }
 
 
-bool server_frame_t::update_serverlist ()
+void server_frame_t::update_serverlist ()
 {
+	update_error("Fetching server list...");
+	std::thread thd(&server_frame_t::update_serverlist_threaded, this);
+	thd.detach();
+}
+
+
+void server_frame_t::update_serverlist_threaded () {
 	// Based on current dialog settings, should we show mismatched servers or not
 	uint revision = 0;
 	const char* pakset = NULL;
@@ -311,17 +320,19 @@ bool server_frame_t::update_serverlist ()
 		revision = current.get_game_engine_revision();
 		pakset   = current.get_pak_name();
 	}
-
+	
 	// Download game listing from listings server into memory
-	cbuffer_t buf;
+	cbuffer_t network_buf;
 
-	if(  const char *err = network_http_get( ANNOUNCE_SERVER, ANNOUNCE_LIST_URL, buf )  ) {
+	if(  const char *err = network_http_get( ANNOUNCE_SERVER, ANNOUNCE_LIST_URL, network_buf )  ) {
 		dbg->error( "server_frame_t::update_serverlist", "could not download list: %s", err );
-		return false;
+		return;
 	}
-
+	
+	buf.clear();
+	
 	// Parse listing into CSV_t object
-	CSV_t csvdata( buf.get_str() );
+	CSV_t csvdata( network_buf.get_str() );
 	int ret;
 
 	dbg->message( "server_frame_t::update_serverlist", "CSV_t: %s", csvdata.get_str() );
@@ -418,8 +429,6 @@ bool server_frame_t::update_serverlist ()
 
 	set_dirty();
 	resize(scr_size(0, 0));
-
-	return true;
 }
 
 
