@@ -1316,4 +1316,11 @@ public:
 	bool is_work_network_safe() const OVERRIDE { return false; }
 };
 
+class tool_merge_player_t : public tool_t {
+public:
+	tool_merge_player_t() : tool_t(TOOL_MERGE_PLAYER | SIMPLE_TOOL) {}
+	bool init(player_t * ) OVERRIDE;
+	bool is_init_network_safe() const OVERRIDE { return false; }
+};
+
 #endif

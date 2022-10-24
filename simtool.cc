@@ -9039,3 +9039,89 @@ char const* tool_sending_money_t::work(player_t* player, koord3d k){
 	}
 	return NULL;
 }
+
+
+bool tool_merge_player_t::init( player_t *player )
+{
+	if (player != welt->get_public_player()) {
+		open_error_msg_win("This tool must be executed by the public player.");
+		return false;
+	}
+	
+	uint8 merged_player_num, merger_player_num;
+	sscanf( default_param, "%hhi,%hhi", &merged_player_num, &merger_player_num );
+	player_t* merged_player = welt->get_player(merged_player_num);
+	player_t* merger_player = welt->get_player(merger_player_num);
+	
+	if(  merged_player == NULL  ||  merged_player == welt->get_public_player()  ) {
+		return false;
+	}
+	if(  merger_player == NULL  ||  merger_player == welt->get_public_player()  ) {
+		return false;
+	}
+	
+	// copy line and move schedule
+	merged_player->simlinemgmt.change_owner_for_all_line(merger_player);
+	
+	// change all owners
+	// vehicles including those in depot
+	for (size_t i = welt->convoys().get_count(); i-- != 0;) {
+		convoihandle_t const cnv = welt->convoys()[i];
+		if(  cnv->get_owner()!=merged_player  ) {
+			continue;
+		}
+		
+		cnv->set_owner(merger_player);
+		for( uint8 h=0; h<cnv->get_vehicle_count(); h++ ) {
+			cnv->get_vehikel(h)->set_owner(merger_player);
+		}
+	}
+	
+	// halt
+	FOR(vector_tpl<halthandle_t>, const halt, haltestelle_t::get_alle_haltestellen()) {
+		if(  halt->get_owner()==merged_player  ) {
+			halt->make_private_and_join(merger_player, false);
+		}
+	}
+	
+	// iterate all tiles
+	koord pos_2d = koord(0, 0);
+	while(pos_2d.y < welt->get_size().y) {
+		while(pos_2d.x < welt->get_size().x) {
+			const planquadrat_t *plan = welt->access(pos_2d.x, pos_2d.y);
+			if(  plan == NULL  ) { continue; }
+			for(uint8 i=0; i<plan->get_boden_count(); i++) {
+				const grund_t* gr = plan->get_boden_bei(i);
+				if(  gr == NULL  ) { continue; }
+				for(uint8 h = gr->get_top(); h-- != 0;) {
+					obj_t* obj = gr->obj_bei(h);
+					if(  obj == NULL  ||  obj->get_owner() != merged_player) {
+						continue;
+					}
+					obj->set_owner(merger_player);
+				}
+			}
+			pos_2d.x += 1;
+		}
+		pos_2d.x = 0;
+		pos_2d.y += 1;
+	}
+	
+	// finance
+	finance_t* const merged_player_finance = merged_player->get_finance();
+	merged_player_finance->calc_finance_history();
+	// add asset
+	for(uint8 tt_num = TT_ROAD; tt_num < TT_MAX; tt_num++) {
+		const transport_type tt = (transport_type)tt_num;
+		const sint64 delta = merged_player_finance->get_history_veh_year(tt, 0, ATV_NON_FINANCIAL_ASSETS);
+		merger_player->get_finance()->update_assets(delta, tt);
+	}
+	// add cash subtracting the initial money
+	const sint64 merged_player_earning = merged_player_finance->get_history_com_year(0, ATC_CASH) - merged_player_finance->get_starting_money();
+	merger_player->get_finance()->book_sending_money(merged_player_earning);
+	
+	// delete merged player
+	welt->remove_player(merged_player_num);
+	
+	return false;
+}
