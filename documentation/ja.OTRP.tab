@@ -204,8 +204,23 @@ Accept trade this convoi
 この車両を受け入れます
 Permitted
 譲渡許可済み
+#------プレイヤー併合------
+merge player
+プレイヤーの併合
+Player merger
+プレイヤーの併合
+Select players to be merged.
+併合するプレイヤーを選択してください。
+merged player
+併合対象
+merge to
+併合先
+Merge
+併合する
 #------その他の翻訳------
 next stop
 次の駅へ
 Max. wayobj speed:
 架線速度:
+Fetching server list...
+サーバリストを取得中...
