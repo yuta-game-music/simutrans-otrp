@@ -41,6 +41,9 @@ public:
 
 	static sint16 fullscreen;
 
+	/// Controls size of the virtual display
+	static sint16 display_scale_percent;
+
 	static bool reselect_closes_tool;
 
 	/// points to the current user directory for loading and saving
@@ -160,6 +163,9 @@ public:
 
 	/// controls scrolling speed and scrolling direction
 	static sint16 scroll_multi;
+
+	/// enables infinite scrolling with trackball or mouse, by may fail with sytlus
+	static bool scroll_infinite;
 
 	/// converts numpad keys to arrows no matter of numlock state
 	static bool numpad_always_moves_map;

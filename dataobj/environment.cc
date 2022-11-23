@@ -19,6 +19,7 @@ void rdwr_win_settings(loadsave_t *file); // simwin
 
 sint16 env_t::menupos = MENU_TOP;
 sint16 env_t::fullscreen = WINDOWED;
+sint16 env_t::display_scale_percent = 100;
 bool env_t::reselect_closes_tool = true;
 
 sint8 env_t::pak_tile_height_step = 16;
@@ -75,6 +76,7 @@ std::string env_t::nickname = "";
 // this is explicitly and interactively set by user => we do not touch it on init
 const char *env_t::language_iso = "en";
 sint16 env_t::scroll_multi = -1; // start with same scrool as mouse as nowadays standard
+bool env_t::scroll_infinite = false; // since it fails with touch devices
 sint16 env_t::global_volume = 127;
 uint32 env_t::sound_distance_scaling;
 sint16 env_t::midi_volume = 127;
@@ -226,6 +228,8 @@ void env_t::init()
 	hide_buildings = env_t::NOT_HIDE;
 	hide_under_cursor = false;
 	cursor_hide_range = 5;
+
+	scroll_infinite = false;
 
 	visualize_schedule = true;
 
@@ -604,6 +608,10 @@ void env_t::rdwr(loadsave_t *file)
 		file->rdwr_byte( show_factory_storage_bar );
 
 		file->rdwr_short( fullscreen );
+	}
+	if (file->get_OTRP_version()>=33) {
+		file->rdwr_short(display_scale_percent);
+		file->rdwr_bool(scroll_infinite);
 	}
 
 	// server settings are not saved, since they are server specific
