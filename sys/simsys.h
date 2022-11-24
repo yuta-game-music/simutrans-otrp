@@ -157,7 +157,7 @@ void show_pointer(int yesno);
 
 void set_pointer(int loading);
 
-void move_pointer(int x, int y);
+bool move_pointer(int x, int y);
 
 int get_mouse_x();
 int get_mouse_y();
