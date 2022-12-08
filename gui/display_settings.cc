@@ -96,24 +96,20 @@ gui_settings_t::gui_settings_t()
 	add_component( buttons + IDBTN_CHANGE_FONT );
 
 	// screen scale number input
-	add_table(3, 1);
+	add_table(3, 0);
+	set_alignment(ALIGN_LEFT);
 	{
 		new_component<gui_label_t>("Screen scale: ");
 
-		add_table(2,0);
-		{
-			screen_scale_numinp.init(dr_get_screen_scale(), 25, 400, 25, false);
-			screen_scale_numinp.add_listener(this);
-			add_component(&screen_scale_numinp);
+		screen_scale_numinp.init(dr_get_screen_scale(), 25, 400, 25);
+		screen_scale_numinp.add_listener(this);
+		add_component(&screen_scale_numinp);
 
-			screen_scale_auto.init(button_t::roundbox_state, "Auto");
-			screen_scale_auto.add_listener(this);
-			add_component(&screen_scale_auto);
-		}
-		end_table();
-
-		new_component<gui_fill_t>();
+		screen_scale_auto.init(button_t::roundbox_state, "Auto");
+		screen_scale_auto.add_listener(this);
+		add_component(&screen_scale_auto);
 	}
+	end_table();
 	
 	// add controls to info container
 	add_table(2,5);
