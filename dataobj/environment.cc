@@ -613,7 +613,7 @@ void env_t::rdwr(loadsave_t *file)
 		file->rdwr_bool(scroll_infinite);
 	}
 
-	if( file->is_version_atleast(123, 1) ) {
+	if(  file->is_version_atleast(123, 1)  ||  file->get_OTRP_version()>=33  ) {
 		file->rdwr_short(display_scale_percent);
 	}
 

@@ -208,11 +208,14 @@ bool gui_settings_t::action_triggered(gui_action_creator_t *comp, value_t)
 {
 	if (comp == &screen_scale_numinp) {
 		const sint16 new_value = screen_scale_numinp.get_value();
+		env_t::display_scale_percent = new_value;
 		dr_set_screen_scale(new_value);
 	}
 	else if (comp == &screen_scale_auto) {
 		dr_set_screen_scale(-1);
-		screen_scale_numinp.set_value(dr_get_screen_scale());
+		const sint16 screen_scale = dr_get_screen_scale();
+		env_t::display_scale_percent = screen_scale;
+		screen_scale_numinp.set_value(screen_scale);
 	}
 
 	return true;

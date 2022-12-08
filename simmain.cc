@@ -814,6 +814,9 @@ int simu_main(int argc, char** argv)
 			dr_set_screen_scale(atoi(scaling));
 		}
 	}
+	else {
+		dr_set_screen_scale(env_t::display_scale_percent);
+	}
 
 	int parameter[2];
 	parameter[0] = args.has_arg("-async");
