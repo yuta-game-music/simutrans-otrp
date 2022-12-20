@@ -31,6 +31,9 @@ class route_t;
  */
 class vehicle_base_t : public obj_t
 {
+public:
+	static uint8 diagonal_vehicle_steps_per_tile;
+	
 protected:
 	// offsets for different directions
 	static sint8 dxdy[16];
@@ -38,7 +41,7 @@ protected:
 	// to make the length on diagonals configurable
 	// Number of vehicle steps along a diagonal...
 	// remember to subtract one when stepping down to 0
-	static uint8 diagonal_vehicle_steps_per_tile;
+	// static uint8 diagonal_vehicle_steps_per_tile;
 	static uint8 old_diagonal_vehicle_steps_per_tile;
 	static uint16 diagonal_multiplier;
 

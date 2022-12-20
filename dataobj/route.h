@@ -140,8 +140,9 @@ public:
 
 	/**
 	 * Calculates the route from @p start to @p target
+	 * @param for max_len, 16 is one tile
 	 */
-	route_result_t calc_route(karte_t *welt, koord3d start, koord3d target, test_driver_t *tdriver, const sint32 max_speed_kmh, sint32 max_tile_len );
+	route_result_t calc_route(karte_t *welt, koord3d start, koord3d target, test_driver_t *tdriver, const sint32 max_speed_kmh, sint32 max_len );
 
 	/**
 	 * Load/Save of the route.

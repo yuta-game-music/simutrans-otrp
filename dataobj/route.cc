@@ -676,6 +676,12 @@ void route_t::postprocess_water_route(karte_t *welt)
 }
 
 
+bool is_way_bend(koord3d pos, waytype_t waytype) {
+	const grund_t* gr = world()->lookup(pos);
+	const weg_t* way = gr ? gr->get_weg(waytype) : NULL;
+	return way ? ribi_t::is_bend(way->get_ribi_unmasked()) : false;
+}
+
 
 /**
  * searches route, uses intern_calc_route() for distance between stations
@@ -698,7 +704,7 @@ route_t::route_result_t route_t::calc_route(karte_t *welt, const koord3d ziel, c
 #endif
 
 	INT_CHECK("route 343");
-
+	const halthandle_t halt = welt->lookup(start)->get_halt();
 	if( !ok ) {
 		DBG_MESSAGE("route_t::calc_route()","No route from %d,%d to %d,%d found",start.x, start.y, ziel.x, ziel.y);
 		// no route found
@@ -707,50 +713,79 @@ route_t::route_result_t route_t::calc_route(karte_t *welt, const koord3d ziel, c
 		return no_route;
 	}
 	// advance so all convoi fits into a halt (only set for trains and cars)
-	else if(  max_len>1  ) {
-
-		// we need a halt of course ...
-		halthandle_t halt = welt->lookup(start)->get_halt();
-		if(  halt.is_bound()  ) {
-
-			// first: find out how many tiles I am already in the station
-			for(  size_t i = route.get_count();  i-- != 0  &&  max_len != 0  &&  halt == haltestelle_t::get_halt(route[i], NULL);  --max_len) {
+	else if(  max_len>1  &&  halt.is_bound()  ) {
+		// For here, we define 512 (VEHICLE_STEPS_PER_TILE * 2) steps for one tile.
+		const uint32 straight_tile_steps = VEHICLE_STEPS_PER_TILE << 1;
+		const uint32 diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile << 1;
+		// When the front or back tile is diagonal, we can use only half of its length as a stop.
+		const uint32 half_diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile;
+		const uint32 max_length_in_steps = max_len << 5; // convert 16 to 512
+		const waytype_t waytype = tdriver->get_waytype();
+		
+		uint32 steps_covered_by_station = 0;
+		bool is_front_diagonal = false;
+		bool is_last_diagonal = false;
+		
+		// first: find out how many vehicle steps I am already in the station
+		for(  uint32 i = route.get_count() - 1;  i>=0;  i--  ) {
+			if(  halt != haltestelle_t::get_halt(route[i], NULL)  ) {
+				break;
 			}
-
-			// and now go forward, if possible
-			if(  max_len>0  ) {
-
-				const uint32 max_n = route.get_count()-1;
-				const koord3d zv = route[max_n] - route[max_n - 1];
-				const int ribi = ribi_type(zv);
-
-				grund_t *gr = welt->lookup(start);
-				const waytype_t wegtyp = tdriver->get_waytype();
-				ribi_t::ribi way_ribi  = tdriver->get_ribi(gr);
-
-				while(  max_len>0  &&  ((way_ribi & ribi) != 0)  &&  gr->get_neighbour(gr,wegtyp,ribi)  &&  gr->get_halt()==halt
-					&&   tdriver->check_next_tile(gr)) {
-					// Do not go on a tile, where a oneway sign forbids going.
-					// This saves time and fixed the bug, that a oneway sign on the final tile was ignored.
-					ribi_t::ribi go_dir=gr->get_weg(wegtyp)->get_ribi_maske();
-					if(  (ribi&go_dir)!=0  ) {
-						break;
-					}
-					route.append(gr->get_pos());
-					max_len--;
-					way_ribi = tdriver->get_ribi(gr);
-				}
-				// station too short => warning!
-				if(  max_len>0  ) {
-					return valid_route_halt_too_short;
-				}
+			const bool is_diagonal = is_way_bend(route[i], waytype);
+			steps_covered_by_station += is_diagonal ? diagonal_tile_steps : straight_tile_steps;
+			is_last_diagonal = i < route.get_count() - 1 && is_diagonal;
+		}
+		if(  is_way_bend(route.back(), waytype)  ) {
+			is_front_diagonal = true;
+			steps_covered_by_station += half_diagonal_tile_steps - diagonal_tile_steps;
+		}
+		if(  is_last_diagonal  ) {
+			steps_covered_by_station += half_diagonal_tile_steps - diagonal_tile_steps;
+		}
+		
+		// and now go forward, if possible
+		grund_t* gr_loop = world()->lookup(route.back());
+		weg_t* way_loop = gr_loop->get_weg(waytype);
+		
+		while(  steps_covered_by_station < max_length_in_steps  ) {
+			// estimate the next pos
+			const ribi_t::ribi ribi_back = ribi_type(route[route.get_count()-2] - route.back());
+			// Use the masked ribi of the way here, considering oneway signs or signals.
+			const ribi_t::ribi open_dir = way_loop->get_ribi() & ~ribi_back;
+			if(  !ribi_t::is_single(open_dir)  ||
+			  !gr_loop->get_neighbour(gr_loop, waytype, open_dir)  ||
+				gr_loop->get_halt() != halt  ||
+				!tdriver->check_next_tile(gr_loop)
+		    ) 
+			{ 
+				// We cannot go foward anymore.
+				break;
 			}
+			way_loop = gr_loop->get_weg(waytype);
+			if(  !way_loop  ) { break; }
+			
+			// We can go forward. We add the pos and calculate steps_covered_by_station.
+			route.append(gr_loop->get_pos());
+			if(  is_front_diagonal  ) {
+				// use full length of the diagonal tile for the previousely front tile.
+				steps_covered_by_station += diagonal_tile_steps - half_diagonal_tile_steps;
+			}
+			const bool is_diagonal = ribi_t::is_bend(way_loop->get_ribi_unmasked());
+			if(  is_diagonal  ) {
+				steps_covered_by_station += half_diagonal_tile_steps;
+			} else {
+				steps_covered_by_station += straight_tile_steps;
+			}
+			is_front_diagonal = is_diagonal;
+		}
+		
+		if(  steps_covered_by_station < max_length_in_steps  ) {
+			// station too short => warning!
+			return valid_route_halt_too_short;
 		}
 	}
 	return valid_route;
 }
-
-
 
 
 void route_t::rdwr(loadsave_t *file)
