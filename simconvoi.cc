@@ -3342,6 +3342,59 @@ bool can_depart(convoihandle_t cnv, halthandle_t halt, uint32 arrived_time, uint
 }
 
 
+uint16 calc_vehicles_count_covered_by_stop(convoihandle_t cnv, halthandle_t halt) {
+	if(cnv->front()->get_desc()->get_waytype() == water_wt) {
+		// harbour and river stop load any size
+		return cnv->get_vehicle_count();
+	}
+	const uint32 straight_tile_steps = VEHICLE_STEPS_PER_TILE << 1;
+	const uint32 diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile << 1;
+	// When the front or back tile is diagonal, we can use only half of its length as a stop.
+	const uint32 half_diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile;
+	const waytype_t waytype = cnv->front()->get_waytype();
+	
+	// find out how many steps I am already in the station
+	uint32 steps_covered_by_stop = 0;
+	grund_t* gr = world()->lookup(cnv->front()->get_pos());
+	const weg_t* way_first = gr->get_weg(waytype);
+	const ribi_t::ribi way_dir_first = way_first->get_ribi_unmasked();
+	steps_covered_by_stop += ribi_t::is_bend(way_dir_first) ? half_diagonal_tile_steps : straight_tile_steps;
+	ribi_t::ribi open_dir = way_dir_first & ~cnv->front()->get_direction();
+	if(  !gr->get_neighbour(gr, waytype, open_dir)  ) {
+		gr = NULL;
+	}
+	
+	bool is_last_diagonal = false;
+	while(  gr  &&  haltestelle_t::get_halt(gr->get_pos(), NULL)==halt  ) {
+		const weg_t* way = gr->get_weg(waytype);
+		if(  !way  ) { break; }
+		const ribi_t::ribi way_dir = way->get_ribi_unmasked();
+		is_last_diagonal = ribi_t::is_bend(way_dir);
+		steps_covered_by_stop += is_last_diagonal ? diagonal_tile_steps : straight_tile_steps;
+		open_dir = way_dir & ~(ribi_t::backward(open_dir));
+		if(  !gr->get_neighbour(gr, waytype, open_dir)  ) {
+			break;
+		}
+	}
+	
+	if(  is_last_diagonal  ) {
+		// When the last tile is diagonal, we can use only half of its length as a stop.
+		steps_covered_by_stop += half_diagonal_tile_steps - diagonal_tile_steps;
+	}
+	
+	// find how many cars we can cover with the stop.
+	uint32 convoy_length_step = 0;
+	for(  uint16 idx = 0;  idx < cnv->get_vehicle_count();  idx++  ) {
+		// convert 16 steps per a tile to 512 steps per a tile
+		convoy_length_step += cnv->get_vehikel(idx)->get_desc()->get_length() << 5;
+		if(  convoy_length_step > steps_covered_by_stop  ) {
+			return idx;
+		}
+	}
+	return cnv->get_vehicle_count();
+}
+
+
 /**
  * convoi an haltestelle anhalten
  *
@@ -3350,57 +3403,7 @@ bool can_depart(convoihandle_t cnv, halthandle_t halt, uint32 arrived_time, uint
 void convoi_t::hat_gehalten(halthandle_t halt)
 {
 	// now find out station length
-	uint16 vehicles_loading = 0;
-	if(fahr[0]->get_desc()->get_waytype() == water_wt) {
-		// harbour and river stop load any size
-		vehicles_loading = anz_vehikel;
-	}
-	else if (anz_vehikel == 1  &&  CARUNITS_PER_TILE >= fahr[0]->get_desc()->get_length()) {
-		vehicles_loading = 1;
-		// one vehicle, which fits into one tile
-	}
-	else {
-		// difference between actual station length and vehicle lenghts
-		sint16 station_length = -fahr[vehicles_loading]->get_desc()->get_length();
-		// iterate through tiles in straight line and look for station
-		koord zv = koord( ribi_t::backward(fahr[0]->get_direction()) );
-		koord3d pos = fahr[0]->get_pos();
-		grund_t *gr=welt->lookup(pos);
-		// start on bridge?
-		pos.z += gr->get_weg_yoff() / TILE_HEIGHT_STEP;
-		do {
-			// advance one station tile
-			station_length += CARUNITS_PER_TILE;
-
-			while(station_length >= 0) {
-				vehicles_loading++;
-				if (vehicles_loading < anz_vehikel) {
-					station_length -= fahr[vehicles_loading]->get_desc()->get_length();
-				}
-				else {
-					// all vehicles fit into station
-					goto station_tile_search_ready;
-				}
-			}
-
-			// search for next station tile
-			pos += zv;
-			gr = welt->lookup(pos);
-			if (gr == NULL) {
-				gr = welt->lookup(pos-koord3d(0,0,1));
-				if (gr == NULL) {
-					gr = welt->lookup(pos-koord3d(0,0,2));
-				}
-				if (gr  &&  (pos.z != gr->get_hoehe() + gr->get_weg_yoff()/TILE_HEIGHT_STEP) ) {
-					// not end/start of bridge
-					break;
-				}
-			}
-
-		}  while(  gr  &&  gr->get_halt() == halt  );
-		// finished
-station_tile_search_ready: ;
-	}
+	const uint16 vehicles_loading = calc_vehicles_count_covered_by_stop(self, halt);
 
 	// next stop in schedule will be a depot
 	bool next_depot = false;
