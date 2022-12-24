@@ -978,58 +978,50 @@ void gebaeude_t::cleanup(player_t *player)
 	}
 
 	player_t::book_construction_costs(player, cost, get_pos().get_2d(), tile->get_desc()->get_finance_waytype());
+	
+	const grund_t * this_gr = welt->lookup( get_pos() );
+	if(tile->get_desc()->get_all_layouts()==1  ||  is_city_building()  ||  !this_gr) {
+		mark_images_dirty();
+		return;
+	}
 
 	// may need to update next buildings, in the case of start, middle, end buildings
-	if(tile->get_desc()->get_all_layouts()>1  &&  !is_city_building()) {
-
-		// realign surrounding buildings...
-		uint32 layout = tile->get_layout();
-
-		// detect if we are connected at far (north/west) end
-		grund_t * gr = welt->lookup( get_pos() );
-		if(gr) {
-			sint8 offset = gr->get_weg_yoff()/TILE_HEIGHT_STEP;
-			gr = welt->lookup( get_pos()+koord3d( (layout & 1 ? koord::east : koord::south), offset) );
-			if(!gr) {
-				// check whether bridge end tile
-				grund_t * gr_tmp = welt->lookup( get_pos()+koord3d( (layout & 1 ? koord::east : koord::south),offset - 1) );
-				if(gr_tmp && gr_tmp->get_weg_yoff()/TILE_HEIGHT_STEP == 1) {
-					gr = gr_tmp;
-				}
-			}
-			if(gr) {
-				gebaeude_t* gb = gr->find<gebaeude_t>();
-				if(gb  &&  gb->get_tile()->get_desc()->get_all_layouts()>4u) {
-					koord xy = gb->get_tile()->get_offset();
-					uint8 layoutbase = gb->get_tile()->get_layout();
-					if((layoutbase & 1u) == (layout & 1u)) {
-						layoutbase |= 4u; // set far bit on neighbour
-						gb->set_tile( gb->get_tile()->get_desc()->get_tile(layoutbase, xy.x, xy.y), false );
-					}
-				}
-			}
-
-			// detect if near (south/east) end
-			gr = welt->lookup( get_pos()+koord3d( (layout & 1 ? koord::west : koord::north), offset) );
-			if(!gr) {
-				// check whether bridge end tile
-				grund_t * gr_tmp = welt->lookup( get_pos()+koord3d( (layout & 1 ? koord::west : koord::north),offset - 1) );
-				if(gr_tmp && gr_tmp->get_weg_yoff()/TILE_HEIGHT_STEP == 1) {
-					gr = gr_tmp;
-				}
-			}
-			if(gr) {
-				gebaeude_t* gb = gr->find<gebaeude_t>();
-				if(gb  &&  gb->get_tile()->get_desc()->get_all_layouts()>4) {
-					koord xy = gb->get_tile()->get_offset();
-					uint8 layoutbase = gb->get_tile()->get_layout();
-					if((layoutbase & 1u) == (layout & 1u)) {
-						layoutbase |= 2u; // set near bit on neighbour
-						gb->set_tile( gb->get_tile()->get_desc()->get_tile(layoutbase, xy.x, xy.y), false );
-					}
-				}
+	// realign surrounding buildings...
+	const uint32 layout = tile->get_layout();
+	
+	// [straight/vertical/horizontal][layout&1][index_to_lookup]
+	const koord directions_to_lookup[3][2][2] = {
+		{{koord::south, koord::north}, {koord::east, koord::west}},
+		{{koord::north, koord::east}, {koord::west, koord::south}},
+		{{koord::south, koord::east}, {koord::west, koord::north}}
+	};
+	const ribi_t::ribi bit_4_turn_on_dir[3] = {
+		ribi_t::southeast, // straight
+		ribi_t::northwest, // vertical diagonal
+		ribi_t::southwest // horizontal diagonal
+	};
+	
+	// check adjacent tiles and turn on the connection bit.
+	const sint8 offset = this_gr->get_weg_yoff()/TILE_HEIGHT_STEP;
+	for(  uint8 i=0;  i<2;  i++  ) {
+		const koord dir = directions_to_lookup[(layout&0x30)>>4][layout&1][i];
+		grund_t* gr = welt->lookup(get_pos() + koord3d(dir, offset));
+		if(!gr) {
+			// check whether bridge end tile
+			grund_t * gr_tmp = welt->lookup(get_pos() + koord3d(dir, offset - 1));
+			if(gr_tmp && gr_tmp->get_weg_yoff()/TILE_HEIGHT_STEP == 1) {
+				gr = gr_tmp;
 			}
 		}
+		gebaeude_t* gb = gr ? gr->find<gebaeude_t>() : NULL;
+		if(  !gb  ||  gb->get_tile()->get_desc()->get_all_layouts()<=4u  ) {
+			continue;
+		}
+		const koord xy = gb->get_tile()->get_offset();
+		uint8 layoutbase = gb->get_tile()->get_layout();
+		const bool bit_4_turn_on = (ribi_type(dir) & bit_4_turn_on_dir[(layoutbase&0x30)>>4]) > 0;
+		layoutbase |= bit_4_turn_on ? 4u : 2u; // set far bit on neighbour
+		gb->set_tile( gb->get_tile()->get_desc()->get_tile(layoutbase, xy.x, xy.y), false );
 	}
 	mark_images_dirty();
 }
