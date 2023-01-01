@@ -1257,8 +1257,14 @@ void vehicle_t::hop(grund_t* gr)
 			// since route_index is already incremented, this is coupling point.
 			steps_next = cnv->get_next_coupling_steps();
 		}
-		else if(  check_for_finish  &&  direction!=ribi_t::south  &&  direction!=ribi_t::east  ) {
-			steps_next = (steps_next/2)+1;
+		else if(  check_for_finish  ) {
+			if(  direction==ribi_t::north  ||  direction==ribi_t::west  ||  direction==ribi_t::southeast  ) {
+				steps_next = (steps_next/2)+1;
+			} else if(  direction==ribi_t::northeast  ) {
+				steps_next = (steps_next/4)+1;
+			} else if(  direction==ribi_t::northwest  ||  direction==ribi_t::southwest  ) {
+				steps_next = 1;
+			}
 		}
 		cnv->must_recalc_data_front();
 	}
