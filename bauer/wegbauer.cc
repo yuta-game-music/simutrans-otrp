@@ -487,7 +487,20 @@ bool way_builder_t::check_building( const grund_t *to, const koord dir ) const
 		if(  layouts==4  ) {
 			return  r == ribi_t::layout_to_ribi[layout];
 		}
-		return ribi_t::is_straight( r | ribi_t::doubles(ribi_t::layout_to_ribi[layout&1]) );
+		if(  layout<16  ) {
+			// straight way tile
+			return ribi_t::is_straight( r | ribi_t::doubles(ribi_t::layout_to_ribi[layout&1]) );
+		}
+		// diagonal way tile
+		ribi_t::ribi gb_connected_direction;
+		if(  (layout&0x30)==0x10  ) {
+			// vertical
+			gb_connected_direction = (layout&1) ? ribi_t::southwest : ribi_t::northeast;
+		} else {
+			// horizontal
+			gb_connected_direction = (layout&1) ? ribi_t::northwest : ribi_t::southeast;
+		}
+		return r & gb_connected_direction;
 	}
 	return true;
 }
