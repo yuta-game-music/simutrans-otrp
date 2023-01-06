@@ -3342,24 +3342,30 @@ bool can_depart(convoihandle_t cnv, halthandle_t halt, uint32 arrived_time, uint
 }
 
 
-uint16 calc_vehicles_count_covered_by_stop(convoihandle_t cnv, halthandle_t halt) {
-	if(cnv->front()->get_desc()->get_waytype() == water_wt) {
+uint32 convoi_t::calc_available_halt_length_in_vehicle_steps(koord3d front_vehicle_pos, ribi_t::ribi front_vehicle_dir) {
+	if(front()->get_desc()->get_waytype() == water_wt) {
 		// harbour and river stop load any size
-		return cnv->get_vehicle_count();
+		return UINT_MAX;
 	}
-	const uint32 straight_tile_steps = VEHICLE_STEPS_PER_TILE << 1;
-	const uint32 diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile << 1;
+	// calculate the halt length in the unit whose 512 is one straight tile length.
+	const uint32 straight_tile_length = VEHICLE_STEPS_PER_TILE << 1;
+	const uint32 diagonal_tile_length = vehicle_base_t::diagonal_vehicle_steps_per_tile << 1;
 	// When the front or back tile is diagonal, we can use only half of its length as a stop.
-	const uint32 half_diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile;
-	const waytype_t waytype = cnv->front()->get_waytype();
+	const uint32 half_diagonal_tile_length = vehicle_base_t::diagonal_vehicle_steps_per_tile;
+	const waytype_t waytype = front()->get_waytype();
 	
 	// find out how many steps I am already in the station
-	uint32 steps_covered_by_stop = 0;
-	grund_t* gr = world()->lookup(cnv->front()->get_pos());
+	uint32 halt_length = 0;
+	grund_t* gr = world()->lookup(front_vehicle_pos);
+	const halthandle_t halt = gr ? gr->get_halt() : halthandle_t();
+	if(  !halt.is_bound()  ) {
+		// We are not on the valid halt tiles?
+		return 0;
+	}
 	const weg_t* way_first = gr->get_weg(waytype);
 	const ribi_t::ribi way_dir_first = way_first->get_ribi_unmasked();
-	steps_covered_by_stop += ribi_t::is_bend(way_dir_first) ? half_diagonal_tile_steps : straight_tile_steps;
-	ribi_t::ribi open_dir = way_dir_first & ~cnv->front()->get_direction();
+	halt_length += ribi_t::is_bend(way_dir_first) ? half_diagonal_tile_length : straight_tile_length;
+	ribi_t::ribi open_dir = way_dir_first & ribi_t::backward(front_vehicle_dir);
 	if(  !gr->get_neighbour(gr, waytype, open_dir)  ) {
 		gr = NULL;
 	}
@@ -3370,7 +3376,7 @@ uint16 calc_vehicles_count_covered_by_stop(convoihandle_t cnv, halthandle_t halt
 		if(  !way  ) { break; }
 		const ribi_t::ribi way_dir = way->get_ribi_unmasked();
 		is_last_diagonal = ribi_t::is_bend(way_dir);
-		steps_covered_by_stop += is_last_diagonal ? diagonal_tile_steps : straight_tile_steps;
+		halt_length += is_last_diagonal ? diagonal_tile_length : straight_tile_length;
 		open_dir = way_dir & ~(ribi_t::backward(open_dir));
 		if(  !gr->get_neighbour(gr, waytype, open_dir)  ) {
 			break;
@@ -3379,19 +3385,9 @@ uint16 calc_vehicles_count_covered_by_stop(convoihandle_t cnv, halthandle_t halt
 	
 	if(  is_last_diagonal  ) {
 		// When the last tile is diagonal, we can use only half of its length as a stop.
-		steps_covered_by_stop += half_diagonal_tile_steps - diagonal_tile_steps;
+		halt_length += half_diagonal_tile_length - diagonal_tile_length;
 	}
-	
-	// find how many cars we can cover with the stop.
-	uint32 convoy_length_step = 0;
-	for(  uint16 idx = 0;  idx < cnv->get_vehicle_count();  idx++  ) {
-		// convert 16 steps per a tile to 512 steps per a tile
-		convoy_length_step += cnv->get_vehikel(idx)->get_desc()->get_length() << 5;
-		if(  convoy_length_step > steps_covered_by_stop  ) {
-			return idx;
-		}
-	}
-	return cnv->get_vehicle_count();
+	return halt_length >> 1;
 }
 
 
@@ -3400,10 +3396,19 @@ uint16 calc_vehicles_count_covered_by_stop(convoihandle_t cnv, halthandle_t halt
  *
  * minimum_loading is now stored in the object (not returned)
  */
-void convoi_t::hat_gehalten(halthandle_t halt)
+void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_steps)
 {
-	// now find out station length
-	const uint16 vehicles_loading = calc_vehicles_count_covered_by_stop(self, halt);
+	// Count how many vehicles can load and unload.
+	uint8 vehicles_loading = 0;
+	uint32 convoy_length_step = 0;
+	for(  uint8 idx = 0;  idx < get_vehicle_count();  idx++  ) {
+		// convert 16 steps per a tile to 256 steps per a tile
+		convoy_length_step += get_vehikel(idx)->get_desc()->get_length() << 4;
+		if(  convoy_length_step > halt_length_in_vehicle_steps  ) {
+			break;
+		}
+		vehicles_loading += 1;
+	}
 
 	// next stop in schedule will be a depot
 	bool next_depot = false;
@@ -3557,7 +3562,8 @@ void convoi_t::hat_gehalten(halthandle_t halt)
 	
 	if(  coupling_convoi.is_bound()  ) {
 		// load/unload cargo of coupling convoy.
-		coupling_convoi->hat_gehalten(halt);
+		// pass the remaining halt length subtracting the length of this convoy.
+		coupling_convoi->hat_gehalten(halt, max(0, halt_length_in_vehicle_steps - convoy_length_step));
 	}
 	
 	bool coupling_cond = (self->get_schedule()->get_current_entry().get_coupling_point()==1  &&  !self->is_coupling_done()  &&  !(self->get_coupling_convoi().is_bound()  &&  self->is_coupled()));

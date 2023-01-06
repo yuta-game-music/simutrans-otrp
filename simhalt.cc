@@ -918,7 +918,8 @@ void haltestelle_t::request_loading( convoihandle_t cnv )
 			convoihandle_t const c = *i;
 			if (c.is_bound() && c->is_loading()) {
 				// now we load into convoi
-				c->hat_gehalten(self);
+				const uint32 halt_length_for_convoy = c->calc_available_halt_length_in_vehicle_steps(c->front()->get_pos(), c->front()->get_direction());
+				c->hat_gehalten(self, halt_length_for_convoy);
 			}
 			if (c.is_bound() && c->is_loading()) {
 				++i;

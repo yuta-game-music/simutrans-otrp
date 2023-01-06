@@ -3395,35 +3395,37 @@ bool rail_vehicle_t::is_target(const grund_t *gr,const grund_t *prev_gr) const
 {
 	const schiene_t * sch1 = (const schiene_t *) gr->get_weg(get_waytype());
 	// first check blocks, if we can go there
-	if(  sch1->can_reserve(cnv->self)  ) {
-		//  just check, if we reached a free stop position of this halt
-		if(  gr->is_halt()  &&  gr->get_halt()==target_halt  ) {
-			// now we must check the predecessor ...
-			if(  prev_gr!=NULL  ) {
-				const koord dir=gr->get_pos().get_2d()-prev_gr->get_pos().get_2d();
-				const ribi_t::ribi ribi = ribi_type(dir);
-				if(  gr->get_weg(get_waytype())->get_ribi_maske() & ribi  ) {
-					// signal/one way sign wrong direction
-					return false;
-				}
-				grund_t *to;
-				if(  !gr->get_neighbour(to,get_waytype(),ribi)  ||  !(to->get_halt()==target_halt)  ||  (to->get_weg(get_waytype())->get_ribi_maske() & ribi_type(dir))!=0  ) {
-					// end of stop: Is it long enough?
-					// end of stop could be also signal!
-					uint16 tiles = cnv->get_tile_length(true);
-					while(  tiles>1  ) {
-						if(  gr->get_weg(get_waytype())->get_ribi_maske() & ribi  ||  !gr->get_neighbour(to,get_waytype(),ribi_t::backward(ribi))  ||  !(to->get_halt()==target_halt)  ) {
-							return false;
-						}
-						gr = to;
-						tiles --;
-					}
-					return true;
-				}
-			}
-		}
+	if(  !sch1->can_reserve(cnv->self)  ) {
+		return false;
 	}
-	return false;
+	//  just check, if we reached a free stop position of this halt
+	if(  !gr->is_halt()  ||  gr->get_halt()!=target_halt  ) {
+		return false;
+	}
+	// now we must check the predecessor ...
+	if(  !prev_gr  ) {
+		return false;
+	}
+	const koord dir=gr->get_pos().get_2d()-prev_gr->get_pos().get_2d();
+	const ribi_t::ribi ribi = ribi_type(dir);
+	const weg_t* way = gr->get_weg(get_waytype());
+	if(  way->get_ribi_maske() & ribi  ) {
+		// signal/one way sign wrong direction
+		return false;
+	}
+	const ribi_t::ribi next_gr_ribi = way->get_ribi_unmasked() & ~ribi_t::backward(ribi);
+	grund_t *to;
+	if(  ribi_t::is_single(next_gr_ribi)  &&
+		gr->get_neighbour(to, get_waytype(), next_gr_ribi)  &&
+		(to->get_halt()==target_halt)  &&
+		(to->get_weg(get_waytype())->get_ribi_maske() & ribi_type(dir))==0
+	) {
+		// We can still go forward.
+		return false;
+	}
+	// end of stop: Is it long enough?
+	const uint32 available_halt_length = cnv->calc_available_halt_length_in_vehicle_steps(gr->get_pos(), ribi); // 256 units per a straight tile
+	return available_halt_length > ((uint32)cnv->get_entire_convoy_length()) << 4;
 }
 
 // this routine is called by find_route, to determined if we reached a coupling point

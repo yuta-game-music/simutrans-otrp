@@ -450,7 +450,7 @@ public:
 	/**
 	* Convoi haelt an Haltestelle und setzt quote fuer Fracht
 	*/
-	void hat_gehalten(halthandle_t halt);
+	void hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_steps);
 
 	const route_t* get_route() const { return &route; }
 	route_t* access_route() { return &route; }
@@ -978,6 +978,10 @@ public:
 	uint8 accept_player_nr = 0;
 	void set_accept_player_nr(uint8 n) { accept_player_nr = n; }
 	uint8 get_accept_player_nr() const { return accept_player_nr; }
+	
+	// returns the available halt length for the given convoy position.
+	// The returned steps includes the entire tile length on which the front vehicle is.
+	uint32 calc_available_halt_length_in_vehicle_steps(koord3d front_vehicle_pos, ribi_t::ribi front_vehicle_dir);
 };
 
 #endif
