@@ -3429,7 +3429,7 @@ bool rail_vehicle_t::is_target(const grund_t *gr,const grund_t *prev_gr) const
 }
 
 // this routine is called by find_route, to determined if we reached a coupling point
-bool rail_vehicle_t::is_coupling_target(const grund_t *gr, const grund_t *prev_gr, sint16 &coupling_steps) const
+bool rail_vehicle_t::is_coupling_target(const grund_t *gr, const grund_t *prev_gr) const
 {
 	const schiene_t * sch = (const schiene_t *) gr->get_weg(get_waytype());
 	if(  !gr  ||  !prev_gr  ||  !sch  ) {
@@ -3444,36 +3444,23 @@ bool rail_vehicle_t::is_coupling_target(const grund_t *gr, const grund_t *prev_g
 	const ribi_t::ribi ribi = ribi_type(dir);
 	// Find target vehicle to couple with
 	for(  uint8 pos=1;  pos<(volatile uint8)gr->get_top();  pos++  ) {
-		if(  rail_vehicle_t* const v = dynamic_cast<rail_vehicle_t*>(gr->obj_bei(pos))  ) {
-			// there is a suitable waiting convoy for coupling -> this is coupling point.
-			if(  cnv->can_start_coupling(v->get_convoi())  &&  v->get_convoi()->is_loading()  ) {
-				if(  !v->is_last()  &&  !v->is_leading()  ) {
-					// we have to couple with either end of the convoy.
-					continue;
-				}
-				// set coupling index and step
-				// c_step can be negative, so it must be handled as sint16.
-				// TODO: in case that the vehicle length is over 16.
-				coupling_steps = v->get_steps() - VEHICLE_STEPS_PER_CARUNIT*v->get_desc()->get_length();
-				// Is the platform long enough?
-				grund_t *to;
-				sint16 steps_remain = cnv->get_entire_convoy_length() * VEHICLE_STEPS_PER_CARUNIT - coupling_steps - VEHICLE_STEPS_PER_TILE;
-				if(  coupling_steps>0  ) {
-					steps_remain += VEHICLE_STEPS_PER_TILE;
-				}
-				while(  steps_remain>0  ) {
-					if(  gr->get_weg(get_waytype())->get_ribi_maske() & ribi  ||  !gr->get_neighbour(to,get_waytype(),ribi_t::backward(ribi))  ||  !(to->get_halt()==target_halt)  ) {
-						return false;
-					}
-					gr = to;
-					steps_remain -= VEHICLE_STEPS_PER_TILE;
-				}
-				return true;
-			} else {
-				// other convoy exists.
-				return false;
-			}
+		rail_vehicle_t* const v = dynamic_cast<rail_vehicle_t*>(gr->obj_bei(pos));
+		// there is a suitable waiting convoy for coupling -> this is coupling point.
+		// we have to couple with either end of the convoy.
+		if(  !v  ||
+			!cnv->can_start_coupling(v->get_convoi())  ||
+			!v->get_convoi()->is_loading()  ||
+			(!v->is_last()  &&  !v->is_leading())  ) {
+			continue;
 		}
+		// Is the platform long enough?
+		// TODO: consider visual steps offset
+		const bool is_diagonal_way_tile = ribi_t::is_bend(gr->get_weg(get_waytype())->get_ribi_unmasked());
+		const sint16 tile_length = is_diagonal_way_tile ? diagonal_vehicle_steps_per_tile : VEHICLE_STEPS_PER_TILE;
+		const sint32 available_halt_length = 
+		cnv->calc_available_halt_length_in_vehicle_steps(gr->get_pos(), ribi)
+		- tile_length + v->get_steps();
+		return available_halt_length >= cnv->get_entire_convoy_length() * VEHICLE_STEPS_PER_CARUNIT;
 	}
 
 	return false;
@@ -4207,9 +4194,11 @@ bool rail_vehicle_t::can_couple(const route_t* route, uint16 start_index, uint16
 					// set coupling index and step
 					// c_step can be negative, so it must be handled as sint16.
 					// TODO: in case that the vehicle length is over 16.
-					sint16 c_step = v->get_steps() - VEHICLE_STEPS_PER_CARUNIT*v->get_desc()->get_length();
+					const sint16 c_step = v->get_steps() - VEHICLE_STEPS_PER_CARUNIT*v->get_desc()->get_length();
+					const bool is_diagonal_way = ribi_t::is_bend(gr->get_weg(get_waytype())->get_ribi_unmasked());
+					const sint16 tile_length = is_diagonal_way ? diagonal_vehicle_steps_per_tile : VEHICLE_STEPS_PER_TILE;
 					coupling_index = c_step<0 ? max(i-1,0) : i;
-					coupling_steps = c_step<0 ? c_step+VEHICLE_STEPS_PER_TILE : c_step;
+					coupling_steps = c_step<0 ? c_step + tile_length : c_step;
 					return true;
 				} else {
 					// other convoy exists.

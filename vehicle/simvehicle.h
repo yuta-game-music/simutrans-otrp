@@ -582,7 +582,7 @@ public:
 
 	// returns true for the way search to an unknown target.
 	bool is_target(const grund_t *,const grund_t *) const OVERRIDE;
-	bool is_coupling_target(const grund_t *, const grund_t *, sint16 &) const OVERRIDE;
+	bool is_coupling_target(const grund_t *, const grund_t *) const OVERRIDE;
 
 	// handles all block stuff and route choosing ...
 	bool can_enter_tile(const grund_t *gr_next, sint32 &restart_speed, uint8) OVERRIDE;

@@ -174,7 +174,6 @@ bool route_t::find_route(karte_t *welt, const koord3d start, test_driver_t *tdri
 	queue.insert(tmp);
 
 	bool target_reached = false;
-	sint16 coupling_steps = 0;
 	do {
 		// this is too expensive to be called each step
 		if((step & 4095) == 0) {
@@ -196,7 +195,7 @@ bool route_t::find_route(karte_t *welt, const koord3d start, test_driver_t *tdri
 		bool already_there;
 		if(  coupling  ) {
 			// find place to do a coupling.
-			already_there = tdriver->is_coupling_target( gr, tmp->parent==NULL ? NULL : tmp->parent->gr, coupling_steps );
+			already_there = tdriver->is_coupling_target( gr, tmp->parent==NULL ? NULL : tmp->parent->gr);
 		} else {
 			// normal routine.
 			already_there = tdriver->is_target( gr, tmp->parent==NULL ? NULL : tmp->parent->gr );
