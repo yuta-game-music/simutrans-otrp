@@ -154,6 +154,17 @@ void gebaeude_t::rotate90()
 			// eight layout city building
 			layout = (layout & 4) + ((layout+3) & 3);
 		}
+		else if(  layout>=16  ) {
+			// diagonal tile layout for stations
+			// construct the rotated layout
+			const bool is_vertical = (layout & 0x30) == 0x10;
+			uint8 bits_to_invert = 0x30; // invert vertical / horizontal
+			bits_to_invert |= is_vertical ? 8 : 1; // front/back or way connected direction
+			if(  ((layout&6) == 2  ||  (layout&6) == 4)  &&  is_vertical  ) {
+				bits_to_invert |= 6; // connection of halt
+			}
+			layout ^= bits_to_invert;
+		}
 		else {
 			// 8 & 16 tile lyoutout for stations
 			static uint8 layout_rotate[16] = { 1, 8, 5, 10, 3, 12, 7, 14, 9, 0, 13, 2, 11, 4, 15, 6 };
