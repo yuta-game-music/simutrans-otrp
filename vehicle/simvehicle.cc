@@ -3425,7 +3425,7 @@ bool rail_vehicle_t::is_target(const grund_t *gr,const grund_t *prev_gr) const
 	}
 	// end of stop: Is it long enough?
 	const uint32 available_halt_length = cnv->calc_available_halt_length_in_vehicle_steps(gr->get_pos(), ribi); // 256 units per a straight tile
-	return available_halt_length > ((uint32)cnv->get_entire_convoy_length()) << 4;
+	return available_halt_length >= ((uint32)cnv->get_entire_convoy_length()) << 4;
 }
 
 // this routine is called by find_route, to determined if we reached a coupling point

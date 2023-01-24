@@ -704,6 +704,7 @@ route_t::route_result_t route_t::calc_route(karte_t *welt, const koord3d ziel, c
 
 	INT_CHECK("route 343");
 	const halthandle_t halt = welt->lookup(start)->get_halt();
+	const vehicle_t* vehicle = dynamic_cast<vehicle_t*>(tdriver);
 	if( !ok ) {
 		DBG_MESSAGE("route_t::calc_route()","No route from %d,%d to %d,%d found",start.x, start.y, ziel.x, ziel.y);
 		// no route found
@@ -712,7 +713,7 @@ route_t::route_result_t route_t::calc_route(karte_t *welt, const koord3d ziel, c
 		return no_route;
 	}
 	// advance so all convoi fits into a halt (only set for trains and cars)
-	else if(  max_len>1  &&  halt.is_bound()  ) {
+	else if(  max_len>1  &&  halt.is_bound()  &&  route.get_count()>=2  &&  vehicle  ) {
 		// For here, we define 512 (VEHICLE_STEPS_PER_TILE * 2) steps for one tile.
 		const uint32 straight_tile_steps = VEHICLE_STEPS_PER_TILE << 1;
 		const uint32 diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile << 1;
@@ -720,27 +721,12 @@ route_t::route_result_t route_t::calc_route(karte_t *welt, const koord3d ziel, c
 		const uint32 half_diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile;
 		const uint32 max_length_in_steps = max_len << 5; // convert 16 to 512
 		const waytype_t waytype = tdriver->get_waytype();
-		
-		uint32 steps_covered_by_station = 0;
-		bool is_front_diagonal = false;
-		bool is_last_diagonal = false;
+
+		bool is_front_diagonal = is_way_bend(route.back(), waytype);
 		
 		// first: find out how many vehicle steps I am already in the station
-		for(  uint32 i = route.get_count() - 1;  i>=0;  i--  ) {
-			if(  halt != haltestelle_t::get_halt(route[i], NULL)  ) {
-				break;
-			}
-			const bool is_diagonal = is_way_bend(route[i], waytype);
-			steps_covered_by_station += is_diagonal ? diagonal_tile_steps : straight_tile_steps;
-			is_last_diagonal = i < route.get_count() - 1 && is_diagonal;
-		}
-		if(  is_way_bend(route.back(), waytype)  ) {
-			is_front_diagonal = true;
-			steps_covered_by_station += half_diagonal_tile_steps - diagonal_tile_steps;
-		}
-		if(  is_last_diagonal  ) {
-			steps_covered_by_station += half_diagonal_tile_steps - diagonal_tile_steps;
-		}
+		const ribi_t::ribi last_dir = ribi_type(route.back() - route[route.get_count()-2]);
+		uint32 steps_covered_by_station = vehicle->get_convoi()->calc_available_halt_length_in_vehicle_steps(route.back(), last_dir) << 1;
 		
 		// and now go forward, if possible
 		grund_t* gr_loop = world()->lookup(route.back());
