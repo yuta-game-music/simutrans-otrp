@@ -695,7 +695,7 @@ route_t::route_result_t route_t::calc_route(karte_t *welt, const koord3d ziel, c
 #ifdef DEBUG_ROUTES
 	const uint32 ms = dr_time();
 #endif
-	bool ok = intern_calc_route(welt, start, ziel, tdriver, max_khm, 0xFFFFFFFFul );
+	const bool ok = intern_calc_route(welt, start, ziel, tdriver, max_khm, 0xFFFFFFFFul );
 #ifdef DEBUG_ROUTES
 	if(tdriver->get_waytype()==water_wt) {
 		DBG_DEBUG("route_t::calc_route()", "route from %d,%d to %d,%d with %i steps in %u ms found.", start.x, start.y, ziel.x, ziel.y, route.get_count()-1, dr_time()-ms );
@@ -703,8 +703,7 @@ route_t::route_result_t route_t::calc_route(karte_t *welt, const koord3d ziel, c
 #endif
 
 	INT_CHECK("route 343");
-	const halthandle_t halt = welt->lookup(start)->get_halt();
-	const vehicle_t* vehicle = dynamic_cast<vehicle_t*>(tdriver);
+	
 	if( !ok ) {
 		DBG_MESSAGE("route_t::calc_route()","No route from %d,%d to %d,%d found",start.x, start.y, ziel.x, ziel.y);
 		// no route found
@@ -712,8 +711,11 @@ route_t::route_result_t route_t::calc_route(karte_t *welt, const koord3d ziel, c
 		route.append(start); // just to be safe
 		return no_route;
 	}
-	// advance so all convoi fits into a halt (only set for trains and cars)
-	else if(  max_len>1  &&  halt.is_bound()  &&  route.get_count()>=2  &&  vehicle  ) {
+
+	// advance so all convoi fits into a halt (only set for trains and cars
+	const halthandle_t halt = welt->lookup(start)->get_halt();
+	const vehicle_t* vehicle = dynamic_cast<vehicle_t*>(tdriver);
+	if(  max_len>1  &&  halt.is_bound()  &&  route.get_count()>=2  &&  vehicle  ) {
 		// For here, we define 512 (VEHICLE_STEPS_PER_TILE * 2) steps for one tile.
 		const uint32 straight_tile_steps = VEHICLE_STEPS_PER_TILE << 1;
 		const uint32 diagonal_tile_steps = vehicle_base_t::diagonal_vehicle_steps_per_tile << 1;
