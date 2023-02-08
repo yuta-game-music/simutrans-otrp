@@ -3365,8 +3365,8 @@ uint32 convoi_t::calc_available_halt_length_in_vehicle_steps(koord3d front_vehic
 	const weg_t* way_first = gr->get_weg(waytype);
 	const ribi_t::ribi way_dir_first = way_first->get_ribi_unmasked();
 	halt_length += ribi_t::is_bend(way_dir_first) ? half_diagonal_tile_length : straight_tile_length;
-	ribi_t::ribi open_dir = way_dir_first & ribi_t::backward(front_vehicle_dir);
-	if(  !gr->get_neighbour(gr, waytype, open_dir)  ) {
+	ribi_t::ribi open_dir = way_dir_first & ~front_vehicle_dir;
+	if(  !ribi_t::is_single(open_dir)  ||  !gr->get_neighbour(gr, waytype, open_dir)  ) {
 		gr = NULL;
 	}
 	
