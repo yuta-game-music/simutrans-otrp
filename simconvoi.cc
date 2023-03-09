@@ -2267,8 +2267,23 @@ bool convoi_t::can_go_alte_richtung()
 			for(i=0; i<inspecting->get_vehicle_count(); i++) {
 				vehicle_t* v = inspecting->get_vehikel(i);
 				// eventually add current position to the route
-				if (route.front() != v->get_pos() && route.at(1) != v->get_pos()) {
-					route.insert(v->get_pos());
+				// fill the tiles between route.front() and v->get_pos()
+				while (route.front() != v->get_pos() && route.at(1) != v->get_pos()) {
+					const grund_t* g = welt->lookup(route.front());
+					const weg_t* w = g ? g->get_weg(front()->get_waytype()) : NULL;
+					ribi_t::ribi dir = w ? w->get_ribi_unmasked() : ribi_t::none;
+					// find the direction to add to the route.
+					dir &= ~ribi_type(route.at(1) - route.front());
+					// If something went wrong in finding the adjacent tile, just insert the vehicle's pos.
+					koord3d pos_to_insert = v->get_pos();
+					if(  ribi_t::is_single(dir)  ) {
+						grund_t* gn;
+						g->get_neighbour(gn, front()->get_waytype(), dir);
+						if(  gn  ) {
+							pos_to_insert = gn->get_pos();
+						}
+					}
+					route.insert(pos_to_insert);
 				}
 			}
 			inspecting = inspecting->get_coupling_convoi();
