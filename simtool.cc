@@ -7929,6 +7929,8 @@ bool scenario_check_convoy(karte_t *welt, player_t *player, convoihandle_t cnv, 
  * 'l' : apply new line [number]
  * 'd' : go to nearest depot
  * 'r' : release the child convoy
+ * 'a' : set convoy trading acceptance
+ * 'o' : change convoy owner by trading
  */
 bool tool_change_convoi_t::init( player_t *player )
 {

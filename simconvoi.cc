@@ -4927,13 +4927,21 @@ void convoi_t::register_journey_time() {
 	}
 }
 
+// Change the owner according to the trading configuration
 void convoi_t::trade_convoi() {
-	if(get_permit_trade()){
-		sint64 value = calc_restwert();
-		owner->book_new_vehicle( value, get_pos().get_2d(), fahr[0] ? fahr[0]->get_desc()->get_waytype() : ignore_wt );
-		set_owner(welt->get_player(get_accept_player_nr()));
-		owner->book_new_vehicle( -value, get_pos().get_2d(), fahr[0] ? fahr[0]->get_desc()->get_waytype() : ignore_wt );
-		set_permit_trade(false);
-		set_accept_player_nr(owner->get_player_nr());
+	if (!get_permit_trade()) {
+		return;
 	}
+	sint64 value = calc_restwert();
+	owner->book_new_vehicle(value, get_pos().get_2d(), fahr[0] ? fahr[0]->get_desc()->get_waytype() : ignore_wt);
+	if(  line.is_bound()  ) {
+		unset_line();
+	} else {
+		unregister_stops();
+	}
+	set_owner(welt->get_player(get_accept_player_nr()));
+	register_stops();
+	owner->book_new_vehicle(-value, get_pos().get_2d(), fahr[0] ? fahr[0]->get_desc()->get_waytype() : ignore_wt);
+	set_permit_trade(false);
+	set_accept_player_nr(owner->get_player_nr());
 }
