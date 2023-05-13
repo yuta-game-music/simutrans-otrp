@@ -3828,9 +3828,13 @@ bool haltestelle_t::book_departure (uint32 arr_tick, uint32 dep_tick, uint32 exp
 		if(  i->cnv==cnv  &&  i->arr_tick==arr_tick  ) {
 			// The requested slot is already reserved by this convoy.
 			return true;
-		} else if(
+		}
+		const linehandle_t line_a = i->cnv->get_line();
+		const linehandle_t line_b = cnv->get_line();
+		if(
 			i->dep_tick==dep_tick  &&
-			(i->cnv==cnv  ||  i->cnv->get_line()==cnv->get_line())  &&
+			line_a.is_bound()  &&  line_b.is_bound()  &&
+			line_a->get_schedule()->get_departure_slot_group_id()==line_b->get_schedule()->get_departure_slot_group_id()  &&
 			i->stop_index==stop_index
 		) {
 			// The slot is already reserved by other convoy.
