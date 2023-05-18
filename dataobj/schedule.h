@@ -53,9 +53,7 @@ class schedule_t
 	}
 
 protected:
-	schedule_t() : editing_finished(false), current_stop(0), flags(0), max_speed(0) {
-		set_new_departure_slot_group_id();
-	}
+	schedule_t() : editing_finished(false), current_stop(0), flags(0), max_speed(0), departure_slot_group_id(0) {}
 
 public:
 	enum schedule_type {
