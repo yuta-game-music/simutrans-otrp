@@ -4,6 +4,7 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 
 #include "../simdebug.h"
 #include "../gui/simwin.h"
@@ -717,9 +718,16 @@ void schedule_t::set_new_departure_slot_group_id() {
 }
 
 
+static uint32 departure_slot_group_id_random = 12345678 + (uint32)time( NULL );
+
+
 sint64 schedule_t::issue_new_departure_slot_group_id() {
-	sint64 upper_bits = (sint64)simrand_plain();
-	uint32 lower_bits = simrand_plain();
-	// generate 63 bit random number, since the id is signed int.
-	return ((upper_bits & 0x7FFFFFFF) << 32) | lower_bits;
+	// issue_new_departure_slot_group_id() has to have its own random number generator
+	// because this function is called only on local machine in network games.
+	// Using simrand() here results in a desync.
+	departure_slot_group_id_random *= 3141592621u;
+	const uint32 num_1 = ++departure_slot_group_id_random;
+	departure_slot_group_id_random *= 3141592621u;
+	const sint64 num_2 = ++departure_slot_group_id_random;
+	return ((num_2 & 0x7FFFFFFF) << 32) | num_1;
 }
