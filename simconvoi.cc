@@ -2898,7 +2898,10 @@ void convoi_t::rdwr(loadsave_t *file)
 	}
 
 	// waiting time left ...
-	if(file->is_version_atleast(99, 17)) {
+	if(  file->get_OTRP_version()>=35  ) {
+		file->rdwr_long(arrived_time);
+	}
+	else if(file->is_version_atleast(99, 17)) {
 		if(file->is_saving()) {
 			if(  has_schedule  &&  schedule->get_current_entry().waiting_time_shift > 0  ) {
 				uint32 diff_ticks = arrived_time + welt->ticks_per_world_month / schedule->get_current_entry().waiting_time_shift - welt->get_ticks();
