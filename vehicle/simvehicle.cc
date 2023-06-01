@@ -1284,18 +1284,7 @@ void vehicle_t::hop(grund_t* gr)
 
 	// if speed limit changed, then cnv must recalc
 	if (speed_limit != old_speed_limit) {
-		if (speed_limit < old_speed_limit) {
-			if (speed_limit < cnv->get_speed_limit()) {
-				// update
-				cnv->set_speed_limit(speed_limit);
-			}
-		}
-		else {
-			if (old_speed_limit == cnv->get_speed_limit()) {
-				// convoy's speed limit may be larger now
-				cnv->must_recalc_speed_limit();
-			}
-		}
+		cnv->must_recalc_speed_limit();
 	}
 }
 
