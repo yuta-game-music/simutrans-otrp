@@ -17,6 +17,7 @@
 
 
 #include "../grund.h"
+#include "../../simconvoi.h"
 #include "../../simworld.h"
 #include "../../display/simimg.h"
 #include "../../simhalt.h"
@@ -207,6 +208,49 @@ void weg_t::rdwr(loadsave_t *file)
 }
 
 
+// calculate the platform length, and append the string of the platform length to buf.
+void append_platform_length_string_if_needed(cbuffer_t & buf, const weg_t* weg) {
+	grund_t* gr = world()->lookup(weg->get_pos());
+	const halthandle_t halt = gr ? gr->get_halt() : halthandle_t();
+	if(  !halt.is_bound()  ) {
+		// not a platform tile
+		return;
+	}
+	// find the edge of the platform.
+	koord3d pos = weg->get_pos();
+	ribi_t::ribi dir = 0;
+	// find the initial direction to search.
+	for(uint8 i=0; i<4; i++) {
+		if(  weg->get_ribi_unmasked()&ribi_t::nesw[i]  ) {
+			dir = ribi_t::nesw[i];
+			break;
+		}
+	}
+	if(  dir==0  ) {
+		// no connected way!?
+		return;
+	}
+	// proceed to the edge
+	while(true) {
+		gr->get_neighbour(gr, weg->get_waytype(), dir);
+		if(  !gr  ) { break; }
+		const weg_t* w = gr->get_weg(weg->get_waytype());
+		const halthandle_t h = gr->get_halt();
+		if(  !w  ||  !h.is_bound()  ||  h.get_id()!=halt.get_id()  ) { break; }
+		// now, the halt and the way exist on the new tile.
+		pos = gr->get_pos();
+		const ribi_t::ribi new_dir = w->get_ribi_unmasked() & ~(ribi_t::backward(dir));
+		if(  new_dir==0  ) {
+			break; // probably the edge of the way.
+		}
+		dir = new_dir;
+	}
+
+	const uint32 length_in_steps = convoi_t::calc_available_halt_length_in_vehicle_steps(pos, dir, weg->get_waytype());
+	buf.printf("\n%s%.4f", translator::translate("Station tiles:"), (double)length_in_steps / VEHICLE_STEPS_PER_TILE);
+}
+
+
 void weg_t::info(cbuffer_t & buf) const
 {
 	obj_t::info(buf);
@@ -268,6 +312,8 @@ void weg_t::info(cbuffer_t & buf) const
 	else {
 		buf.append(translator::translate("\nnot elektrified"));
 	}
+
+	append_platform_length_string_if_needed(buf, this);
 
 #if 1
 	buf.printf(translator::translate("convoi passed last\nmonth %i\n"), statistics[1][1]);
