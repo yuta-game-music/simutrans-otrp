@@ -7570,6 +7570,75 @@ const char* tool_remove_signal_t::work( player_t* player, koord3d pos )
 }
 
 
+char const* tool_remove_halt_t::do_work(player_t *player, const koord3d &last_pos, const koord3d &pos)
+{
+	if(  pos==koord3d::invalid  ) {
+		// single tile removal
+		return remove_halt(player, last_pos) ? NULL : "The station cannot be removed.";
+	}
+
+	// multiple tiles removal
+	if(  last_pos.z != pos.z  ) {
+		// allow only same height
+		return NULL;
+	}
+	bool failed_to_remove = false;
+	for(  sint16 x = min(pos.x, last_pos.x);  x <= max(pos.x, last_pos.x);  x++  ) {
+		for(  sint16 y = min(pos.y, last_pos.y);  y <= max(pos.y, last_pos.y);  y++  ) {
+			failed_to_remove |= !remove_halt(player, koord3d(x, y, pos.z));
+		}
+	}
+	return failed_to_remove ? "Some stations cannot be removed." : NULL;
+}
+
+void tool_remove_halt_t::mark_tiles(player_t *, koord3d const &start, koord3d const &end)
+{
+	if (start.z != end.z) {
+		// allow only same height
+		return;
+	}
+	for (sint16 x = min(start.x, end.x); x <= max(start.x, end.x); x++) {
+		for (sint16 y = min(start.y, end.y); y <= max(start.y, end.y); y++) {
+			grund_t *gr = welt->lookup(koord3d(x, y, start.z));
+			if (  !gr  ) { continue; }
+			zeiger_t *marker = new zeiger_t(gr->get_pos(), NULL);
+
+			const uint8 grund_hang = gr->get_grund_hang();
+			const uint8 weg_hang = gr->get_weg_hang();
+			const uint8 hang = max(corner_sw(grund_hang), corner_sw(weg_hang)) + 3 * max(corner_se(grund_hang), corner_se(weg_hang)) + 9 * max(corner_ne(grund_hang), corner_ne(weg_hang)) + 27 * max(corner_nw(grund_hang), corner_nw(weg_hang));
+			uint8 back_hang = (hang % 3) + 3 * ((uint8)(hang / 9)) + 27;
+			marker->set_foreground_image(ground_desc_t::marker->get_image(grund_hang % 27));
+			marker->set_image(ground_desc_t::marker->get_image(back_hang));
+			marker->mark_image_dirty(marker->get_image(), 0);
+			gr->obj_add(marker);
+			marked.insert(marker);
+		}
+	}
+}
+
+
+image_id tool_remove_halt_t::get_marker_image() const
+{
+	return cursor;
+}
+
+
+// removes the halt of the given pos.
+// returns true if removing succeeded. returns false if an error occured.
+bool tool_remove_halt_t::remove_halt(player_t* player, koord3d const &pos)
+{
+	const grund_t *gr = welt->lookup(pos);
+	const gebaeude_t* gb = gr ? gr->find<gebaeude_t>() : NULL;
+	halthandle_t halt = gr ? gr->get_halt() : halthandle_t();
+	if(  !gr  ||  !gb  ||  !halt.is_bound()  ||  !gr->is_halt()  || fabrik_t::get_fab(gr->get_pos().get_2d())  ) {
+		return true;
+	}
+	// halt and not a factory (oil rig etc.)
+	const player_t *owner = gb->get_owner();
+	return player_t::check_owner(owner, player) && haltestelle_t::remove(player, gr->get_pos());
+}
+
+
 bool tool_show_trees_t::init( player_t * )
 {
 	env_t::hide_trees = !env_t::hide_trees;
