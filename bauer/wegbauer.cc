@@ -2736,7 +2736,7 @@ void way_builder_t::build_track()
 				}
 
 				// build tram track over crossing -> remove crossing
-				if(  gr->has_two_ways()  &&  desc->get_styp()==type_tram  &&  weg->get_desc()->get_styp() != type_tram  ) {
+				if(  gr->has_two_ways()  &&  desc->get_styp()==type_tram  &&  weg->get_desc()->get_styp() != type_tram  &&  gr->hat_weg(waytype_t::road_wt)  ) {
 					if(  crossing_t *cr = gr->find<crossing_t>(2)  ) {
 						// change to tram track
 						cr->mark_image_dirty( cr->get_image(), 0);
