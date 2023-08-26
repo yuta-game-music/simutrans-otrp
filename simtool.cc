@@ -6346,6 +6346,10 @@ void tool_build_house_t::rdwr_custom_data(memory_rw_t *packet)
 		buildings.clear();
 		for(  uint32 i=0;  i<count;  i++  ) {
 			packet->rdwr_str(ps);
+			// ps can be NULL for some reasons.
+			if(  !ps.c_str()  ) {
+				continue;
+			}
 			const building_tile_desc_t *tile = hausbauer_t::find_tile(ps,0);
 			if(tile) {
 				buildings.append(tile->get_desc());
