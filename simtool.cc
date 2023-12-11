@@ -6298,9 +6298,7 @@ const char *tool_build_house_t::do_work( player_t *player, const koord3d &start,
 		koord k;
 		k.x = start.x;
 		k.y = start.y;
-		if(  grund_t *gr=welt->lookup_kartenboden(k)  ) {
-			return work_on_ground(player, k);
-		}
+		return work_on_ground(player, k);
 	}
 	else {
 		koord wh, nw;
