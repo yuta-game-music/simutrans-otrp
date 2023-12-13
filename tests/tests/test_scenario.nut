@@ -106,7 +106,7 @@ function test_scenario_rules_allow_forbid_way_tool_rect()
 function test_scenario_rules_allow_forbid_way_tool_cube()
 {
 	local waybuilder = command_x(tool_build_way)
-	local setslope = command_x(tool_setslope)
+	local setslope = command_x.set_slope
 	local road = way_desc_x.get_available_ways(wt_road, st_flat)[0]
 	local pl = player_x(0)
 
@@ -132,8 +132,8 @@ function test_scenario_rules_allow_forbid_way_tool_cube()
 
 	// build into forbidden zone
 	{
-		ASSERT_EQUAL(setslope.work(pl, coord3d(3, 4, 0), "" + slope.all_up_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(3, 3, 0), "" + slope.north), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(3, 4, 0), slope.all_up_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(3, 3, 0), slope.north), null)
 
 		ASSERT_EQUAL(command_x.build_way(pl, coord3d(3, 0, 0), coord3d(3, 4, 1), road, true), "")
 		ASSERT_WAY_PATTERN(wt_road, coord3d(0, 0, 0),
@@ -148,8 +148,8 @@ function test_scenario_rules_allow_forbid_way_tool_cube()
 				"........"
 			])
 
-		ASSERT_EQUAL(setslope.work(pl, coord3d(3, 4, 1), "" + slope.all_down_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(3, 3, 0), "" + slope.flat), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(3, 4, 1), slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(3, 3, 0), slope.flat), null)
 	}
 
 	rules.clear()
@@ -157,7 +157,7 @@ function test_scenario_rules_allow_forbid_way_tool_cube()
 
 	// build double height slope through forbidden cube
 	{
-		ASSERT_EQUAL(setslope.work(pl, coord3d(1, 1, 0), "" + (2*slope.east)), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(1, 1, 0), (2*slope.east)), null)
 		ASSERT_EQUAL(command_x.build_way(pl, coord3d(2, 1, 0), coord3d(1, 1, 0), road, true), null)
 		ASSERT_WAY_PATTERN(wt_road, coord3d(0, 0, 0),
 			[
@@ -172,7 +172,7 @@ function test_scenario_rules_allow_forbid_way_tool_cube()
 			])
 
 		ASSERT_EQUAL(command_x(tool_remove_way).work(pl, coord3d(2, 1, 0), coord3d(1, 1, 0), "" + wt_road), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(1, 1, 0), "" + slope.flat), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(1, 1, 0), slope.flat), null)
 	}
 
 	// clean up
@@ -185,7 +185,7 @@ function test_scenario_rules_allow_forbid_tool_stacked_rect()
 {
 	local pl = player_x(0)
 	local waybuilder = command_x(tool_build_way)
-	local setslope = command_x(tool_setslope)
+	local setslope = command_x.set_slope
 	local road_desc = way_desc_x.get_available_ways(wt_road, st_flat)[0]
 
 	rules.forbid_way_tool_rect(0, tool_build_way, wt_road, coord(1, 1), coord(14, 14), "Foo Bar 1")
@@ -251,7 +251,7 @@ function test_scenario_rules_allow_forbid_tool_stacked_cube()
 {
 	local pl = player_x(0)
 	local waybuilder = command_x(tool_build_way)
-	local setslope = command_x(tool_setslope)
+	local setslope = command_x.set_slope
 	local road_desc = way_desc_x.get_available_ways(wt_road, st_flat)[0]
 
 	rules.forbid_way_tool_cube(0, tool_build_way, wt_road, coord3d(1, 1, 0), coord3d(14, 14, 0), "Foo Bar 1")

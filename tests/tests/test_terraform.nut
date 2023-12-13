@@ -366,45 +366,45 @@ function test_terraform_raise_lower_land_below_way()
 
 	// set slope up
 	{
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" +   slope.south), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" +   slope.south), "")
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" + 2*slope.south), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" + slope.all_down_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" + slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0),   slope.south), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0),   slope.south), "")
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0), 2*slope.south), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0), slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0), slope.all_down_slope), null)
 
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" +   slope.north), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" +   slope.north), "")
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" + 2*slope.north), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" + slope.all_down_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" + slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0),   slope.north), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0),   slope.north), "")
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0), 2*slope.north), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0), slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0), slope.all_down_slope), null)
 
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" + slope.all_up_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" + slope.all_up_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" + slope.all_down_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, 0), "" + slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0), slope.all_up_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0), slope.all_up_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0), slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, 0), slope.all_down_slope), null)
 
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" + slope.all_up_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" + slope.all_up_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" + slope.all_down_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, 0), "" + slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0), slope.all_up_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0), slope.all_up_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0), slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, 0), slope.all_down_slope), null)
 	}
 
 	// set slope down
 	{
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2,  0), "" + slope.all_down_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2,  0), "" + slope.all_down_slope), "")
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 2, -1), "" + slope.all_up_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2,  0), slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2,  0), slope.all_down_slope), "")
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 2, -1), slope.all_up_slope), null)
 
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4,  0), "" + slope.all_down_slope), null)
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4,  0), "" + slope.all_down_slope), "")
-		ASSERT_EQUAL(setslope.work(pl, coord3d(4, 4, -1), "" + slope.all_up_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4,  0), slope.all_down_slope), null)
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4,  0), slope.all_down_slope), "")
+		ASSERT_EQUAL(setslope(pl, coord3d(4, 4, -1), slope.all_up_slope), null)
 	}
 
 	// non-dead-end, should fail for all slopes
 	{
 		for (local sl = slope.flat+1; sl <= slope.all_down_slope; ++sl) {
 			if (sl != slope.raised && sl != 81) {
-				ASSERT_EQUAL(setslope.work(pl, coord3d(4, 3, 0), "" + sl), "Tile not empty.")
+				ASSERT_EQUAL(setslope(pl, coord3d(4, 3, 0), sl), "Tile not empty.")
 			}
 		}
 	}
