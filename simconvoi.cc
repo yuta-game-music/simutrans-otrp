@@ -179,6 +179,7 @@ void convoi_t::init(player_t *player)
 	longblock_signal_request.valid = false;
 	crossing_reservation_index.clear();
 	recalc_min_top_speed = true;
+	recalc_friction_weight = true;
 
 	speed_magnification = atoi(translator::translate("speed_magnification"))!=0 ? atoi(translator::translate("speed_magnification")) : 100;
 	acceleration_magnification = atoi(translator::translate("acceleration_magnification"))!=0 ? atoi(translator::translate("acceleration_magnification")) : 100;
@@ -766,13 +767,15 @@ void convoi_t::calc_acceleration(uint32 delta_t)
 	convoihandle_t c = self;
 	bool rsl = recalc_speed_limit; // Must speed limit be recalculated?
 	bool rmt = recalc_min_top_speed; // Must min_top_speed be recalculated?
+	bool rfw = recalc_friction_weight; // Must friction_weight be recalculated?
 	while(  c.is_bound()  &&  !rsl  ) {
 		rsl |= c->get_recalc_speed_limit();
 		rmt |= c->get_recalc_min_top_speed();
+		rfw |= c->get_recalc_friction_weight();
 		c = c->get_coupling_convoi();
 	}
-	
-	if(  !recalc_data  &&  !rsl  &&  !rmt  &&  !recalc_data_front  &&  (
+
+	if(  !recalc_data  &&  !rsl  &&  !rmt  &&  !rfw  &&  !recalc_data_front  &&  (
 		(sum_friction_weight == sum_gesamtweight  &&  akt_speed_soll <= akt_speed  &&  akt_speed_soll+24 >= akt_speed)  ||
 		(sum_friction_weight > sum_gesamtweight  &&  akt_speed_soll == akt_speed)  )
 		) {
@@ -801,7 +804,7 @@ void convoi_t::calc_acceleration(uint32 delta_t)
 	// only compute this if a vehicle in the convoi hopped
 	if(  recalc_data  ||  rsl  ) {
 		if(  recalc_data  ) {
-			sum_friction_weight = sum_gesamtweight = 0;
+			sum_gesamtweight = 0;
 		}
 		// calculate total friction and lowest speed limit
 		speed_limit = min_top_speed;
@@ -813,8 +816,7 @@ void convoi_t::calc_acceleration(uint32 delta_t)
 				speed_limit = min( speed_limit, v->get_speed_limit() );
 
 				if (recalc_data) {
-					int total_vehicle_weight = v->get_total_weight();
-					sum_friction_weight += v->get_frictionfactor() * total_vehicle_weight;
+					const uint32 total_vehicle_weight = v->get_total_weight();
 					sum_gesamtweight += total_vehicle_weight;
 				}
 			}
@@ -833,6 +835,10 @@ void convoi_t::calc_acceleration(uint32 delta_t)
 		}
 		recalc_data = recalc_speed_limit = false;
 		akt_speed_soll = min( speed_limit, brake_speed_soll );
+	}
+
+	if(  recalc_data  ||  rfw  ) {
+		calc_sum_friction_weight();
 	}
 
 	if(  recalc_data_front  ) {
@@ -4814,8 +4820,10 @@ convoihandle_t convoi_t::uncouple_convoi() {
 	coupling_convoi->front()->set_leading(true);
 	back()->set_last(true);
 	must_recalc_min_top_speed();
+	must_recalc_friction_weight();
 	// for child convoy, recalculate is_electric and min_top_speed immediately.
 	coupling_convoi->check_electrification();
+	coupling_convoi->must_recalc_friction_weight();
 	const sint32 mts = coupling_convoi->calc_min_top_speed();
 	convoihandle_t c = coupling_convoi->get_coupling_convoi();
 	// broadcast min_top_speed
@@ -4951,4 +4959,19 @@ void convoi_t::trade_convoi() {
 	owner->book_new_vehicle(-value, get_pos().get_2d(), fahr[0] ? fahr[0]->get_desc()->get_waytype() : ignore_wt);
 	set_permit_trade(false);
 	set_accept_player_nr(owner->get_player_nr());
+}
+
+
+void convoi_t::calc_sum_friction_weight() {
+	sum_friction_weight = 0;
+	convoihandle_t c = self;
+	while(  c.is_bound()  ) {
+		for(  uint8 i=0;  i<c->get_vehicle_count();  i++  ) {
+			const vehicle_t* v = c->get_vehikel(i);
+			const sint64 total_vehicle_weight = v->get_total_weight();
+			sum_friction_weight += v->get_frictionfactor() * total_vehicle_weight;
+		}
+		c->reset_recalc_friction_weight();
+		c = c->get_coupling_convoi();
+	}
 }

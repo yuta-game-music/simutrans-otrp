@@ -1279,7 +1279,7 @@ void vehicle_t::hop(grund_t* gr)
 	calc_friction(gr);
 
 	if (old_friction != current_friction) {
-		cnv->update_friction_weight( (current_friction-old_friction) * (sint64)sum_weight);
+		cnv->must_recalc_friction_weight();
 	}
 
 	// if speed limit changed, then cnv must recalc
@@ -1736,6 +1736,10 @@ DBG_MESSAGE("vehicle_t::rdwr_from_convoi()","bought at %i/%i.",(purchase_time%12
 		total_freight = 0;
 		FOR(slist_tpl<ware_t>, const& c, fracht) {
 			total_freight += c.menge;
+		}
+
+		if(  const grund_t* gr = welt->lookup(get_pos())  ) {
+			calc_friction(gr);
 		}
 	}
 

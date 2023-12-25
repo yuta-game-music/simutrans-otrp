@@ -109,6 +109,7 @@ private:
 	uint16 recalc_data        : 1; ///< true, when convoy has to recalculate weights and speed limits
 	uint16 recalc_speed_limit : 1; ///< true, when convoy has to recalculate speed limits
 	bool recalc_min_top_speed : 1; ///< true, when convoy has to recalculate min_top_speed and is_electric
+	bool recalc_friction_weight  : 1; ///< true, when vehicle has to recalculate the friction weight
 
 	uint16 previous_delta_v   :12; /// 12 bit! // Stores the previous delta_v value; otherwise these digits are lost during calculation and vehicle do not accelerate
 	// 36 bytes
@@ -126,7 +127,7 @@ private:
 	 * when loading/driving.
 	 */
 	sint64 sum_gesamtweight;
-	sint64 sum_friction_weight;
+	sint64 sum_friction_weight; // valid only when the convoy is the parent.
 	// 56 bytes
 	sint32 akt_speed_soll;    // target speed
 	sint32 akt_speed;         // current speed
@@ -426,6 +427,12 @@ private:
 	 */
 	void unregister_stops();
 
+	/**
+	 * Calculates and set sum_friction_weight considering the coupling convoys.
+	 * recalc_friction_weight is reset by this function.
+	 */
+	void calc_sum_friction_weight();
+
 	uint32 move_to(uint16 start_index);
 	
 	vector_tpl<std::pair< uint16, uint16> > crossing_reservation_index; 
@@ -619,9 +626,6 @@ public:
 
 	/// @returns weight of convoy including freight
 	const sint64 & get_sum_gesamtweight() const {return sum_gesamtweight;}
-
-	/// changes sum_friction_weight, called when vehicle changed tile and friction changes as well.
-	void update_friction_weight(sint64 delta_friction_weight) { sum_friction_weight += delta_friction_weight; }
 
 	/// @returns theoretical max speed of a convoy with given @p total_power and @p total_weight
 	static sint32 calc_max_speed(uint64 total_power, uint64 total_weight, sint32 speed_limit);
@@ -902,6 +906,9 @@ public:
 	void must_recalc_min_top_speed() { recalc_min_top_speed = true; }
 	void reset_recalc_min_top_speed() { recalc_min_top_speed = false; }
 	bool get_recalc_min_top_speed() const { return recalc_min_top_speed; }
+	void must_recalc_friction_weight() { recalc_friction_weight = true; }
+	void reset_recalc_friction_weight() { recalc_friction_weight = false; }
+	bool get_recalc_friction_weight() const { return recalc_friction_weight; }
 
 	// calculates the speed used for the speedbonus base, and the max achievable speed at current power/weight for overtakers
 	void calc_speedbonus_kmh();
