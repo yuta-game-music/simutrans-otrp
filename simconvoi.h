@@ -286,6 +286,11 @@ private:
 	uint8 next_coupling_steps;
 
 	bool coupling_done;
+
+	/*
+	 * The initial convoy direction to get to the next stop.
+	 * This is valid only when the convoy is in loading state.
+	*/
 	ribi_t::ribi next_initial_direction;
 
 	/**
