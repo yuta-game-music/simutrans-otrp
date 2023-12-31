@@ -1014,8 +1014,10 @@ void gebaeude_t::cleanup(player_t *player)
 	
 	// check adjacent tiles and turn on the connection bit.
 	const sint8 offset = this_gr->get_weg_yoff()/TILE_HEIGHT_STEP;
+	// WORKAROUND: station extensions have somehow inverted layout bits.
+	const bool is_generic_ext = tile->get_desc()->get_type() == building_desc_t::generic_extension;
 	for(  uint8 i=0;  i<2;  i++  ) {
-		const koord dir = directions_to_lookup[(layout&0x30)>>4][layout&1][i];
+		const koord dir = directions_to_lookup[(layout&0x30)>>4][(layout&1)^is_generic_ext][i];
 		grund_t* gr = welt->lookup(get_pos() + koord3d(dir, offset));
 		if(!gr) {
 			// check whether bridge end tile
