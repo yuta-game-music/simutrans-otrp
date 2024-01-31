@@ -833,13 +833,16 @@ void convoi_t::calc_acceleration(uint32 delta_t)
 		if (  in_delay_recovery  ){
 			speed_limit += kmh_to_speed(5);
 		}
-		recalc_data = recalc_speed_limit = false;
+		recalc_speed_limit = false;
 		akt_speed_soll = min( speed_limit, brake_speed_soll );
 	}
 
 	if(  recalc_data  ||  rfw  ) {
 		calc_sum_friction_weight();
 	}
+
+	// all calculations which is triggered by recalc_data must be above this line.
+	recalc_data = false;
 
 	if(  recalc_data_front  ) {
 		// brake at the end of stations/in front of signals and crossings
