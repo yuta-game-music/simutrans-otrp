@@ -21,6 +21,7 @@
 #include "../sys/simsys.h"
 #include "../dataobj/environment.h"
 #include "../player/simplay.h"
+#include "../player/finance.h"
 #include "../gui/player_frame_t.h"
 #include "../utils/simrandom.h"
 #include "../utils/cbuffer_t.h"
@@ -1427,6 +1428,33 @@ bool nwc_service_t::execute(karte_t *welt)
 			nws.flag = flag;
 			nws.text = strdup(buf);
 			if (text  &&  (strlen(text) > MAX_PACKET_LEN - 256)) {
+				text[MAX_PACKET_LEN - 256] = 0;
+			}
+			nws.send(packet->get_sender());
+			break;
+		}
+
+		case SRVC_GET_STAT: {
+			uint8 min_index = 0;
+			uint8 max_index = PLAYER_UNOWNED;
+
+			cbuffer_t buf;
+			for (uint8 i = min_index; i < max_index; i++) {
+				if (player_t* player = welt->get_player(i)) {
+					buf.printf("Company #%d: %s\n", i, player->get_name());
+					// print current financial info
+					if (i < lengthof(nwc_chg_player_t::company_creator)) {
+						finance_t* finance = player->get_finance();
+						buf.printf("    current account balance: %d\n", finance->get_account_balance());
+						buf.printf("    current net wealth: %d\n", finance->get_netwealth());
+					}
+				}
+			}
+
+			nwc_service_t nws;
+			nws.flag = flag;
+			nws.text = strdup(buf);
+			if (text && (strlen(text) > MAX_PACKET_LEN - 256)) {
 				text[MAX_PACKET_LEN - 256] = 0;
 			}
 			nws.send(packet->get_sender());
