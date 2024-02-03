@@ -260,7 +260,7 @@ void schedule_t::rdwr(loadsave_t *file)
 				sint8 n = 0;
 				// Conversion for standard compatible writing.
 				if(  entries[i].waiting_time_shift>0  ) {
-					n = 16-max(int(log2(entries[i].waiting_time_shift)), 9);
+					n = 16-max(int(log2((uint32)entries[i].waiting_time_shift)), 9);
 				}
 				file->rdwr_byte(n);
 				if(  file->is_loading()  ) {

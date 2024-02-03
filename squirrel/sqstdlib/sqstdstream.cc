@@ -101,9 +101,10 @@ SQInteger _stream_readstr(HSQUIRRELVM v) {
 	SETUP_STREAM(v);
 	SQInteger size;
 	sq_getinteger(v, 2, &size);
-	SQChar str[size];
+	SQChar* str = new SQChar[size];
 	SQInteger len = self->Read(&str, sizeof(SQChar)*size);
 	sq_pushstring(v, str, len);
+	delete[] str;
 	return 1;
 }
 
@@ -194,9 +195,10 @@ SQInteger _stream_writestr(HSQUIRRELVM v) {
 	SETUP_STREAM(v);
 	const SQChar* str;
 	sq_getstring(v, 2, &str);
-	SQChar str2[strlen(str)+1];
+	SQChar* str2 = new SQChar[strlen(str)+1];
 	strcpy(str2, str);
 	self->Write(str2, sizeof(SQChar)*(strlen(str2)));
+	delete[] str2;
 	return 0;
 }
 
