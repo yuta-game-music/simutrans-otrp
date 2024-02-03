@@ -1445,8 +1445,8 @@ bool nwc_service_t::execute(karte_t *welt)
 					// print current financial info
 					if (i < lengthof(nwc_chg_player_t::company_creator)) {
 						finance_t* finance = player->get_finance();
-						buf.printf("    current account balance: %d\n", finance->get_account_balance());
-						buf.printf("    current net wealth: %d\n", finance->get_netwealth());
+						buf.printf("    current account balance: %lld\n", finance->get_account_balance());
+						buf.printf("    current net wealth: %lld\n", finance->get_netwealth());
 					}
 				}
 			}
