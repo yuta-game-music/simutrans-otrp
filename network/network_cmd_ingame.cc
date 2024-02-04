@@ -1498,11 +1498,11 @@ bool nwc_service_t::execute(karte_t *welt)
 				vector_tpl<halthandle_t> haltestelles = haltestelle_t::get_alle_haltestellen();
 				halthandle_t* wlist = MALLOCN(halthandle_t, haltestelles.get_count());
 
-				//std::sort(wlist, wlist + haltestelles.get_count() * sizeof(halthandle_t), [](const halthandle_t &a, const halthandle_t &b) {return a->get_ware_summe(goods_manager_t::passengers) - b->get_ware_summe(goods_manager_t::passengers); });
+				/*std::sort(wlist, wlist + haltestelles.get_count(), [](const halthandle_t &a, const halthandle_t &b) {return a->get_ware_summe(goods_manager_t::passengers) - b->get_ware_summe(goods_manager_t::passengers); });
 				for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
 					halthandle_t halt = wlist[i];
 					buf.printf("    halt #%d: %s (%d / %d)\n", i, halt->get_name(), halt->get_ware_summe(goods_manager_t::passengers), halt->get_capacity(0));
-				}
+				}*/
 				free(wlist);
 			}
 
