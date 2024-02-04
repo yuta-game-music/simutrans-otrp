@@ -1497,7 +1497,8 @@ bool nwc_service_t::execute(karte_t *welt)
 				buf.printf("Halt Top\n");
 				vector_tpl<halthandle_t> haltestelles = haltestelle_t::get_alle_haltestellen();
 				halthandle_t* wlist = MALLOCN(halthandle_t, haltestelles.get_count());
-				std::sort(wlist, wlist + haltestelles.get_count() * sizeof(halthandle_t), order_by_wait_count);
+
+				std::sort(wlist, wlist + haltestelles.get_count() * sizeof(halthandle_t), [](const halthandle_t &a, const halthandle_t &b) {return a->get_ware_summe(goods_manager_t::passengers) - b->get_ware_summe(goods_manager_t::passengers); });
 				for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
 					halthandle_t halt = wlist[i];
 					buf.printf("    halt #%d: %s (%d / %d)\n", i, halt->get_name(), halt->get_ware_summe(goods_manager_t::passengers), halt->get_capacity(0));
@@ -1547,10 +1548,4 @@ bool nwc_service_t::execute(karte_t *welt)
 		default: ;
 	}
 	return true; // to delete
-}
-
-bool order_by_wait_count(const halthandle_t &a, const halthandle_t &b) {
-	uint32 a_connections = a->get_ware_summe(goods_manager_t::passengers);
-	uint32 b_connections = b->get_ware_summe(goods_manager_t::passengers);
-	return a_connections - b_connections;
 }
