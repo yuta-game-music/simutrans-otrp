@@ -14,6 +14,7 @@
 #include "../dataobj/loadsave.h"
 #include "../dataobj/gameinfo.h"
 #include "../dataobj/scenario.h"
+#include "../simmem.h"
 #include "../simmenu.h"
 #include "../simversion.h"
 #include "../gui/simwin.h"
@@ -23,12 +24,15 @@
 #include "../player/simplay.h"
 #include "../player/finance.h"
 #include "../simconvoi.h"
+#include "../simhalt.h"
+#include "../halthandle_t.h"
 #include "../gui/player_frame_t.h"
 #include "../utils/simrandom.h"
 #include "../utils/cbuffer_t.h"
 #include "../utils/csv.h"
 #include "../display/viewport.h"
 #include "../script/script.h" // callback for calls to tools
+#include <algorithm>
 
 
 network_command_t* network_command_t::read_from_packet(packet_t *p)
@@ -1489,6 +1493,14 @@ bool nwc_service_t::execute(karte_t *welt)
 						buf.printf("    current error convois count: %d\n", error_convois_count);
 					}
 				}
+				vector_tpl<halthandle_t> haltestelles = haltestelle_t::get_alle_haltestellen();
+				halthandle_t* wlist = MALLOCN(halthandle_t, haltestelles.get_count());
+				std::sort(wlist, wlist + haltestelles.get_count() * sizeof(halthandle_t), order_by_wait_count);
+				for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
+					halthandle_t halt = wlist[i];
+					buf.printf("halt #%d: %s (%d / %d)\n", i, halt->get_name(), halt->get_ware_summe(goods_manager_t::passengers), halt->get_capacity(0));
+				}
+				free(wlist);
 			}
 
 			nwc_service_t nws;
@@ -1533,4 +1545,10 @@ bool nwc_service_t::execute(karte_t *welt)
 		default: ;
 	}
 	return true; // to delete
+}
+
+bool order_by_wait_count(const halthandle_t &a, const halthandle_t &b) {
+	uint32 a_connections = a->get_ware_summe(goods_manager_t::passengers);
+	uint32 b_connections = b->get_ware_summe(goods_manager_t::passengers);
+	return a_connections - b_connections;
 }
