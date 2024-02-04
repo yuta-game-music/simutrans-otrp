@@ -34,6 +34,8 @@ public:
 	void rdwr() OVERRIDE;
 	uint32 client_id;
 	uint32 len;
+private:
+	bool order_by_wait_count(const halthandle_t& a, const halthandle_t& b);
 };
 
 /**

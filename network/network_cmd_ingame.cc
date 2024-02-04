@@ -1493,12 +1493,14 @@ bool nwc_service_t::execute(karte_t *welt)
 						buf.printf("    current error convois count: %d\n", error_convois_count);
 					}
 				}
+
+				buf.printf("Halt Top\n");
 				vector_tpl<halthandle_t> haltestelles = haltestelle_t::get_alle_haltestellen();
 				halthandle_t* wlist = MALLOCN(halthandle_t, haltestelles.get_count());
 				std::sort(wlist, wlist + haltestelles.get_count() * sizeof(halthandle_t), order_by_wait_count);
 				for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
 					halthandle_t halt = wlist[i];
-					buf.printf("halt #%d: %s (%d / %d)\n", i, halt->get_name(), halt->get_ware_summe(goods_manager_t::passengers), halt->get_capacity(0));
+					buf.printf("    halt #%d: %s (%d / %d)\n", i, halt->get_name(), halt->get_ware_summe(goods_manager_t::passengers), halt->get_capacity(0));
 				}
 				free(wlist);
 			}
