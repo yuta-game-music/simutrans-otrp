@@ -1450,13 +1450,43 @@ bool nwc_service_t::execute(karte_t *welt)
 						buf.printf("    current net wealth: %lld\n", finance->get_netwealth());
 
 						vector_tpl<convoihandle_t> convois = welt->convoys();
+						uint32 all_convois_count = 0;
+						uint32 error_convois_count = 0;
 						for (uint32 j = 0; j < convois.get_count(); j++) {
 							convoihandle_t convoi = convois[j];
 							if (convoi->get_owner()->get_player_nr() != i) {
 								continue;
 							}
-							buf.printf("    convoi #%d: (%s)[%d] %s\n", j, convoi->get_pos().get_2d().get_str(), convoi->get_state(), convoi->get_name());
+							all_convois_count++;
+							switch (convoi->get_state()) {
+								case convoi_t::states::NO_ROUTE:
+								case convoi_t::states::WAITING_FOR_CLEARANCE_ONE_MONTH:
+								case convoi_t::states::WAITING_FOR_CLEARANCE_TWO_MONTHS:
+								case convoi_t::states::CAN_START_ONE_MONTH:
+								case convoi_t::states::CAN_START_TWO_MONTHS:
+									error_convois_count++;
+									break;
+								case convoi_t::states::INITIAL:
+								case convoi_t::states::EDIT_SCHEDULE:
+								case convoi_t::states::ROUTING_1:
+								case convoi_t::states::DUMMY4:
+								case convoi_t::states::DUMMY5:
+								case convoi_t::states::DRIVING:
+								case convoi_t::states::LOADING:
+								case convoi_t::states::WAITING_FOR_CLEARANCE:
+								case convoi_t::states::CAN_START:
+								case convoi_t::states::SELF_DESTRUCT:
+								case convoi_t::states::LEAVING_DEPOT:
+								case convoi_t::states::ENTERING_DEPOT:
+								case convoi_t::states::COUPLED:
+								case convoi_t::states::COUPLED_LOADING:
+								case convoi_t::states::WAITING_FOR_LEAVING_DEPOT:
+								case convoi_t::states::MAX_STATES:
+									break;
+							}
 						}
+						buf.printf("    current convois count: %d\n", all_convois_count);
+						buf.printf("    current error convois count: %d\n", error_convois_count);
 					}
 				}
 			}
