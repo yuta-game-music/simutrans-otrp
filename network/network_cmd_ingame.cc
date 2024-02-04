@@ -22,6 +22,7 @@
 #include "../dataobj/environment.h"
 #include "../player/simplay.h"
 #include "../player/finance.h"
+#include "../simconvoi.h"
 #include "../gui/player_frame_t.h"
 #include "../utils/simrandom.h"
 #include "../utils/cbuffer_t.h"
@@ -1447,6 +1448,15 @@ bool nwc_service_t::execute(karte_t *welt)
 						finance_t* finance = player->get_finance();
 						buf.printf("    current account balance: %lld\n", finance->get_account_balance());
 						buf.printf("    current net wealth: %lld\n", finance->get_netwealth());
+
+						vector_tpl<convoihandle_t> convois = welt->convoys();
+						for (uint32 j = 0; j < convois.get_count(); j++) {
+							convoihandle_t convoi = convois[j];
+							if (convoi->get_owner()->get_player_nr() != i) {
+								continue;
+							}
+							buf.printf("    convoi #%d: (%s)[%d] %s\n", j, convoi->get_pos().get_2d().get_str(), convoi->get_state(), convoi->get_name());
+						}
 					}
 				}
 			}
