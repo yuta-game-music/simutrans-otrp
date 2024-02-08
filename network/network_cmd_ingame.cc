@@ -1495,16 +1495,16 @@ bool nwc_service_t::execute(karte_t *welt)
 				}
 			}
 
-			buf.printf("Halt Top\n");
+			buf.printf("Crowded Halt Top\n");
 			vector_tpl<halthandle_t> haltestelles = haltestelle_t::get_alle_haltestellen();
 			halthandle_t* wlist = MALLOCN(halthandle_t, haltestelles.get_count());
 			for (uint32 i = 0; i < haltestelles.get_count(); i++) {
 				wlist[i] = haltestelles[i];
 			}
-			std::sort(wlist, wlist + haltestelles.get_count(), [](const halthandle_t& a, const halthandle_t& b) {return a->get_ware_summe(goods_manager_t::passengers) > b->get_ware_summe(goods_manager_t::passengers); });
+			std::sort(wlist, wlist + haltestelles.get_count(), [](const halthandle_t& a, const halthandle_t& b) {return (float)a->get_ware_summe(goods_manager_t::passengers) / a->get_capacity(0) > (float)b->get_ware_summe(goods_manager_t::passengers) / b->get_capacity(0); });
 			for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
 				halthandle_t halt = wlist[i];
-				buf.printf("    halt #%d: %s (%d / %d)\n", i + 1 , halt->get_name(), halt->get_ware_summe(goods_manager_t::passengers), halt->get_capacity(0));
+				buf.printf("    halt #%d: [%s]%s (%7d / %7d = %.1f%%)\n", i + 1 , halt->get_owner()->get_name(), halt->get_name(), halt->get_ware_summe(goods_manager_t::passengers), halt->get_capacity(0), 100.0f * halt->get_ware_summe(goods_manager_t::passengers) / halt->get_capacity(0));
 			}
 			free(wlist);
 
