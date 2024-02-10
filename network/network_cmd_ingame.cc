@@ -1446,12 +1446,14 @@ bool nwc_service_t::execute(karte_t *welt)
 			cbuffer_t buf;
 			for (uint8 i = min_index; i < max_index; i++) {
 				if (player_t* player = welt->get_player(i)) {
-					buf.printf("Company #%d: %s\n", i, player->get_name());
+					const char* name = player->get_name();
+					buf.printf("Company #%d: %s\n", i, name);
 					// print current financial info
 					if (i < lengthof(nwc_chg_player_t::company_creator)) {
 						finance_t* finance = player->get_finance();
-						buf.printf("    current account balance: %lld\n", finance->get_account_balance());
-						buf.printf("    current net wealth: %lld\n", finance->get_netwealth());
+						sint64 balance = finance->get_account_balance();
+						sint64 wealth = finance->get_netwealth();
+						buf.printf("    balance - wealth: %lld - %lld\n", balance, wealth);
 
 						vector_tpl<convoihandle_t> convois = welt->convoys();
 						uint32 all_convois_count = 0;
@@ -1489,8 +1491,7 @@ bool nwc_service_t::execute(karte_t *welt)
 									break;
 							}
 						}
-						buf.printf("    current convois count: %d\n", all_convois_count);
-						buf.printf("    current error convois count: %d\n", error_convois_count);
+						buf.printf("    convois (error/all): %4d / %4d\n", error_convois_count, all_convois_count);
 					}
 				}
 			}
