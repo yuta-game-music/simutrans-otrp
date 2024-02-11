@@ -122,6 +122,10 @@ public:
 		SRVC_GET_STAT         = 16,
 		SRVC_MAX
 	};
+	enum {
+		FORMAT_PRETTY = 0,
+		FORMAT_JSON = 1,
+	};
 
 	uint32 number;
 	char *text;

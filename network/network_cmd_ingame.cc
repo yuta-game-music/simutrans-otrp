@@ -1442,18 +1442,34 @@ bool nwc_service_t::execute(karte_t *welt)
 		case SRVC_GET_STAT: {
 			uint8 min_index = 0;
 			uint8 max_index = PLAYER_UNOWNED;
+			uint8 format = FORMAT_PRETTY;
+			if (strcmp(text, "json") == 0) {
+				format = FORMAT_JSON;
+			}
 
 			cbuffer_t buf;
+			switch (format) {
+			case FORMAT_PRETTY: break;
+			case FORMAT_JSON: buf.printf("{\"players\":["); break;
+			}
+			bool is_first_element = true;
 			for (uint8 i = min_index; i < max_index; i++) {
 				if (player_t* player = welt->get_player(i)) {
 					const char* name = player->get_name();
-					buf.printf("Company #%d: %s\n", i, name);
+					switch (format) {
+					case FORMAT_PRETTY: buf.printf("Company #%d: %s\n", i, name); break;
+					case FORMAT_JSON:
+						if(!is_first_element) buf.printf(",");
+						buf.printf("{\"id\":%d,\"name\":\"%s\"", i, name);
+						is_first_element = false;
+						break;
+					}
+					
 					// print current financial info
 					if (i < lengthof(nwc_chg_player_t::company_creator)) {
 						finance_t* finance = player->get_finance();
 						sint64 balance = finance->get_account_balance();
 						sint64 wealth = finance->get_netwealth();
-						buf.printf("    balance - wealth: %lld - %lld\n", balance, wealth);
 
 						vector_tpl<convoihandle_t> convois = welt->convoys();
 						uint32 all_convois_count = 0;
@@ -1491,23 +1507,61 @@ bool nwc_service_t::execute(karte_t *welt)
 									break;
 							}
 						}
-						buf.printf("    convois (error/all): %4d / %4d\n", error_convois_count, all_convois_count);
+						switch (format) {
+						case FORMAT_PRETTY:
+							buf.printf("    balance - wealth: %lld - %lld\n    convois (error/all): %4d / %4d\n",
+								balance, wealth,
+								error_convois_count, all_convois_count);
+							break;
+						case FORMAT_JSON: buf.printf("\"balance\":%lld,\"wealth\":%lld,\"convois\"{\"total\":%d,\"error\":%d}",
+							balance, wealth,
+							error_convois_count, all_convois_count);
+							break;
+						}
+					}
+					switch (format) {
+					case FORMAT_PRETTY: break;
+					case FORMAT_JSON: buf.printf("}"); break;
 					}
 				}
 			}
+			switch (format) {
+			case FORMAT_PRETTY: buf.printf("Crowded Halt Top\n"); break;
+			case FORMAT_JSON: buf.printf("],\"halts\":["); break;
+			}
 
-			buf.printf("Crowded Halt Top\n");
 			vector_tpl<halthandle_t> haltestelles = haltestelle_t::get_alle_haltestellen();
 			halthandle_t* wlist = MALLOCN(halthandle_t, haltestelles.get_count());
 			for (uint32 i = 0; i < haltestelles.get_count(); i++) {
 				wlist[i] = haltestelles[i];
 			}
 			std::sort(wlist, wlist + haltestelles.get_count(), [](const halthandle_t& a, const halthandle_t& b) {return (float)a->get_ware_summe(goods_manager_t::passengers) / a->get_capacity(0) > (float)b->get_ware_summe(goods_manager_t::passengers) / b->get_capacity(0); });
+
+			is_first_element = true;
 			for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
 				halthandle_t halt = wlist[i];
-				buf.printf("    halt #%2d: (%7d / %7d = %.1f%%) [%s]%s \n", i + 1 , halt->get_ware_summe(goods_manager_t::passengers), halt->get_capacity(0), 100.0f * halt->get_ware_summe(goods_manager_t::passengers) / halt->get_capacity(0), halt->get_owner()->get_name(), halt->get_name());
+				const char* halt_name = halt->get_name();
+				const char* owner_name = halt->get_owner()->get_name();
+				uint32 passenger_count = halt->get_ware_summe(goods_manager_t::passengers);
+				uint32 capacity = halt->get_capacity(0);
+				float rate = (float)passenger_count / capacity;
+				switch (format) {
+				case FORMAT_PRETTY: buf.printf("    halt #%2d: (%7d / %7d = %.1f%%) [%s]%s \n",
+					i + 1, passenger_count, capacity, 100.0f * rate,
+					owner_name, halt_name);
+					break;
+				case FORMAT_JSON:
+					if (!is_first_element) buf.printf(",");
+					buf.printf("{\"ranking\":%d,\"name\":\"%s\",\"owner\":\"%s\",\"passenger_count\":%d,\"capacity\":%d}");
+					is_first_element = false;
+					break;
+				}
 			}
 			free(wlist);
+			switch (format) {
+			case FORMAT_PRETTY: break;
+			case FORMAT_JSON: buf.printf("]}"); break;
+			}
 
 			nwc_service_t nws;
 			nws.flag = flag;
