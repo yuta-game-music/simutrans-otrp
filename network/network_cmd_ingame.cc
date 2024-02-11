@@ -27,6 +27,7 @@
 #include "../simhalt.h"
 #include "../halthandle_t.h"
 #include "../gui/player_frame_t.h"
+#include "../obj/wayobj.h"
 #include "../utils/simrandom.h"
 #include "../utils/cbuffer_t.h"
 #include "../utils/csv.h"
@@ -1448,122 +1449,30 @@ bool nwc_service_t::execute(karte_t *welt)
 			}
 
 			cbuffer_t buf;
-			switch (format) {
-			case FORMAT_PRETTY: break;
-			case FORMAT_JSON: buf.printf("{\"companies\":["); break;
-			}
-			bool is_first_element = true;
-			for (uint8 i = min_index; i < max_index; i++) {
-				if (player_t* player = welt->get_player(i)) {
-					const char* name = player->get_name();
-					switch (format) {
-					case FORMAT_PRETTY: buf.printf("Company #%d: %s\n", i, name); break;
-					case FORMAT_JSON:
-						if(!is_first_element) buf.printf(",");
-						buf.printf("{\"id\":%d,\"name\":\"%s\"", i, name);
-						is_first_element = false;
-						break;
-					}
-					
-					// print current financial info
-					if (i < lengthof(nwc_chg_player_t::company_creator)) {
-						finance_t* finance = player->get_finance();
-						sint64 balance = finance->get_account_balance();
-						sint64 wealth = finance->get_netwealth();
-
-						vector_tpl<convoihandle_t> convois = welt->convoys();
-						uint32 all_convois_count = 0;
-						uint32 error_convois_count = 0;
-						for (uint32 j = 0; j < convois.get_count(); j++) {
-							convoihandle_t convoi = convois[j];
-							if (convoi->get_owner()->get_player_nr() != i) {
-								continue;
-							}
-							all_convois_count++;
-							switch (convoi->get_state()) {
-								case convoi_t::states::NO_ROUTE:
-								case convoi_t::states::WAITING_FOR_CLEARANCE_ONE_MONTH:
-								case convoi_t::states::WAITING_FOR_CLEARANCE_TWO_MONTHS:
-								case convoi_t::states::CAN_START_ONE_MONTH:
-								case convoi_t::states::CAN_START_TWO_MONTHS:
-									error_convois_count++;
-									break;
-								case convoi_t::states::INITIAL:
-								case convoi_t::states::EDIT_SCHEDULE:
-								case convoi_t::states::ROUTING_1:
-								case convoi_t::states::DUMMY4:
-								case convoi_t::states::DUMMY5:
-								case convoi_t::states::DRIVING:
-								case convoi_t::states::LOADING:
-								case convoi_t::states::WAITING_FOR_CLEARANCE:
-								case convoi_t::states::CAN_START:
-								case convoi_t::states::SELF_DESTRUCT:
-								case convoi_t::states::LEAVING_DEPOT:
-								case convoi_t::states::ENTERING_DEPOT:
-								case convoi_t::states::COUPLED:
-								case convoi_t::states::COUPLED_LOADING:
-								case convoi_t::states::WAITING_FOR_LEAVING_DEPOT:
-								case convoi_t::states::MAX_STATES:
-									break;
-							}
-						}
-						switch (format) {
-						case FORMAT_PRETTY:
-							buf.printf("    balance - wealth: %lld - %lld\n    convois (error/all): %4d / %4d\n",
-								balance, wealth,
-								error_convois_count, all_convois_count);
-							break;
-						case FORMAT_JSON:
-							buf.printf(",\"balance\":%lld,\"wealth\":%lld,\"convoi_status\":{\"total\":%d,\"error\":%d}",
-							balance, wealth,
-							all_convois_count, error_convois_count);
-							break;
+			const koord size = welt->get_size();
+			for (int y = 0; y < size.y; y++) {
+				for (int x = 0; x < size.x; x++) {
+					planquadrat_t* planquadrat = welt->access(x, y);
+					if (!planquadrat) continue;
+					grund_t* ground = planquadrat->get_kartenboden();
+					if (!ground) continue;
+					waytype_t types[9];
+					types[0] = waytype_t::road_wt;
+					types[1] = waytype_t::track_wt;
+					types[2] = waytype_t::water_wt;
+					types[3] = waytype_t::overheadlines_wt;
+					types[4] = waytype_t::monorail_wt;
+					types[5] = waytype_t::maglev_wt;
+					types[6] = waytype_t::tram_wt;
+					types[7] = waytype_t::narrowgauge_wt;
+					types[8] = waytype_t::powerline_wt;
+					for (int typeIndex = 0; typeIndex < 9; typeIndex++) {
+						wayobj_t* wayobj = ground->get_wayobj(types[typeIndex]);
+						if (wayobj) {
+							buf.printf("(%d,%d)%s,", x, y, wayobj->get_name());
 						}
 					}
-					switch (format) {
-					case FORMAT_PRETTY: break;
-					case FORMAT_JSON: buf.printf("}"); break;
-					}
 				}
-			}
-			switch (format) {
-			case FORMAT_PRETTY: buf.printf("Crowded Halt Top\n"); break;
-			case FORMAT_JSON: buf.printf("],\"halts\":["); break;
-			}
-
-			vector_tpl<halthandle_t> haltestelles = haltestelle_t::get_alle_haltestellen();
-			halthandle_t* wlist = MALLOCN(halthandle_t, haltestelles.get_count());
-			for (uint32 i = 0; i < haltestelles.get_count(); i++) {
-				wlist[i] = haltestelles[i];
-			}
-			std::sort(wlist, wlist + haltestelles.get_count(), [](const halthandle_t& a, const halthandle_t& b) {return (float)a->get_ware_summe(goods_manager_t::passengers) / max(a->get_capacity(0), 1) > (float)b->get_ware_summe(goods_manager_t::passengers) / max(b->get_capacity(0), 1); });
-
-			is_first_element = true;
-			for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
-				halthandle_t halt = wlist[i];
-				const char* halt_name = halt->get_name();
-				const char* owner_name = halt->get_owner()->get_name();
-				uint32 passenger_count = halt->get_ware_summe(goods_manager_t::passengers);
-				uint32 capacity = halt->get_capacity(0);
-				float rate = capacity <= 0 ? 0 : (float)passenger_count / capacity;
-				switch (format) {
-				case FORMAT_PRETTY: buf.printf("    halt #%2d: (%7d / %7d = %.1f%%) [%s]%s \n",
-					i + 1, passenger_count, capacity, 100.0f * rate,
-					owner_name, halt_name);
-					break;
-				case FORMAT_JSON:
-					if (!is_first_element) buf.printf(",");
-					buf.printf("{\"ranking\":%d,\"name\":\"%s\",\"owner\":\"%s\",\"passenger_count\":%d,\"capacity\":%d}",
-						i + 1, halt_name, owner_name,
-						passenger_count, capacity);
-					is_first_element = false;
-					break;
-				}
-			}
-			free(wlist);
-			switch (format) {
-			case FORMAT_PRETTY: break;
-			case FORMAT_JSON: buf.printf("]}"); break;
 			}
 
 			nwc_service_t nws;
