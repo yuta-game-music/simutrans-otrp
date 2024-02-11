@@ -1513,7 +1513,8 @@ bool nwc_service_t::execute(karte_t *welt)
 								balance, wealth,
 								error_convois_count, all_convois_count);
 							break;
-						case FORMAT_JSON: buf.printf("\"balance\":%lld,\"wealth\":%lld,\"convois\"{\"total\":%d,\"error\":%d}",
+						case FORMAT_JSON:
+							buf.printf("\"balance\":%lld,\"wealth\":%lld,\"convois\"{\"total\":%d,\"error\":%d}",
 							balance, wealth,
 							error_convois_count, all_convois_count);
 							break;
@@ -1552,7 +1553,9 @@ bool nwc_service_t::execute(karte_t *welt)
 					break;
 				case FORMAT_JSON:
 					if (!is_first_element) buf.printf(",");
-					buf.printf("{\"ranking\":%d,\"name\":\"%s\",\"owner\":\"%s\",\"passenger_count\":%d,\"capacity\":%d}");
+					buf.printf("{\"ranking\":%d,\"name\":\"%s\",\"owner\":\"%s\",\"passenger_count\":%d,\"capacity\":%d}",
+						i + 1, halt_name, owner_name,
+						passenger_count, capacity);
 					is_first_element = false;
 					break;
 				}
