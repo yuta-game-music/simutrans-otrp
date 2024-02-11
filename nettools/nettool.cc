@@ -161,6 +161,49 @@ int simple_gettext_command(SOCKET socket, uint32 command_id, int argc, char **ar
 	return 0;
 }
 
+// get statistics
+int get_stat(SOCKET socket, uint32 command_id, int argc, char** argv) {
+	nwc_service_t nwcs;
+	nwcs.flag = command_id;
+	// Cat all arguments together into message to send
+	const int maxlen = 513;
+	int remaining = maxlen - 1;
+	char msg[maxlen];
+	int ind = 0;
+	tstrncpy(msg, argv[ind], remaining);
+	remaining -= strlen(argv[ind]);
+	ind++;
+	while (ind < argc && remaining > 1) {
+		strcat(msg, " ");
+		remaining -= 1;
+		strncat(msg, argv[ind], remaining);
+		remaining -= strlen(argv[ind]);
+		ind++;
+	}
+	nwcs.text = strdup(msg);
+	if (!nwcs.send(socket)) {
+		fprintf(stderr, "Could not send request!\n");
+		return 2;
+	}
+	nwc_service_t* nws = (nwc_service_t*)network_receive_command(NWC_SERVICE);
+	if (nws == NULL) {
+		return 3;
+	}
+	if (nws->flag != command_id) {
+		delete nws;
+		return 3;
+	}
+
+	if (nws->text) {
+		printf("%s", nws->text);
+	}
+	else {
+		printf("Nothing received.\n");
+	}
+	delete nws;
+	return 0;
+}
+
 int get_client_list(SOCKET socket, uint32 command_id, int, char **) {
 	nwc_service_t nwcs;
 	nwcs.flag = command_id;
@@ -552,7 +595,7 @@ int main(int argc, char* argv[]) {
 		{"unlock-company", true,  nwc_service_t::SRVC_UNLOCK_COMPANY,   1, &simple_command},
 		{"remove-company", true,  nwc_service_t::SRVC_REMOVE_COMPANY,   1, &simple_command},
 		{"lock-company",   true,  nwc_service_t::SRVC_LOCK_COMPANY,     2, &lock_company},
-		{"stats",          true,  nwc_service_t::SRVC_GET_STAT,         1, &simple_gettext_command}
+		{"stats",          true,  nwc_service_t::SRVC_GET_STAT,         1, &get_stat}
 	};
 	int numcommands = lengthof(commands);
 
