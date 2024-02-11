@@ -1450,7 +1450,7 @@ bool nwc_service_t::execute(karte_t *welt)
 			cbuffer_t buf;
 			switch (format) {
 			case FORMAT_PRETTY: break;
-			case FORMAT_JSON: buf.printf("{\"players\":["); break;
+			case FORMAT_JSON: buf.printf("{\"companies\":["); break;
 			}
 			bool is_first_element = true;
 			for (uint8 i = min_index; i < max_index; i++) {
