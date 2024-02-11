@@ -1514,7 +1514,7 @@ bool nwc_service_t::execute(karte_t *welt)
 								error_convois_count, all_convois_count);
 							break;
 						case FORMAT_JSON:
-							buf.printf(",\"balance\":%lld,\"wealth\":%lld,\"convois\":{\"total\":%d,\"error\":%d}",
+							buf.printf(",\"balance\":%lld,\"wealth\":%lld,\"convoi_status\":{\"total\":%d,\"error\":%d}",
 							balance, wealth,
 							error_convois_count, all_convois_count);
 							break;
@@ -1536,7 +1536,7 @@ bool nwc_service_t::execute(karte_t *welt)
 			for (uint32 i = 0; i < haltestelles.get_count(); i++) {
 				wlist[i] = haltestelles[i];
 			}
-			std::sort(wlist, wlist + haltestelles.get_count(), [](const halthandle_t& a, const halthandle_t& b) {return (float)a->get_ware_summe(goods_manager_t::passengers) / a->get_capacity(0) > (float)b->get_ware_summe(goods_manager_t::passengers) / b->get_capacity(0); });
+			std::sort(wlist, wlist + haltestelles.get_count(), [](const halthandle_t& a, const halthandle_t& b) {return (float)a->get_ware_summe(goods_manager_t::passengers) / max(a->get_capacity(0), 1) > (float)b->get_ware_summe(goods_manager_t::passengers) / max(b->get_capacity(0), 1); });
 
 			is_first_element = true;
 			for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
@@ -1545,7 +1545,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				const char* owner_name = halt->get_owner()->get_name();
 				uint32 passenger_count = halt->get_ware_summe(goods_manager_t::passengers);
 				uint32 capacity = halt->get_capacity(0);
-				float rate = (float)passenger_count / capacity;
+				float rate = capacity <= 0 ? 0 : (float)passenger_count / capacity;
 				switch (format) {
 				case FORMAT_PRETTY: buf.printf("    halt #%2d: (%7d / %7d = %.1f%%) [%s]%s \n",
 					i + 1, passenger_count, capacity, 100.0f * rate,
