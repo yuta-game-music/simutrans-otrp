@@ -1514,7 +1514,7 @@ bool nwc_service_t::execute(karte_t *welt)
 								error_convois_count, all_convois_count);
 							break;
 						case FORMAT_JSON:
-							buf.printf("\"balance\":%lld,\"wealth\":%lld,\"convois\"{\"total\":%d,\"error\":%d}",
+							buf.printf(",\"balance\":%lld,\"wealth\":%lld,\"convois\":{\"total\":%d,\"error\":%d}",
 							balance, wealth,
 							error_convois_count, all_convois_count);
 							break;
