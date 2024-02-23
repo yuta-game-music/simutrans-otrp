@@ -1263,6 +1263,10 @@ void nwc_tool_t::do_command(karte_t *welt)
 
 extern address_list_t blacklist;
 
+void print_comma_json_value(cbuffer_t buf, bool isLast) {
+	if (isLast) return;
+	buf.printf(",");
+}
 void print_bool_json_value(cbuffer_t buf, char const* key, bool value, bool isLast = false) {
 	buf.printf("\"%s\":%s", key, value ? "true" : "false");
 	print_comma_json_value(buf, isLast);
@@ -1282,9 +1286,6 @@ void print_array_end_json_value(cbuffer_t buf, bool isLast = false) {
 	buf.printf("]");
 	print_comma_json_value(buf, isLast);
 }
-void print_comma_json_value(cbuffer_t buf, bool isLast) {
-	if (isLast) return;
-	buf.printf(",");
 }
 
 bool nwc_service_t::execute(karte_t *welt)
