@@ -1753,7 +1753,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				vector_tpl<halthandle_t> all_halts = haltestelle_t::get_alle_haltestellen();
 				halthandle_t halt;
 				int i;
-				for (i = 0; all_halts.get_count(); i++) {
+				for (i = 0; i < all_halts.get_count(); i++) {
 					if (all_halts[i].get_id() == index) {
 						halt = all_halts[i];
 						break;
