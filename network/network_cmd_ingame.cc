@@ -1763,23 +1763,30 @@ bool nwc_service_t::execute(karte_t *welt)
 					const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
 					dbg->error("network_cmd_ingame", "goods[%i] %s", goods_type, goods_desc->get_name());
 					if (!halt->is_enabled(goods_desc)) continue;
-					dbg->error("network_cmd_ingame", "exist");
 					print_object_start_json_value(&buf);
 					print_int_json_value(&buf, "index", goods_type);
+					dbg->error("network_cmd_ingame", "get_index");
 					print_string_json_value(&buf, "kind", goods_desc->get_name());
+					dbg->error("network_cmd_ingame", "get_name");
 					print_bool_json_value(&buf, "is_transfer", halt->is_transfer(goods_type));
+					dbg->error("network_cmd_ingame", "is_trans");
 					print_int_json_value(&buf, "capacity", halt->get_capacity(goods_type));
+					dbg->error("network_cmd_ingame", "get_cap");
 					print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc));
+					dbg->error("network_cmd_ingame", "get_wait");
 					const vector_tpl<haltestelle_t::connection_t> connections = halt->get_connections(goods_type);
+					dbg->error("network_cmd_ingame", "get_con");
 					int connections_count = connections.get_count();
+					dbg->error("network_cmd_ingame", "get_count v=%i", connections_count);
 					print_array_start_json_value(&buf, "connections");
 					for (int connection_index = 0; connection_index < connections_count; connection_index++)
 					{
+						dbg->error("network_cmd_ingame", "connections[%i] accessing...", connection_index);
 						haltestelle_t::connection_t connection = connections[connection_index];
 						dbg->error("network_cmd_ingame", "connections[%i] %s", connection_index, connection.halt->get_name());
 						print_object_start_json_value(&buf);
 						print_int_json_value(&buf, "index", connection_index);
-						//print_int_json_value(&buf, "halt_index", connection.halt.get_id());
+						print_int_json_value(&buf, "halt_index", connection.halt.get_id());
 						print_string_json_value(&buf, "halt_name", connection.halt->get_name());
 						print_koord_json_value(&buf, "halt_pos", connection.halt->get_basis_pos3d());
 						print_bool_json_value(&buf, "is_transfer", connection.is_transfer);
