@@ -130,7 +130,7 @@ public:
 	enum {
 		DETAIL_TYPE_COMPANY = 0,
 		DETAIL_TYPE_CONVOI = 1,
-		DETAIL_TYPE_STATION = 2,
+		DETAIL_TYPE_HALT = 2,
 	};
 
 	uint32 number;

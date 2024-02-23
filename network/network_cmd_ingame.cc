@@ -1289,6 +1289,9 @@ void print_array_end_json_value(cbuffer_t* buf, bool isLast = false) {
 	buf->printf("]");
 	print_comma_json_value(buf, isLast);
 }
+void print_object_start_json_value(cbuffer_t* buf) {
+	buf->printf("{");
+}
 void print_object_start_json_value(cbuffer_t* buf, char const* key) {
 	buf->printf("\"%s\":{", key);
 }
@@ -1628,7 +1631,7 @@ bool nwc_service_t::execute(karte_t *welt)
 			if (strcmp(text, "convoi") == 0) {
 				type = DETAIL_TYPE_CONVOI;
 			}else if (strcmp(text, "halt") == 0) {
-				type = DETAIL_TYPE_STATION;
+				type = DETAIL_TYPE_HALT;
 			}
 
 			uint8 min_index = 0;
@@ -1642,7 +1645,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				min_index = 0;
 				max_index = welt->convoys().get_count();
 				break;
-			case DETAIL_TYPE_STATION:
+			case DETAIL_TYPE_HALT:
 				min_index = 0;
 				max_index = haltestelle_t::get_alle_haltestellen().get_count();
 				break;
@@ -1739,6 +1742,46 @@ bool nwc_service_t::execute(karte_t *welt)
 				print_object_end_json_value(&buf);
 				print_int_json_value(&buf, "total_distance_traveled", convoi->get_total_distance_traveled(), true);
 				break;
+			case DETAIL_TYPE_HALT:
+				halthandle_t halt = haltestelle_t::get_alle_haltestellen()[index];
+				print_int_json_value(&buf, "index", index);
+				print_string_json_value(&buf, "name", halt->get_name());
+				print_int_json_value(&buf, "owner_number", halt->get_owner()->get_player_nr());
+				print_koord_json_value(&buf, "basis_pos", halt->get_basis_pos3d());
+				print_array_start_json_value(&buf, "transports");
+				int goods_count = goods_manager_t::get_count();
+				for (uint8 goods_type = 0; goods_type < goods_count; goods_type++)
+				{
+					const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
+					print_object_start_json_value(&buf);
+					print_int_json_value(&buf, "index", goods_type); break;
+					print_string_json_value(&buf, "kind", goods_desc->get_name()); break;
+					print_int_json_value(&buf, "capacity", halt->get_capacity(goods_type));
+					print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc));
+
+					const vector_tpl<haltestelle_t::connection_t> connections = halt->get_connections(goods_type);
+					int connections_count = connections.get_count();
+					print_array_start_json_value(&buf, "connections");
+					for(int connection_index = 0; connection_index < connections_count; connection_index++)
+					{
+						haltestelle_t::connection_t connection = connections[connection_index];
+						print_object_start_json_value(&buf);
+						print_int_json_value(&buf, "index", connection_index); break;
+						print_int_json_value(&buf, "halt_index", connection.halt.get_id());
+						print_string_json_value(&buf, "halt_name", connection.halt->get_name());
+						print_koord_json_value(&buf, "halt_pos", connection.halt->get_basis_pos3d());
+						print_bool_json_value(&buf, "is_transfer", connection.is_transfer);
+						print_int_json_value(&buf, "weight", connection.weight);
+						print_object_end_json_value(&buf, connection_index == connections_count - 1);
+					}
+					print_array_end_json_value(&buf, true);
+					print_object_end_json_value(&buf, goods_type == goods_count - 1);
+				}
+				print_int_json_value(&buf, "happy", halt->get_pax_happy());
+				print_int_json_value(&buf, "unhappy", halt->get_pax_unhappy());
+				print_int_json_value(&buf, "no_route", halt->get_pax_no_route());
+				print_int_json_value(&buf, "station_type", halt->get_station_type(), true);
+				print_array_end_json_value(&buf);
 			}
 			buf.printf("}");
 
