@@ -1627,195 +1627,182 @@ bool nwc_service_t::execute(karte_t *welt)
 		}
 
 		case SRVC_GET_DETAILS: {
-			try {
 
-				uint8 type = DETAIL_TYPE_COMPANY;
-				if (strcmp(text, "convoi") == 0) {
-					type = DETAIL_TYPE_CONVOI;
-				}
-				else if (strcmp(text, "halt") == 0) {
-					type = DETAIL_TYPE_HALT;
-				}
+			uint8 type = DETAIL_TYPE_COMPANY;
+			if (strcmp(text, "convoi") == 0) {
+				type = DETAIL_TYPE_CONVOI;
+			}
+			else if (strcmp(text, "halt") == 0) {
+				type = DETAIL_TYPE_HALT;
+			}
 
-				uint8 min_index = 0;
-				uint8 max_index = 0;
-				switch (type) {
-				case DETAIL_TYPE_COMPANY:
-					min_index = 0;
-					max_index = PLAYER_UNOWNED;
-					break;
-				case DETAIL_TYPE_CONVOI:
-					min_index = 0;
-					max_index = welt->convoys().get_count();
-					break;
-				case DETAIL_TYPE_HALT:
-					min_index = 0;
-					max_index = haltestelle_t::get_alle_haltestellen().get_count();
-					break;
-				}
-				uint8 index = number;
-				if (index < min_index) {
-					index = min_index;
-				}
-				else if (index >= max_index) {
-					index = max_index - 1;
-				}
+			uint8 min_index = 0;
+			uint8 max_index = 0;
+			switch (type) {
+			case DETAIL_TYPE_COMPANY:
+				min_index = 0;
+				max_index = PLAYER_UNOWNED;
+				break;
+			case DETAIL_TYPE_CONVOI:
+				min_index = 0;
+				max_index = welt->convoys().get_count();
+				break;
+			case DETAIL_TYPE_HALT:
+				min_index = 0;
+				max_index = haltestelle_t::get_alle_haltestellen().get_count();
+				break;
+			}
+			uint8 index = number;
+			if (index < min_index) {
+				index = min_index;
+			}
+			else if (index >= max_index) {
+				index = max_index - 1;
+			}
 
-				cbuffer_t buf;
+			cbuffer_t buf;
+			buf.extend(1024);
 
-				print_object_start_json_value(&buf);
-				switch (type) {
-				case DETAIL_TYPE_COMPANY:
-				{
-					player_t* player = welt->get_player(index);
-					print_bool_json_value(&buf, "valid", player, !player);
-					if (player) {
-						print_int_json_value(&buf, "index", index);
-						print_string_json_value(&buf, "name", player->get_name());
-						print_bool_json_value(&buf, "password_set", !player->access_password_hash().empty());
-						print_int_json_value(&buf, "color1", player->get_player_color1());
-						print_int_json_value(&buf, "color2", player->get_player_color2());
-						print_object_start_json_value(&buf, "headquater");
-						{
-							short hq_level = player->get_headquarter_level();
-							bool exists = hq_level > 0;
-							print_bool_json_value(&buf, "exists", exists, !exists);
-							if (exists) {
-								print_koord_json_value(&buf, "pos", player->get_headquarter_pos());
-								print_int_json_value(&buf, "level", hq_level, true);
-							}
-						}
-						print_object_end_json_value(&buf);
-						print_object_start_json_value(&buf, "finance");
-						{
-							finance_t* finance = player->get_finance();
-							print_int_json_value(&buf, "balance", finance->get_account_balance());
-							print_int_json_value(&buf, "overdrawn", finance->get_account_overdrawn());
-							print_int_json_value(&buf, "netwealth", finance->get_netwealth(), true);
-						}
-						print_object_end_json_value(&buf, true);
-					}
-					break;
-				}
-				case DETAIL_TYPE_CONVOI:
-				{
-					convoihandle_t convoi = welt->convoys()[index];
+			print_object_start_json_value(&buf);
+			switch (type) {
+			case DETAIL_TYPE_COMPANY:
+			{
+				player_t* player = welt->get_player(index);
+				print_bool_json_value(&buf, "valid", player, !player);
+				if (player) {
 					print_int_json_value(&buf, "index", index);
-					print_string_json_value(&buf, "name", convoi->get_name());
-					print_int_json_value(&buf, "owner_number", convoi->get_owner()->get_player_nr());
-					print_koord_json_value(&buf, "pos", convoi->get_pos());
-					print_int_json_value(&buf, "state", convoi->get_state());
-					print_int_json_value(&buf, "length", convoi->get_length());
-					print_int_json_value(&buf, "vehicle_count", convoi->get_vehicle_count());
-					print_int_json_value(&buf, "detail_length", convoi->get_length_in_steps());
-					print_int_json_value(&buf, "tile_length", convoi->get_tile_length());
-					print_int_json_value(&buf, "entire_length", convoi->get_entire_convoy_length());
-					print_object_start_json_value(&buf, "speed");
+					print_string_json_value(&buf, "name", player->get_name());
+					print_bool_json_value(&buf, "password_set", !player->access_password_hash().empty());
+					print_int_json_value(&buf, "color1", player->get_player_color1());
+					print_int_json_value(&buf, "color2", player->get_player_color2());
+					print_object_start_json_value(&buf, "headquater");
 					{
-						print_int_json_value(&buf, "current", convoi->get_akt_speed());
-						print_int_json_value(&buf, "max", convoi->get_speed_limit());
-						print_int_json_value(&buf, "average", convoi->get_average_kmh());
-						print_int_json_value(&buf, "convoi_weight", convoi->get_sum_weight());
-						print_int_json_value(&buf, "whole_weight", convoi->get_sum_gesamtweight());
-						print_int_json_value(&buf, "power", convoi->get_sum_power());
-						print_int_json_value(&buf, "max_power", convoi->get_max_power_speed());
-						print_int_json_value(&buf, "min_top", convoi->get_min_top_speed(), true);
+						short hq_level = player->get_headquarter_level();
+						bool exists = hq_level > 0;
+						print_bool_json_value(&buf, "exists", exists, !exists);
+						if (exists) {
+							print_koord_json_value(&buf, "pos", player->get_headquarter_pos());
+							print_int_json_value(&buf, "level", hq_level, true);
+						}
 					}
 					print_object_end_json_value(&buf);
 					print_object_start_json_value(&buf, "finance");
 					{
-						print_int_json_value(&buf, "fixed", convoi->get_fixed_cost());
-						print_int_json_value(&buf, "running", convoi->get_running_cost());
-						print_int_json_value(&buf, "purchased", convoi->get_purchase_cost());
-						print_int_json_value(&buf, "profit_in_year", convoi->get_jahresgewinn(), true);
+						finance_t* finance = player->get_finance();
+						print_int_json_value(&buf, "balance", finance->get_account_balance());
+						print_int_json_value(&buf, "overdrawn", finance->get_account_overdrawn());
+						print_int_json_value(&buf, "netwealth", finance->get_netwealth(), true);
 					}
-					print_object_end_json_value(&buf);
-					print_int_json_value(&buf, "departure_time", convoi->get_departure_time());
-					print_koord_json_value(&buf, "home_depot", convoi->get_home_depot());
-					print_object_start_json_value(&buf, "load");
-					{
-						print_int_json_value(&buf, "level", convoi->get_loading_level());
-						print_int_json_value(&buf, "limit", convoi->get_loading_limit(), true);
-					}
-					print_object_end_json_value(&buf);
-					print_object_start_json_value(&buf, "route");
-					{
-						const route_t* route = convoi->get_route();
-						print_bool_json_value(&buf, "exists", route);
-						print_int_json_value(&buf, "line_index", convoi->get_line().get_id());
-						print_koord_json_value(&buf, "schedule_target", convoi->get_schedule_target(), true);
-					}
-					print_object_end_json_value(&buf);
-					print_int_json_value(&buf, "total_distance_traveled", convoi->get_total_distance_traveled(), true);
-					break;
+					print_object_end_json_value(&buf, true);
 				}
-				case DETAIL_TYPE_HALT:
+				break;
+			}
+			case DETAIL_TYPE_CONVOI:
+			{
+				convoihandle_t convoi = welt->convoys()[index];
+				print_int_json_value(&buf, "index", index);
+				print_string_json_value(&buf, "name", convoi->get_name());
+				print_int_json_value(&buf, "owner_number", convoi->get_owner()->get_player_nr());
+				print_koord_json_value(&buf, "pos", convoi->get_pos());
+				print_int_json_value(&buf, "state", convoi->get_state());
+				print_int_json_value(&buf, "length", convoi->get_length());
+				print_int_json_value(&buf, "vehicle_count", convoi->get_vehicle_count());
+				print_int_json_value(&buf, "detail_length", convoi->get_length_in_steps());
+				print_int_json_value(&buf, "tile_length", convoi->get_tile_length());
+				print_int_json_value(&buf, "entire_length", convoi->get_entire_convoy_length());
+				print_object_start_json_value(&buf, "speed");
 				{
-					halthandle_t halt = haltestelle_t::get_alle_haltestellen()[index];
-					dbg->message("network_cmd_ingame", "[%i] %s", index, halt->get_name());
-					print_int_json_value(&buf, "index", index);
-					print_string_json_value(&buf, "name", halt->get_name());
-					print_int_json_value(&buf, "owner_number", halt->get_owner()->get_player_nr());
-					print_koord_json_value(&buf, "basis_pos", halt->get_basis_pos3d());
-					print_array_start_json_value(&buf, "transports");
-					int goods_count = goods_manager_t::get_count();
-					for (uint8 goods_type = 0; goods_type < goods_count; goods_type++)
+					print_int_json_value(&buf, "current", convoi->get_akt_speed());
+					print_int_json_value(&buf, "max", convoi->get_speed_limit());
+					print_int_json_value(&buf, "average", convoi->get_average_kmh());
+					print_int_json_value(&buf, "convoi_weight", convoi->get_sum_weight());
+					print_int_json_value(&buf, "whole_weight", convoi->get_sum_gesamtweight());
+					print_int_json_value(&buf, "power", convoi->get_sum_power());
+					print_int_json_value(&buf, "max_power", convoi->get_max_power_speed());
+					print_int_json_value(&buf, "min_top", convoi->get_min_top_speed(), true);
+				}
+				print_object_end_json_value(&buf);
+				print_object_start_json_value(&buf, "finance");
+				{
+					print_int_json_value(&buf, "fixed", convoi->get_fixed_cost());
+					print_int_json_value(&buf, "running", convoi->get_running_cost());
+					print_int_json_value(&buf, "purchased", convoi->get_purchase_cost());
+					print_int_json_value(&buf, "profit_in_year", convoi->get_jahresgewinn(), true);
+				}
+				print_object_end_json_value(&buf);
+				print_int_json_value(&buf, "departure_time", convoi->get_departure_time());
+				print_koord_json_value(&buf, "home_depot", convoi->get_home_depot());
+				print_object_start_json_value(&buf, "load");
+				{
+					print_int_json_value(&buf, "level", convoi->get_loading_level());
+					print_int_json_value(&buf, "limit", convoi->get_loading_limit(), true);
+				}
+				print_object_end_json_value(&buf);
+				print_object_start_json_value(&buf, "route");
+				{
+					const route_t* route = convoi->get_route();
+					print_bool_json_value(&buf, "exists", route);
+					print_int_json_value(&buf, "line_index", convoi->get_line().get_id());
+					print_koord_json_value(&buf, "schedule_target", convoi->get_schedule_target(), true);
+				}
+				print_object_end_json_value(&buf);
+				print_int_json_value(&buf, "total_distance_traveled", convoi->get_total_distance_traveled(), true);
+				break;
+			}
+			case DETAIL_TYPE_HALT:
+			{
+				halthandle_t halt = haltestelle_t::get_alle_haltestellen()[index];
+				print_int_json_value(&buf, "index", index);
+				print_string_json_value(&buf, "name", halt->get_name());
+				print_int_json_value(&buf, "owner_number", halt->get_owner()->get_player_nr());
+				print_koord_json_value(&buf, "basis_pos", halt->get_basis_pos3d());
+				print_array_start_json_value(&buf, "transports");
+				int goods_count = goods_manager_t::get_count();
+				for (uint8 goods_type = 0; goods_type < goods_count; goods_type++)
+				{
+					const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
+					if (!halt->is_enabled(goods_desc)) continue;
+					print_object_start_json_value(&buf);
+					print_int_json_value(&buf, "index", goods_type);
+					print_string_json_value(&buf, "kind", goods_desc->get_name());
+					print_bool_json_value(&buf, "is_transfer", halt->is_transfer(goods_type));
+					print_int_json_value(&buf, "capacity", halt->get_capacity(goods_type));
+					print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc));
+					const vector_tpl<haltestelle_t::connection_t> connections = halt->get_connections(goods_type);
+					int connections_count = connections.get_count();
+					print_array_start_json_value(&buf, "connections");
+					for (int connection_index = 0; connection_index < connections_count; connection_index++)
 					{
-						const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
-						if (!halt->is_enabled(goods_desc)) continue;
-						dbg->message("network_cmd_ingame", "goods[%i] %s", goods_type, goods_desc->get_name());
+						haltestelle_t::connection_t connection = connections[connection_index];
 						print_object_start_json_value(&buf);
-						print_int_json_value(&buf, "index", goods_type);
-						print_string_json_value(&buf, "kind", goods_desc->get_name());
-						print_bool_json_value(&buf, "is_transfer", halt->is_transfer(goods_type));
-						print_int_json_value(&buf, "capacity", halt->get_capacity(goods_type));
-						print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc));
-						const vector_tpl<haltestelle_t::connection_t> connections = halt->get_connections(goods_type);
-						int connections_count = connections.get_count();
-						print_array_start_json_value(&buf, "connections");
-						for (int connection_index = 0; connection_index < connections_count; connection_index++)
-						{
-							haltestelle_t::connection_t connection = connections[connection_index];
-							dbg->message("network_cmd_ingame", "con[%i] %s", connection_index, connection.halt->get_name());
-							print_object_start_json_value(&buf);
-							print_int_json_value(&buf, "index", connection_index);
-							print_int_json_value(&buf, "halt_index", connection.halt.get_id());
-							print_string_json_value(&buf, "halt_name", connection.halt->get_name());
-							print_koord_json_value(&buf, "halt_pos", connection.halt->get_basis_pos3d());
-							print_bool_json_value(&buf, "is_transfer", connection.is_transfer);
-							print_int_json_value(&buf, "weight", connection.weight);
-							print_object_end_json_value(&buf, connection_index == connections_count - 1);
-						}
-						print_array_end_json_value(&buf, true);
-						print_object_end_json_value(&buf, goods_type == goods_count - 1);
+						print_int_json_value(&buf, "index", connection_index);
+						print_int_json_value(&buf, "halt_index", connection.halt.get_id());
+						print_string_json_value(&buf, "halt_name", connection.halt->get_name());
+						print_koord_json_value(&buf, "halt_pos", connection.halt->get_basis_pos3d());
+						print_bool_json_value(&buf, "is_transfer", connection.is_transfer);
+						print_int_json_value(&buf, "weight", connection.weight);
+						print_object_end_json_value(&buf, connection_index == connections_count - 1);
 					}
-					print_array_end_json_value(&buf);
-					print_int_json_value(&buf, "happy", halt->get_pax_happy());
-					print_int_json_value(&buf, "unhappy", halt->get_pax_unhappy());
-					print_int_json_value(&buf, "no_route", halt->get_pax_no_route());
-					print_int_json_value(&buf, "station_type", halt->get_station_type(), true);
-					break;
+					print_array_end_json_value(&buf, true);
+					print_object_end_json_value(&buf, goods_type == goods_count - 1);
 				}
-				}
-				print_object_end_json_value(&buf, true);
+				print_array_end_json_value(&buf);
+				print_int_json_value(&buf, "happy", halt->get_pax_happy());
+				print_int_json_value(&buf, "unhappy", halt->get_pax_unhappy());
+				print_int_json_value(&buf, "no_route", halt->get_pax_no_route());
+				print_int_json_value(&buf, "station_type", halt->get_station_type(), true);
+				break;
+			}
+			}
+			print_object_end_json_value(&buf, true);
 
-				nwc_service_t nws;
-				nws.flag = flag;
-				nws.text = strdup(buf);
-				if (text && (strlen(text) > MAX_PACKET_LEN - 256)) {
-					text[MAX_PACKET_LEN - 256] = 0;
-				}
-				nws.send(packet->get_sender());
+			nwc_service_t nws;
+			nws.flag = flag;
+			nws.text = strdup(buf);
+			if (text && (strlen(text) > MAX_PACKET_LEN - 256)) {
+				text[MAX_PACKET_LEN - 256] = 0;
 			}
-			catch (std::exception e) {
-				nwc_service_t nws;
-				nws.flag = flag;
-				nws.text = strdup(e.what());
-				if (text && (strlen(text) > MAX_PACKET_LEN - 256)) {
-					text[MAX_PACKET_LEN - 256] = 0;
-				}
-				nws.send(packet->get_sender());
-			}
+			nws.send(packet->get_sender());
 			break;
 		}
 
