@@ -1758,12 +1758,13 @@ bool nwc_service_t::execute(karte_t *welt)
 				for (uint8 goods_type = 0; goods_type < goods_count; goods_type++)
 				{
 					const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
+					if (!halt->is_enabled(goods_desc)) continue;
 					print_object_start_json_value(&buf);
 					print_int_json_value(&buf, "index", goods_type);
 					print_string_json_value(&buf, "kind", goods_desc->get_name());
+					print_bool_json_value(&buf, "is_transfer", halt->is_transfer(goods_type));
 					print_int_json_value(&buf, "capacity", halt->get_capacity(goods_type));
-					print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc), true);
-					/*
+					print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc));
 					const vector_tpl<haltestelle_t::connection_t> connections = halt->get_connections(goods_type);
 					int connections_count = connections.get_count();
 					print_array_start_json_value(&buf, "connections");
@@ -1780,7 +1781,6 @@ bool nwc_service_t::execute(karte_t *welt)
 						print_object_end_json_value(&buf, connection_index == connections_count - 1);
 					}
 					print_array_end_json_value(&buf, true);
-					*/
 					print_object_end_json_value(&buf, goods_type == goods_count - 1);
 				}
 				print_array_end_json_value(&buf);
