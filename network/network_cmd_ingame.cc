@@ -14,6 +14,7 @@
 #include "../dataobj/loadsave.h"
 #include "../dataobj/gameinfo.h"
 #include "../dataobj/scenario.h"
+#include "../dataobj/schedule.h"
 #include "../simmem.h"
 #include "../simmenu.h"
 #include "../simversion.h"
@@ -25,6 +26,8 @@
 #include "../player/finance.h"
 #include "../simconvoi.h"
 #include "../simhalt.h"
+#include "../simline.h"
+#include "../convoihandle_t.h"
 #include "../halthandle_t.h"
 #include "../gui/player_frame_t.h"
 #include "../utils/simrandom.h"
@@ -1637,7 +1640,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				break;
 			case DETAIL_TYPE_CONVOI:
 				min_index = 0;
-				max_index = welt->get_copy_convoi()->get_vehicle_count();
+				max_index = welt->convoys().get_count();
 				break;
 			case DETAIL_TYPE_STATION:
 				min_index = 0;
@@ -1671,7 +1674,7 @@ bool nwc_service_t::execute(karte_t *welt)
 						print_bool_json_value(&buf, "exists", exists, !exists);
 						if (exists) {
 							print_koord_json_value(&buf, "pos", player->get_headquarter_pos());
-							print_int_json_value(&buf, "level", hq_level);
+							print_int_json_value(&buf, "level", hq_level, true);
 						}
 					}
 					print_object_end_json_value(&buf);
@@ -1680,10 +1683,61 @@ bool nwc_service_t::execute(karte_t *welt)
 						finance_t* finance = player->get_finance();
 						print_int_json_value(&buf, "balance", finance->get_account_balance());
 						print_int_json_value(&buf, "overdrawn", finance->get_account_overdrawn());
-						print_int_json_value(&buf, "netwealth", finance->get_netwealth());
+						print_int_json_value(&buf, "netwealth", finance->get_netwealth(), true);
 					}
 					print_object_end_json_value(&buf, true);
 				}
+				break;
+			case DETAIL_TYPE_CONVOI:
+				convoihandle_t convoi = welt->convoys()[index];
+				print_int_json_value(&buf, "index", index);
+				print_string_json_value(&buf, "name", convoi->get_name());
+				print_int_json_value(&buf, "owner_number", convoi->get_owner()->get_player_nr());
+				print_koord_json_value(&buf, "pos", convoi->get_pos());
+				print_int_json_value(&buf, "state", convoi->get_state());
+				print_int_json_value(&buf, "length", convoi->get_length());
+				print_int_json_value(&buf, "vehicle_count", convoi->get_vehicle_count());
+				print_int_json_value(&buf, "detail_length", convoi->get_length_in_steps());
+				print_int_json_value(&buf, "tile_length", convoi->get_tile_length());
+				print_int_json_value(&buf, "entire_length", convoi->get_entire_convoy_length());
+				print_object_start_json_value(&buf, "speed");
+				{
+					print_int_json_value(&buf, "current", convoi->get_akt_speed());
+					print_int_json_value(&buf, "max", convoi->get_speed_limit());
+					print_int_json_value(&buf, "average", convoi->get_average_kmh());
+					print_int_json_value(&buf, "convoi_weight", convoi->get_sum_weight());
+					print_int_json_value(&buf, "whole_weight", convoi->get_sum_gesamtweight());
+					print_int_json_value(&buf, "power", convoi->get_sum_power());
+					print_int_json_value(&buf, "max_power", convoi->get_max_power_speed());
+					print_int_json_value(&buf, "min_top", convoi->get_min_top_speed(), true);
+				}
+				print_object_end_json_value(&buf);
+				print_object_start_json_value(&buf, "finance");
+				{
+					print_int_json_value(&buf, "purchased_cost", convoi->get_purchase_cost());
+					print_int_json_value(&buf, "fixed", convoi->get_fixed_cost());
+					print_int_json_value(&buf, "running", convoi->get_running_cost());
+					print_int_json_value(&buf, "purchased", convoi->get_purchase_cost());
+					print_int_json_value(&buf, "profit_in_year", convoi->get_jahresgewinn(), true);
+				}
+				print_object_end_json_value(&buf);
+				print_int_json_value(&buf, "departure_time", convoi->get_departure_time());
+				print_koord_json_value(&buf, "home_depot", convoi->get_home_depot());
+				print_object_start_json_value(&buf, "load");
+				{
+					print_int_json_value(&buf, "level", convoi->get_loading_level());
+					print_int_json_value(&buf, "limit", convoi->get_loading_limit(), true);
+				}
+				print_object_end_json_value(&buf);
+				print_object_start_json_value(&buf, "route");
+				{
+					const route_t* route = convoi->get_route();
+					print_bool_json_value(&buf, "exists", route);
+					print_int_json_value(&buf, "line_index", convoi->get_line().get_id());
+					print_koord_json_value(&buf, "schedule_target", convoi->get_schedule_target(), true);
+				}
+				print_object_end_json_value(&buf);
+				print_int_json_value(&buf, "total_distance_traveled", convoi->get_total_distance_traveled(), true);
 				break;
 			}
 			buf.printf("}");
