@@ -1661,7 +1661,6 @@ bool nwc_service_t::execute(karte_t *welt)
 			}
 
 			cbuffer_t buf;
-			buf.extend(1024);
 
 			print_object_start_json_value(&buf);
 			switch (type) {
@@ -1764,6 +1763,7 @@ bool nwc_service_t::execute(karte_t *welt)
 					const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
 					dbg->error("network_cmd_ingame", "goods[%i] %s", goods_type, goods_desc->get_name());
 					if (!halt->is_enabled(goods_desc)) continue;
+					dbg->error("network_cmd_ingame", "exist");
 					print_object_start_json_value(&buf);
 					print_int_json_value(&buf, "index", goods_type);
 					print_string_json_value(&buf, "kind", goods_desc->get_name());
@@ -1779,7 +1779,7 @@ bool nwc_service_t::execute(karte_t *welt)
 						dbg->error("network_cmd_ingame", "connections[%i] %s", connection_index, connection.halt->get_name());
 						print_object_start_json_value(&buf);
 						print_int_json_value(&buf, "index", connection_index);
-						print_int_json_value(&buf, "halt_index", connection.halt.get_id());
+						//print_int_json_value(&buf, "halt_index", connection.halt.get_id());
 						print_string_json_value(&buf, "halt_name", connection.halt->get_name());
 						print_koord_json_value(&buf, "halt_pos", connection.halt->get_basis_pos3d());
 						print_bool_json_value(&buf, "is_transfer", connection.is_transfer);
