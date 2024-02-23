@@ -1587,8 +1587,6 @@ bool nwc_service_t::execute(karte_t *welt)
 		}
 
 		case SRVC_GET_DETAILS: {
-			uint8 min_index = 0;
-			uint8 max_index = PLAYER_UNOWNED;
 			uint8 type = DETAIL_TYPE_COMPANY;
 			if (strcmp(text, "convoi") == 0) {
 				type = DETAIL_TYPE_CONVOI;
