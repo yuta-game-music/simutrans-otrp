@@ -1482,9 +1482,7 @@ bool nwc_service_t::execute(karte_t *welt)
 							all_convois_count++;
 							switch (convoi->get_state()) {
 								case convoi_t::states::NO_ROUTE:
-								case convoi_t::states::WAITING_FOR_CLEARANCE_ONE_MONTH:
 								case convoi_t::states::WAITING_FOR_CLEARANCE_TWO_MONTHS:
-								case convoi_t::states::CAN_START_ONE_MONTH:
 								case convoi_t::states::CAN_START_TWO_MONTHS:
 									error_convois_count++;
 									break;
@@ -1496,7 +1494,9 @@ bool nwc_service_t::execute(karte_t *welt)
 								case convoi_t::states::DRIVING:
 								case convoi_t::states::LOADING:
 								case convoi_t::states::WAITING_FOR_CLEARANCE:
+								case convoi_t::states::WAITING_FOR_CLEARANCE_ONE_MONTH:
 								case convoi_t::states::CAN_START:
+								case convoi_t::states::CAN_START_ONE_MONTH:
 								case convoi_t::states::SELF_DESTRUCT:
 								case convoi_t::states::LEAVING_DEPOT:
 								case convoi_t::states::ENTERING_DEPOT:
