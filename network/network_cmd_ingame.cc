@@ -1660,9 +1660,13 @@ bool nwc_service_t::execute(karte_t *welt)
 
 			cbuffer_t buf;
 			buf.printf("{");
+
+			player_t* player;
+			convoihandle_t convoi;
+			halthandle_t halt;
 			switch (type) {
 			case DETAIL_TYPE_COMPANY:
-				player_t* player = welt->get_player(index);
+				player = welt->get_player(index);
 				print_bool_json_value(&buf, "valid", player, !player);
 				if (player) {
 					print_int_json_value(&buf, "index", index);
@@ -1692,7 +1696,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				}
 				break;
 			case DETAIL_TYPE_CONVOI:
-				convoihandle_t convoi = welt->convoys()[index];
+				convoi = welt->convoys()[index];
 				print_int_json_value(&buf, "index", index);
 				print_string_json_value(&buf, "name", convoi->get_name());
 				print_int_json_value(&buf, "owner_number", convoi->get_owner()->get_player_nr());
@@ -1743,7 +1747,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				print_int_json_value(&buf, "total_distance_traveled", convoi->get_total_distance_traveled(), true);
 				break;
 			case DETAIL_TYPE_HALT:
-				halthandle_t halt = haltestelle_t::get_alle_haltestellen()[index];
+				halt = haltestelle_t::get_alle_haltestellen()[index];
 				print_int_json_value(&buf, "index", index);
 				print_string_json_value(&buf, "name", halt->get_name());
 				print_int_json_value(&buf, "owner_number", halt->get_owner()->get_player_nr());
@@ -1782,6 +1786,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				print_int_json_value(&buf, "no_route", halt->get_pax_no_route());
 				print_int_json_value(&buf, "station_type", halt->get_station_type(), true);
 				print_array_end_json_value(&buf);
+				break;
 			}
 			buf.printf("}");
 
