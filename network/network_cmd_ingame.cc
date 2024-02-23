@@ -1659,14 +1659,12 @@ bool nwc_service_t::execute(karte_t *welt)
 			}
 
 			cbuffer_t buf;
-			buf.printf("{");
 
-			player_t* player;
-			convoihandle_t convoi;
-			halthandle_t halt;
+			print_object_start_json_value(&buf);
 			switch (type) {
 			case DETAIL_TYPE_COMPANY:
-				player = welt->get_player(index);
+			{
+				player_t* player = welt->get_player(index);
 				print_bool_json_value(&buf, "valid", player, !player);
 				if (player) {
 					print_int_json_value(&buf, "index", index);
@@ -1695,8 +1693,10 @@ bool nwc_service_t::execute(karte_t *welt)
 					print_object_end_json_value(&buf, true);
 				}
 				break;
+			}
 			case DETAIL_TYPE_CONVOI:
-				convoi = welt->convoys()[index];
+			{
+				convoihandle_t convoi = welt->convoys()[index];
 				print_int_json_value(&buf, "index", index);
 				print_string_json_value(&buf, "name", convoi->get_name());
 				print_int_json_value(&buf, "owner_number", convoi->get_owner()->get_player_nr());
@@ -1745,8 +1745,10 @@ bool nwc_service_t::execute(karte_t *welt)
 				print_object_end_json_value(&buf);
 				print_int_json_value(&buf, "total_distance_traveled", convoi->get_total_distance_traveled(), true);
 				break;
+			}
 			case DETAIL_TYPE_HALT:
-				halt = haltestelle_t::get_alle_haltestellen()[index];
+			{
+				halthandle_t halt = haltestelle_t::get_alle_haltestellen()[index];
 				print_int_json_value(&buf, "index", index);
 				print_string_json_value(&buf, "name", halt->get_name());
 				print_int_json_value(&buf, "owner_number", halt->get_owner()->get_player_nr());
@@ -1760,12 +1762,12 @@ bool nwc_service_t::execute(karte_t *welt)
 					print_int_json_value(&buf, "index", goods_type);
 					print_string_json_value(&buf, "kind", goods_desc->get_name());
 					print_int_json_value(&buf, "capacity", halt->get_capacity(goods_type));
-					print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc));
-
+					print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc), true);
+					/*
 					const vector_tpl<haltestelle_t::connection_t> connections = halt->get_connections(goods_type);
 					int connections_count = connections.get_count();
 					print_array_start_json_value(&buf, "connections");
-					for(int connection_index = 0; connection_index < connections_count; connection_index++)
+					for (int connection_index = 0; connection_index < connections_count; connection_index++)
 					{
 						haltestelle_t::connection_t connection = connections[connection_index];
 						print_object_start_json_value(&buf);
@@ -1778,6 +1780,7 @@ bool nwc_service_t::execute(karte_t *welt)
 						print_object_end_json_value(&buf, connection_index == connections_count - 1);
 					}
 					print_array_end_json_value(&buf, true);
+					*/
 					print_object_end_json_value(&buf, goods_type == goods_count - 1);
 				}
 				print_array_end_json_value(&buf);
@@ -1787,7 +1790,8 @@ bool nwc_service_t::execute(karte_t *welt)
 				print_int_json_value(&buf, "station_type", halt->get_station_type(), true);
 				break;
 			}
-			buf.printf("}");
+			}
+			print_object_end_json_value(&buf, true);
 
 			nwc_service_t nws;
 			nws.flag = flag;
