@@ -1263,43 +1263,43 @@ void nwc_tool_t::do_command(karte_t *welt)
 
 extern address_list_t blacklist;
 
-void print_comma_json_value(cbuffer_t buf, bool isLast) {
+void print_comma_json_value(cbuffer_t* buf, bool isLast) {
 	if (isLast) return;
-	buf.printf(",");
+	buf->printf(",");
 }
-void print_bool_json_value(cbuffer_t buf, char const* key, bool value, bool isLast = false) {
-	buf.printf("\"%s\":%s", key, value ? "true" : "false");
+void print_bool_json_value(cbuffer_t* buf, char const* key, bool value, bool isLast = false) {
+	buf->printf("\"%s\":%s", key, value ? "true" : "false");
 	print_comma_json_value(buf, isLast);
 }
-void print_int_json_value(cbuffer_t buf, char const* key, sint32 value, bool isLast = false) {
-	buf.printf("\"%s\":%i", key, value);
+void print_int_json_value(cbuffer_t* buf, char const* key, sint64 value, bool isLast = false) {
+	buf->printf("\"%s\":%i", key, value);
 	print_comma_json_value(buf, isLast);
 }
-void print_string_json_value(cbuffer_t buf, char const* key, char const* value, bool isLast = false) {
-	buf.printf("\"%s\":\"%s\"", key, value);
+void print_string_json_value(cbuffer_t* buf, char const* key, char const* value, bool isLast = false) {
+	buf->printf("\"%s\":\"%s\"", key, value);
 	print_comma_json_value(buf, isLast);
 }
-void print_array_start_json_value(cbuffer_t buf, char const* key) {
-	buf.printf("\"%s\":[", key);
+void print_array_start_json_value(cbuffer_t* buf, char const* key) {
+	buf->printf("\"%s\":[", key);
 }
-void print_array_end_json_value(cbuffer_t buf, bool isLast = false) {
-	buf.printf("]");
+void print_array_end_json_value(cbuffer_t* buf, bool isLast = false) {
+	buf->printf("]");
 	print_comma_json_value(buf, isLast);
 }
-void print_object_start_json_value(cbuffer_t buf, char const* key) {
-	buf.printf("\"%s\":{", key);
+void print_object_start_json_value(cbuffer_t* buf, char const* key) {
+	buf->printf("\"%s\":{", key);
 }
-void print_object_end_json_value(cbuffer_t buf, bool isLast = false) {
-	buf.printf("}");
+void print_object_end_json_value(cbuffer_t* buf, bool isLast = false) {
+	buf->printf("}");
 	print_comma_json_value(buf, isLast);
 }
-void print_koord_json_value(cbuffer_t buf, char const* key, koord value, bool isLast = false) {
+void print_koord_json_value(cbuffer_t* buf, char const* key, koord value, bool isLast = false) {
 	print_object_start_json_value(buf, key);
 	print_int_json_value(buf, "x", value.x);
 	print_int_json_value(buf, "y", value.y);
 	print_object_end_json_value(buf, isLast);
 }
-void print_koord_json_value(cbuffer_t buf, char const* key, koord3d value, bool isLast = false) {
+void print_koord_json_value(cbuffer_t* buf, char const* key, koord3d value, bool isLast = false) {
 	print_object_start_json_value(buf, key);
 	print_int_json_value(buf, "x", value.x);
 	print_int_json_value(buf, "y", value.y);
@@ -1657,17 +1657,26 @@ bool nwc_service_t::execute(karte_t *welt)
 			switch (type) {
 			case DETAIL_TYPE_COMPANY:
 				player_t* player = welt->get_player(index);
-				print_bool_json_value(buf, "valid", player, !player);
+				print_bool_json_value(&buf, "valid", player, !player);
 				if (player) {
-					print_int_json_value(buf, "index", index);
-					print_string_json_value(buf, "name", player->get_name());
-					print_bool_json_value(buf, "password_set", !player->access_password_hash().empty());
-					print_int_json_value(buf, "color1", player->get_player_color1());
-					print_int_json_value(buf, "color2", player->get_player_color2());
-					print_object_start_json_value(buf, "headquater");
-					print_koord_json_value(buf, "pos", player->get_headquarter_pos());
-					print_int_json_value(buf, "level", player->get_headquarter_level());
-					print_object_end_json_value(buf);
+					print_int_json_value(&buf, "index", index);
+					print_string_json_value(&buf, "name", player->get_name());
+					print_bool_json_value(&buf, "password_set", !player->access_password_hash().empty());
+					print_int_json_value(&buf, "color1", player->get_player_color1());
+					print_int_json_value(&buf, "color2", player->get_player_color2());
+					print_object_start_json_value(&buf, "headquater");
+					{
+						print_koord_json_value(&buf, "pos", player->get_headquarter_pos());
+						print_int_json_value(&buf, "level", player->get_headquarter_level());
+					}
+					print_object_end_json_value(&buf);
+					print_object_start_json_value(&buf, "finance");
+					{
+						finance_t* finance = player->get_finance();
+						print_int_json_value(&buf, "balance", finance->get_account_balance());
+						print_int_json_value(&buf, "overdrawn", finance->get_account_overdrawn());
+					}
+					print_object_end_json_value(&buf);
 				}
 				break;
 			}
