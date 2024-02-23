@@ -11,7 +11,7 @@
 #include "memory_rw.h"
 #include "network.h"
 
-#define MAX_PACKET_LEN (8192)
+#define MAX_PACKET_LEN (524288)
 
 // static const do not work on all compilers/architectures
 #define HEADER_SIZE (6) // the network sizes are given ...
