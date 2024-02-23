@@ -1666,8 +1666,13 @@ bool nwc_service_t::execute(karte_t *welt)
 					print_int_json_value(&buf, "color2", player->get_player_color2());
 					print_object_start_json_value(&buf, "headquater");
 					{
-						print_koord_json_value(&buf, "pos", player->get_headquarter_pos());
-						print_int_json_value(&buf, "level", player->get_headquarter_level());
+						short hq_level = player->get_headquarter_level();
+						bool exists = hq_level > 0;
+						print_bool_json_value(&buf, "exists", exists, !exists);
+						if (exists) {
+							print_koord_json_value(&buf, "pos", player->get_headquarter_pos());
+							print_int_json_value(&buf, "level", hq_level);
+						}
 					}
 					print_object_end_json_value(&buf);
 					print_object_start_json_value(&buf, "finance");
@@ -1675,8 +1680,9 @@ bool nwc_service_t::execute(karte_t *welt)
 						finance_t* finance = player->get_finance();
 						print_int_json_value(&buf, "balance", finance->get_account_balance());
 						print_int_json_value(&buf, "overdrawn", finance->get_account_overdrawn());
+						print_int_json_value(&buf, "netwealth", finance->get_netwealth());
 					}
-					print_object_end_json_value(&buf);
+					print_object_end_json_value(&buf, true);
 				}
 				break;
 			}
