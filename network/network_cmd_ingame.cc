@@ -1302,14 +1302,14 @@ void print_object_end_json_value(cbuffer_t* buf, bool isLast = false) {
 void print_koord_json_value(cbuffer_t* buf, char const* key, koord value, bool isLast = false) {
 	print_object_start_json_value(buf, key);
 	print_int_json_value(buf, "x", value.x);
-	print_int_json_value(buf, "y", value.y);
+	print_int_json_value(buf, "y", value.y, true);
 	print_object_end_json_value(buf, isLast);
 }
 void print_koord_json_value(cbuffer_t* buf, char const* key, koord3d value, bool isLast = false) {
 	print_object_start_json_value(buf, key);
 	print_int_json_value(buf, "x", value.x);
 	print_int_json_value(buf, "y", value.y);
-	print_int_json_value(buf, "z", value.z);
+	print_int_json_value(buf, "z", value.z, true);
 	print_object_end_json_value(buf, isLast);
 }
 
@@ -1721,7 +1721,6 @@ bool nwc_service_t::execute(karte_t *welt)
 				print_object_end_json_value(&buf);
 				print_object_start_json_value(&buf, "finance");
 				{
-					print_int_json_value(&buf, "purchased_cost", convoi->get_purchase_cost());
 					print_int_json_value(&buf, "fixed", convoi->get_fixed_cost());
 					print_int_json_value(&buf, "running", convoi->get_running_cost());
 					print_int_json_value(&buf, "purchased", convoi->get_purchase_cost());
@@ -1758,8 +1757,8 @@ bool nwc_service_t::execute(karte_t *welt)
 				{
 					const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
 					print_object_start_json_value(&buf);
-					print_int_json_value(&buf, "index", goods_type); break;
-					print_string_json_value(&buf, "kind", goods_desc->get_name()); break;
+					print_int_json_value(&buf, "index", goods_type);
+					print_string_json_value(&buf, "kind", goods_desc->get_name());
 					print_int_json_value(&buf, "capacity", halt->get_capacity(goods_type));
 					print_int_json_value(&buf, "waiting", halt->get_ware_summe(goods_desc));
 
@@ -1770,7 +1769,7 @@ bool nwc_service_t::execute(karte_t *welt)
 					{
 						haltestelle_t::connection_t connection = connections[connection_index];
 						print_object_start_json_value(&buf);
-						print_int_json_value(&buf, "index", connection_index); break;
+						print_int_json_value(&buf, "index", connection_index);
 						print_int_json_value(&buf, "halt_index", connection.halt.get_id());
 						print_string_json_value(&buf, "halt_name", connection.halt->get_name());
 						print_koord_json_value(&buf, "halt_pos", connection.halt->get_basis_pos3d());
@@ -1781,11 +1780,11 @@ bool nwc_service_t::execute(karte_t *welt)
 					print_array_end_json_value(&buf, true);
 					print_object_end_json_value(&buf, goods_type == goods_count - 1);
 				}
+				print_array_end_json_value(&buf);
 				print_int_json_value(&buf, "happy", halt->get_pax_happy());
 				print_int_json_value(&buf, "unhappy", halt->get_pax_unhappy());
 				print_int_json_value(&buf, "no_route", halt->get_pax_no_route());
 				print_int_json_value(&buf, "station_type", halt->get_station_type(), true);
-				print_array_end_json_value(&buf);
 				break;
 			}
 			buf.printf("}");
