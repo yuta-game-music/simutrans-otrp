@@ -120,11 +120,17 @@ public:
 		SRVC_REMOVE_COMPANY   = 14,
 		SRVC_LOCK_COMPANY     = 15,
 		SRVC_GET_STAT         = 16,
+		SRVC_GET_DETAILS      = 17,
 		SRVC_MAX
 	};
 	enum {
 		FORMAT_PRETTY = 0,
 		FORMAT_JSON = 1,
+	};
+	enum {
+		DETAIL_TYPE_COMPANY = 0,
+		DETAIL_TYPE_CONVOI = 1,
+		DETAIL_TYPE_STATION = 2,
 	};
 
 	uint32 number;

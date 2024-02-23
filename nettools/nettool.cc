@@ -118,6 +118,34 @@ bool fill_nwc_service(nwc_service_t &nwcs, uint32 command_id, int argc, char **a
 	return true;
 }
 
+/**
+ * Sets nwcs.flag = command_id, text to argv[0], number to argv[1].
+ * @returns true upon success
+ */
+bool fill_nwc_service_string_number(nwc_service_t& nwcs, uint32 command_id, int argc, char** argv)
+{
+	nwcs.flag = command_id;
+	switch (argc) {
+	case 2: // second argument is a positive number
+		if (argv[1]) {
+			int _n = atoi(argv[1]);
+			if (_n >= 0) {
+				nwcs.number = _n;
+			}
+			else {
+				return false;
+			}
+		}
+
+	case 1: // first argument is a string
+	{
+		nwcs.text = strdup(argv[0]);
+	}
+	default: break;
+	}
+	return true;
+}
+
 // Simple commands specify only a command ID to perform an action on the server
 int simple_command(SOCKET socket, uint32 command_id, int argc, char **argv) {
 	nwc_service_t nwcs;
@@ -181,6 +209,35 @@ int get_stat(SOCKET socket, uint32 command_id, int argc, char** argv) {
 		ind++;
 	}
 	nwcs.text = strdup(msg);
+	if (!nwcs.send(socket)) {
+		fprintf(stderr, "Could not send request!\n");
+		return 2;
+	}
+	nwc_service_t* nws = (nwc_service_t*)network_receive_command(NWC_SERVICE);
+	if (nws == NULL) {
+		return 3;
+	}
+	if (nws->flag != command_id) {
+		delete nws;
+		return 3;
+	}
+
+	if (nws->text) {
+		printf("%s", nws->text);
+	}
+	else {
+		printf("Nothing received.\n");
+	}
+	delete nws;
+	return 0;
+}
+
+// get details
+int get_details(SOCKET socket, uint32 command_id, int argc, char** argv) {
+	nwc_service_t nwcs;
+	if (!fill_nwc_service_string_number(nwcs, command_id, argc, argv)) {
+		return 3;
+	}
 	if (!nwcs.send(socket)) {
 		fprintf(stderr, "Could not send request!\n");
 		return 2;
@@ -595,7 +652,8 @@ int main(int argc, char* argv[]) {
 		{"unlock-company", true,  nwc_service_t::SRVC_UNLOCK_COMPANY,   1, &simple_command},
 		{"remove-company", true,  nwc_service_t::SRVC_REMOVE_COMPANY,   1, &simple_command},
 		{"lock-company",   true,  nwc_service_t::SRVC_LOCK_COMPANY,     2, &lock_company},
-		{"stats",          true,  nwc_service_t::SRVC_GET_STAT,         1, &get_stat}
+		{"stats",          true,  nwc_service_t::SRVC_GET_STAT,         1, &get_stat},
+		{"details",        true,  nwc_service_t::SRVC_GET_DETAILS,      2, &get_details}
 	};
 	int numcommands = lengthof(commands);
 

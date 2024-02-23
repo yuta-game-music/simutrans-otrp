@@ -1263,6 +1263,16 @@ void nwc_tool_t::do_command(karte_t *welt)
 
 extern address_list_t blacklist;
 
+void print_bool_json_value(cbuffer_t buf, char const* key, bool value, bool isLast = false) {
+	buf.printf("\"%s\":%s,", key, value ? "true" : "false");
+}
+void print_int_json_value(cbuffer_t buf, char const* key, uint8 value, bool isLast = false) {
+	buf.printf("\"%s\":%i,", key, value);
+}
+void print_string_json_value(cbuffer_t buf, char const* key, char const* value, bool isLast = false) {
+	buf.printf("\"%s\":\"%s\",", key, value);
+}
+
 bool nwc_service_t::execute(karte_t *welt)
 {
 	if (flag>=SRVC_MAX  ||  !env_t::server) {
@@ -1565,6 +1575,67 @@ bool nwc_service_t::execute(karte_t *welt)
 			case FORMAT_PRETTY: break;
 			case FORMAT_JSON: buf.printf("]}"); break;
 			}
+
+			nwc_service_t nws;
+			nws.flag = flag;
+			nws.text = strdup(buf);
+			if (text && (strlen(text) > MAX_PACKET_LEN - 256)) {
+				text[MAX_PACKET_LEN - 256] = 0;
+			}
+			nws.send(packet->get_sender());
+			break;
+		}
+
+		case SRVC_GET_DETAILS: {
+			uint8 min_index = 0;
+			uint8 max_index = PLAYER_UNOWNED;
+			uint8 type = DETAIL_TYPE_COMPANY;
+			if (strcmp(text, "convoi") == 0) {
+				type = DETAIL_TYPE_CONVOI;
+			}else if (strcmp(text, "halt") == 0) {
+				type = DETAIL_TYPE_STATION;
+			}
+
+			uint8 min_index = 0;
+			uint8 max_index = 0;
+			switch (type) {
+			case DETAIL_TYPE_COMPANY:
+				min_index = 0;
+				max_index = PLAYER_UNOWNED;
+				break;
+			case DETAIL_TYPE_CONVOI:
+				min_index = 0;
+				max_index = welt->get_copy_convoi()->get_vehicle_count();
+				break;
+			case DETAIL_TYPE_STATION:
+				min_index = 0;
+				max_index = haltestelle_t::get_alle_haltestellen().get_count();
+				break;
+			}
+			uint8 index = number;
+			if (index < min_index) {
+				index = min_index;
+			}
+			else if (index >= max_index) {
+				index = max_index - 1;
+			}
+
+			cbuffer_t buf;
+			buf.printf("{");
+			switch (type) {
+			case DETAIL_TYPE_COMPANY:
+				player_t* player = welt->get_player(index);
+				print_bool_json_value(buf, "valid", player, !player);
+				if (player) {
+					print_int_json_value(buf, "index", index);
+					print_string_json_value(buf, "name", player->get_name());
+					print_bool_json_value(buf, "password_set", !player->access_password_hash().empty());
+					print_int_json_value(buf, "color1", !player->get_player_color1());
+					print_int_json_value(buf, "color2", !player->get_player_color2(), true);
+				}
+				break;
+			}
+			buf.printf("}");
 
 			nwc_service_t nws;
 			nws.flag = flag;
