@@ -1275,7 +1275,7 @@ void print_bool_json_value(cbuffer_t* buf, char const* key, bool value, bool isL
 	print_comma_json_value(buf, isLast);
 }
 void print_int_json_value(cbuffer_t* buf, char const* key, sint64 value, bool isLast = false) {
-	buf->printf("\"%s\":%i", key, value);
+	buf->printf("\"%s\":%lld", key, value);
 	print_comma_json_value(buf, isLast);
 }
 void print_string_json_value(cbuffer_t* buf, char const* key, char const* value, bool isLast = false) {
