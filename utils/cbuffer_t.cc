@@ -399,6 +399,7 @@ void cbuffer_t::vprintf(const char *fmt, va_list ap )
 
 void cbuffer_t::extend(unsigned int min_free_space)
 {
+	dbg->error("cbuffer_t", "extend min_free=%i current_cap=%i", min_free_space, capacity);
 	if(  min_free_space >= capacity - size  ) {
 
 		unsigned int by_amount = min_free_space + 1 - (capacity - size);
@@ -414,4 +415,5 @@ void cbuffer_t::extend(unsigned int min_free_space)
 		buf = new_buf;
 		capacity = new_capacity;
 	}
+	dbg->error("cbuffer_t", "new_cap=%i", capacity);
 }

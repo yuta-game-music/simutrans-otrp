@@ -1752,6 +1752,7 @@ bool nwc_service_t::execute(karte_t *welt)
 			case DETAIL_TYPE_HALT:
 			{
 				halthandle_t halt = haltestelle_t::get_alle_haltestellen()[index];
+				dbg->error("network_cmd_ingame", "halt[%i] %s", index, halt->get_name());
 				print_int_json_value(&buf, "index", index);
 				print_string_json_value(&buf, "name", halt->get_name());
 				print_int_json_value(&buf, "owner_number", halt->get_owner()->get_player_nr());
@@ -1761,6 +1762,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				for (uint8 goods_type = 0; goods_type < goods_count; goods_type++)
 				{
 					const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
+					dbg->error("network_cmd_ingame", "goods[%i] %s", goods_type, goods_desc->get_name());
 					if (!halt->is_enabled(goods_desc)) continue;
 					print_object_start_json_value(&buf);
 					print_int_json_value(&buf, "index", goods_type);
@@ -1774,6 +1776,7 @@ bool nwc_service_t::execute(karte_t *welt)
 					for (int connection_index = 0; connection_index < connections_count; connection_index++)
 					{
 						haltestelle_t::connection_t connection = connections[connection_index];
+						dbg->error("network_cmd_ingame", "connections[%i] %s", connection_index, connection.halt->get_name());
 						print_object_start_json_value(&buf);
 						print_int_json_value(&buf, "index", connection_index);
 						print_int_json_value(&buf, "halt_index", connection.halt.get_id());
