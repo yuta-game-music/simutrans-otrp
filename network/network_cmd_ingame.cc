@@ -1636,8 +1636,8 @@ bool nwc_service_t::execute(karte_t *welt)
 				type = DETAIL_TYPE_HALT;
 			}
 
-			uint8 min_index = 0;
-			uint8 max_index = 0;
+			uint32 min_index = 0;
+			uint32 max_index = 0;
 			switch (type) {
 			case DETAIL_TYPE_COMPANY:
 				min_index = 0;
@@ -1649,10 +1649,10 @@ bool nwc_service_t::execute(karte_t *welt)
 				break;
 			case DETAIL_TYPE_HALT:
 				min_index = 0;
-				max_index = haltestelle_t::get_alle_haltestellen().get_count();
+				max_index = 0xffffffff;
 				break;
 			}
-			uint8 index = number;
+			uint32 index = number;
 			if (index < min_index) {
 				index = min_index;
 			}
@@ -1750,7 +1750,20 @@ bool nwc_service_t::execute(karte_t *welt)
 			}
 			case DETAIL_TYPE_HALT:
 			{
-				halthandle_t halt = haltestelle_t::get_alle_haltestellen()[index];
+				vector_tpl<halthandle_t> all_halts = haltestelle_t::get_alle_haltestellen();
+				halthandle_t halt;
+				int i;
+				for (i = 0; all_halts.get_count(); i++) {
+					if (all_halts[i].get_id() == index) {
+						halt = all_halts[i];
+						break;
+					}
+				}
+				if (i == all_halts.get_count()) {
+					print_bool_json_value(&buf, "valid", false, true);
+					break;
+				}
+				print_bool_json_value(&buf, "valid", true);
 				print_int_json_value(&buf, "index", index);
 				print_string_json_value(&buf, "name", halt->get_name());
 				print_int_json_value(&buf, "owner_number", halt->get_owner()->get_player_nr());
