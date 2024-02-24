@@ -1860,10 +1860,17 @@ bool nwc_service_t::execute(karte_t *welt)
 				print_koord_json_value(&buf, "basis_pos", halt->get_basis_pos3d());
 				print_array_start_json_value(&buf, "transports");
 				int goods_count = goods_manager_t::get_count();
+				bool is_first_good = true;
 				for (uint8 goods_type = 0; goods_type < goods_count; goods_type++)
 				{
 					const goods_desc_t* goods_desc = goods_manager_t::get_info(goods_type);
 					if (!halt->is_enabled(goods_desc)) continue;
+					if (is_first_good) {
+						is_first_good = false;
+					}
+					else {
+						buf.append(",");
+					}
 					print_object_start_json_value(&buf);
 					print_int_json_value(&buf, "index", goods_type);
 					print_string_json_value(&buf, "kind", goods_desc->get_name());
@@ -1886,7 +1893,7 @@ bool nwc_service_t::execute(karte_t *welt)
 						print_object_end_json_value(&buf, connection_index == connections_count - 1);
 					}
 					print_array_end_json_value(&buf, true);
-					print_object_end_json_value(&buf, goods_type == goods_count - 1);
+					print_object_end_json_value(&buf, true);
 				}
 				print_array_end_json_value(&buf);
 				print_int_json_value(&buf, "happy", halt->get_pax_happy());
