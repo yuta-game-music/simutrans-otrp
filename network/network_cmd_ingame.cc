@@ -1698,8 +1698,21 @@ bool nwc_service_t::execute(karte_t *welt)
 			}
 			case DETAIL_TYPE_CONVOI:
 			{
-				convoihandle_t convoi = welt->convoys()[index];
-				print_int_json_value(&buf, "index", index);
+				vector_tpl<convoihandle_t> all_convois = welt->convoys();
+				convoihandle_t convoi;
+				int i;
+				for (i = 0; i < all_convois.get_count(); i++) {
+					if (all_convois[i].get_id() == index) {
+						convoi = all_convois[i];
+						break;
+					}
+				}
+				if (i == all_convois.get_count()) {
+					print_bool_json_value(&buf, "valid", false, true);
+					break;
+				}
+				print_bool_json_value(&buf, "valid", true);
+				print_int_json_value(&buf, "index", convoi.get_id());
 				print_string_json_value(&buf, "name", convoi->get_name());
 				print_int_json_value(&buf, "owner_number", convoi->get_owner()->get_player_nr());
 				print_koord_json_value(&buf, "pos", convoi->get_pos());
