@@ -1266,9 +1266,12 @@ void nwc_tool_t::do_command(karte_t *welt)
 
 extern address_list_t blacklist;
 
+void print_comma_json_value(cbuffer_t* buf) {
+	buf->printf(",");
+}
 void print_comma_json_value(cbuffer_t* buf, bool isLast) {
 	if (isLast) return;
-	buf->printf(",");
+	print_comma_json_value(buf);
 }
 void print_bool_json_value(cbuffer_t* buf, char const* key, bool value, bool isLast = false) {
 	buf->printf("\"%s\":%s", key, value ? "true" : "false");
@@ -1281,6 +1284,9 @@ void print_int_json_value(cbuffer_t* buf, char const* key, sint64 value, bool is
 void print_string_json_value(cbuffer_t* buf, char const* key, char const* value, bool isLast = false) {
 	buf->printf("\"%s\":\"%s\"", key, value);
 	print_comma_json_value(buf, isLast);
+}
+void print_array_start_json_value(cbuffer_t* buf) {
+	buf->printf("[");
 }
 void print_array_start_json_value(cbuffer_t* buf, char const* key) {
 	buf->printf("\"%s\":[", key);
@@ -1616,6 +1622,87 @@ bool nwc_service_t::execute(karte_t *welt)
 			case FORMAT_JSON: buf.printf("]}"); break;
 			}
 
+			nwc_service_t nws;
+			nws.flag = flag;
+			nws.text = strdup(buf);
+			if (text && (strlen(text) > MAX_PACKET_LEN - 256)) {
+				text[MAX_PACKET_LEN - 256] = 0;
+			}
+			nws.send(packet->get_sender());
+			break;
+		}
+
+		case SRVC_GET_LIST: {
+			uint8 type = LIST_TYPE_COMPANY;
+			if (strcmp(text, "convoi") == 0) {
+				type = LIST_TYPE_CONVOI;
+			}
+			else if (strcmp(text, "halt") == 0) {
+				type = LIST_TYPE_HALT;
+			}
+
+			cbuffer_t buf;
+			print_array_start_json_value(&buf);
+			bool is_first_element = true;
+			switch(type){
+			case LIST_TYPE_COMPANY: {
+				for (int i = 0; i < PLAYER_UNOWNED; i++) {
+					player_t* player = welt->get_player(i);
+					if (player) {
+						if (is_first_element) {
+							is_first_element = false;
+						}
+						else {
+							print_comma_json_value(&buf);
+						}
+						print_object_start_json_value(&buf);
+						print_int_json_value(&buf, "index", i);
+						print_string_json_value(&buf, "name", player->get_name());
+						print_object_end_json_value(&buf, true);
+					}
+				}
+				break;
+			}
+			case LIST_TYPE_CONVOI:
+			{
+				vector_tpl<convoihandle_t> convois = welt->convoys();
+				for (int i = 0; i < convois.get_count(); i++) {
+					convoihandle_t convoi = convois[i];
+					if (is_first_element) {
+						is_first_element = false;
+					}
+					else {
+						print_comma_json_value(&buf);
+					}
+					print_object_start_json_value(&buf);
+					print_int_json_value(&buf, "id", convoi.get_id());
+					print_string_json_value(&buf, "name", convoi->get_name());
+					print_int_json_value(&buf, "owner", convoi->get_owner()->get_player_nr());
+					print_object_end_json_value(&buf, true);
+				}
+				break;
+			}
+			case LIST_TYPE_HALT:
+			{
+				vector_tpl<halthandle_t> halts = haltestelle_t::get_alle_haltestellen();
+				for (int i = 0; i < halts.get_count(); i++) {
+					halthandle_t halt = halts[i];
+					if (is_first_element) {
+						is_first_element = false;
+					}
+					else {
+						print_comma_json_value(&buf);
+					}
+					print_object_start_json_value(&buf);
+					print_int_json_value(&buf, "id", halt.get_id());
+					print_string_json_value(&buf, "name", halt->get_name());
+					print_object_end_json_value(&buf, true);
+				}
+				break;
+			}
+
+			}
+			print_array_end_json_value(&buf, true);
 			nwc_service_t nws;
 			nws.flag = flag;
 			nws.text = strdup(buf);

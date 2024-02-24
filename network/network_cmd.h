@@ -120,12 +120,18 @@ public:
 		SRVC_REMOVE_COMPANY   = 14,
 		SRVC_LOCK_COMPANY     = 15,
 		SRVC_GET_STAT         = 16,
-		SRVC_GET_DETAILS      = 17,
+		SRVC_GET_LIST         = 17,
+		SRVC_GET_DETAILS      = 18,
 		SRVC_MAX
 	};
 	enum {
 		FORMAT_PRETTY = 0,
 		FORMAT_JSON = 1,
+	};
+	enum {
+		LIST_TYPE_COMPANY = 0,
+		LIST_TYPE_CONVOI = 1,
+		LIST_TYPE_HALT = 2,
 	};
 	enum {
 		DETAIL_TYPE_COMPANY = 0,

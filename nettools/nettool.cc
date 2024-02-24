@@ -653,6 +653,7 @@ int main(int argc, char* argv[]) {
 		{"remove-company", true,  nwc_service_t::SRVC_REMOVE_COMPANY,   1, &simple_command},
 		{"lock-company",   true,  nwc_service_t::SRVC_LOCK_COMPANY,     2, &lock_company},
 		{"stats",          true,  nwc_service_t::SRVC_GET_STAT,         1, &get_stat},
+		{"list",           true,  nwc_service_t::SRVC_GET_LIST,         1, &get_details},
 		{"details",        true,  nwc_service_t::SRVC_GET_DETAILS,      2, &get_details}
 	};
 	int numcommands = lengthof(commands);
