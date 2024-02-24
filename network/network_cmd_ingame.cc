@@ -1722,7 +1722,7 @@ bool nwc_service_t::execute(karte_t *welt)
 				break;
 			case DETAIL_TYPE_CONVOI:
 				min_index = 0;
-				max_index = welt->convoys().get_count();
+				max_index = 0xffffffff;
 				break;
 			case DETAIL_TYPE_HALT:
 				min_index = 0;
