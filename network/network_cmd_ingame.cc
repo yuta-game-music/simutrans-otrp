@@ -1653,12 +1653,9 @@ bool nwc_service_t::execute(karte_t *welt)
 							is_first_element = false;
 						}
 						else {
-							print_comma_json_value(&buf);
+							buf.printf(",");
 						}
-						print_object_start_json_value(&buf);
-						print_int_json_value(&buf, "index", i);
-						print_string_json_value(&buf, "name", player->get_name());
-						print_object_end_json_value(&buf, true);
+						buf.printf("%d", i);
 					}
 				}
 				break;
@@ -1672,13 +1669,9 @@ bool nwc_service_t::execute(karte_t *welt)
 						is_first_element = false;
 					}
 					else {
-						print_comma_json_value(&buf);
+						buf.printf(",");
 					}
-					print_object_start_json_value(&buf);
-					print_int_json_value(&buf, "id", convoi.get_id());
-					print_string_json_value(&buf, "name", convoi->get_name());
-					print_int_json_value(&buf, "owner", convoi->get_owner()->get_player_nr());
-					print_object_end_json_value(&buf, true);
+					buf.printf("%d", convoi.get_id());
 				}
 				break;
 			}
@@ -1691,12 +1684,9 @@ bool nwc_service_t::execute(karte_t *welt)
 						is_first_element = false;
 					}
 					else {
-						print_comma_json_value(&buf);
+						buf.printf(",");
 					}
-					print_object_start_json_value(&buf);
-					print_int_json_value(&buf, "id", halt.get_id());
-					print_string_json_value(&buf, "name", halt->get_name());
-					print_object_end_json_value(&buf, true);
+					buf.printf("%d", halt.get_id());
 				}
 				break;
 			}
