@@ -1889,6 +1889,7 @@ bool nwc_service_t::execute(karte_t *welt)
 						print_string_json_value(&buf, "halt_name", connection.halt->get_name());
 						print_koord_json_value(&buf, "halt_pos", connection.halt->get_basis_pos3d());
 						print_bool_json_value(&buf, "is_transfer", connection.is_transfer);
+						print_int_json_value(&buf, "waiting_count", halt->get_ware_fuer_zwischenziel(goods_desc, connection.halt));
 						print_int_json_value(&buf, "weight", connection.weight, true);
 						print_object_end_json_value(&buf, connection_index == connections_count - 1);
 					}
