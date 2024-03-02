@@ -1597,6 +1597,7 @@ bool nwc_service_t::execute(karte_t *welt)
 			is_first_element = true;
 			for (uint32 i = 0; i < haltestelles.get_count() && i < 10; i++) {
 				halthandle_t halt = wlist[i];
+				int halt_id = halt.get_id();
 				const char* halt_name = halt->get_name();
 				const char* owner_name = halt->get_owner()->get_name();
 				uint32 passenger_count = halt->get_ware_summe(goods_manager_t::passengers);
@@ -1609,8 +1610,8 @@ bool nwc_service_t::execute(karte_t *welt)
 					break;
 				case FORMAT_JSON:
 					if (!is_first_element) buf.printf(",");
-					buf.printf("{\"ranking\":%d,\"name\":\"%s\",\"owner\":\"%s\",\"passenger_count\":%d,\"capacity\":%d}",
-						i + 1, halt_name, owner_name,
+					buf.printf("{\"ranking\":%d,\"id\":%d,\"name\":\"%s\",\"owner\":\"%s\",\"passenger_count\":%d,\"capacity\":%d}",
+						i + 1, halt_id, halt_name, owner_name,
 						passenger_count, capacity);
 					is_first_element = false;
 					break;
