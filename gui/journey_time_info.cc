@@ -8,12 +8,6 @@
 #include "messagebox.h"
 #include "simwin.h"
 
-
-uint16 tick_to_divided_time(uint32 tick) {
-  const uint16 divisor = world()->get_settings().get_spacing_shift_divisor();
-  return (uint16)((uint64)tick * divisor / world()->ticks_per_world_month);
-}
-
 uint32 get_latest_dep_slot(schedule_entry_t& entry, uint32 current_time) {
   const sint32 spacing_shift = (sint64)entry.spacing_shift * world()->ticks_per_world_month / world()->get_settings().get_spacing_shift_divisor();
   uint64 slot = (current_time - spacing_shift) * (uint64)entry.spacing / world()->ticks_per_world_month;
@@ -226,12 +220,12 @@ void gui_journey_time_info_t::update() {
   for(uint8 i=0; i<schedule->entries.get_count(); i++) {
     uint32 sum = 0;
     uint8 cnt = 0;
-    const uint8 kc = (schedule->entries[i].at_index + NUM_ARRIVAL_TIME_STORED - 1) % NUM_ARRIVAL_TIME_STORED;
+    const uint8 kc = (schedule->entries[i].jt_at_index + NUM_ARRIVAL_TIME_STORED - 1) % NUM_ARRIVAL_TIME_STORED;
     for(uint8 k=0; k<NUM_ARRIVAL_TIME_STORED; k++) {
       uint32* ca = schedule->entries[i].journey_time;
       uint8 ica = (kc + NUM_ARRIVAL_TIME_STORED - k) % NUM_ARRIVAL_TIME_STORED;
       if(  ca[ica]>0  ) {
-        journey_times[i][k+1] = tick_to_divided_time(ca[ica]);
+        journey_times[i][k+1] = world()->tick_to_divided_time(ca[ica]);
         sum += journey_times[i][k+1];
         cnt += 1;
       } else {

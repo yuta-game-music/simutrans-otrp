@@ -298,6 +298,18 @@ void schedule_t::rdwr(loadsave_t *file)
 				entries[i].spacing = 1;
 				entries[i].spacing_shift = entries[i].delay_tolerance = 0;
 			}
+			if(file->get_OTRP_version()>=36) {
+				// read and write journey times
+				file->rdwr_byte(entries[i].jt_at_index);
+				for(uint8 j=0; j<NUM_ARRIVAL_TIME_STORED; j++) {
+					file->rdwr_long(entries[i].journey_time[j]);
+				}
+				// read and write waiting times
+				file->rdwr_byte(entries[i].wt_at_index);
+				for(uint8 j=0; j<NUM_WAITING_TIME_STORED; j++) {
+					file->rdwr_long(entries[i].waiting_time[j]);
+				}
+			}
 		}
 	}
 	if(file->is_loading()) {
@@ -730,4 +742,21 @@ sint64 schedule_t::issue_new_departure_slot_group_id() {
 	departure_slot_group_id_random *= 3141592621u;
 	const sint64 num_2 = ++departure_slot_group_id_random;
 	return ((num_2 & 0x7FFFFFFF) << 32) | num_1;
+}
+
+
+uint32 schedule_t::get_median_journey_time(uint8 index, uint32 max_speed_kmh) const {
+	const uint32 entry_journey_time = entries[index].get_median_journey_time();
+	if(  entry_journey_time>0  ) {
+		return entry_journey_time;
+	}
+	// No journey time record is available. Calculate Euclid distance / max_speed.
+	const koord3d pos = entries[index].pos;
+	const koord3d prev_pos = entries[(index+entries.get_count()-1)%entries.get_count()].pos;
+
+	/* calculate the time needed:
+	 *   tiles << (8+12) / (kmh_to_speed(max_kmh) = ticks
+	 * (derived from gui_departure_board_t::calc_ticks_until_arrival())
+	 */
+	return (koord_distance(pos, prev_pos) << 20) / kmh_to_speed(max_speed_kmh);
 }
