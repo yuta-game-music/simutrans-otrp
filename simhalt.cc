@@ -1363,6 +1363,7 @@ sint32 haltestelle_t::rebuild_connections()
 					connection_t *const existing_connection = staged_all_links[catg_index].connections.insert_unique_ordered( connection_t( current_halt, aggregate_weight, traveler ), connection_t::compare );
 					if(  existing_connection  &&  aggregate_weight<existing_connection->weight  ) {
 						existing_connection->weight = aggregate_weight;
+						existing_connection->best_weight_traveler = traveler;
 					}
 				}
 			}
