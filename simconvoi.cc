@@ -3480,6 +3480,7 @@ uint32 convoi_t::calc_available_halt_length_in_vehicle_steps(koord3d front_vehic
 void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable_halts, convoihandle_t cnv) {
 	reachable_halts.clear();
 	const schedule_t* schedule = cnv->get_schedule();
+	const schedule_t* line_schedule = cnv->get_line().is_bound() ? cnv->get_line()->get_schedule() : schedule;
 	const player_t* owner = cnv->get_owner();
 	if (  cnv->get_no_load()  ||  schedule->get_current_entry().is_no_load()  ) {
 		// Nothing is allowed to load here.
@@ -3510,7 +3511,7 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 		}
 		// Use the median of the journey time history to stabilize the estimated value
 		// when something irregular happens on a single convoy.
-		journey_time += schedule->get_median_journey_time(wrap_i, cnv->get_speedbonus_kmh());
+		journey_time += line_schedule->get_median_journey_time(wrap_i, cnv->get_speedbonus_kmh());
 		reachable_halts.append(haltestelle_t::reachable_halt_t(plan_halt, journey_time));
 		if(  schedule->entries[wrap_i].is_unload_all()  ) {
 			// passengers/cargos cannot keep boarding beyond this stop.
