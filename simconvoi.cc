@@ -3489,7 +3489,11 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 
 	const halthandle_t current_halt = haltestelle_t::get_halt(schedule->get_current_entry().pos, owner);
 	const uint8 count = schedule->get_count();
-	uint32 journey_time = 0; // The estimated journey time from the current stop
+	// The estimated journey time from the current stop
+	// The convoy stopping time at the starting point is subtracted because the journey time of
+	// the first entry contains the stopping time at the starting point, which should be excluded.
+	sint32 journey_time = -line_schedule->get_current_entry().get_median_convoy_stopping_time(); 
+
 	uint8 interval = 0;
 	for(  uint8 i=1;  i<count;  i++  ) {
 		const uint8 wrap_i = (i + schedule->get_current_stop()) % count;
@@ -3512,7 +3516,7 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 		// Use the median of the journey time history to stabilize the estimated value
 		// when something irregular happens on a single convoy.
 		journey_time += line_schedule->get_median_journey_time(wrap_i, cnv->get_speedbonus_kmh());
-		reachable_halts.append(haltestelle_t::reachable_halt_t(plan_halt, journey_time));
+		reachable_halts.append(haltestelle_t::reachable_halt_t(plan_halt, (uint32)max(journey_time, 0)));
 		if(  schedule->entries[wrap_i].is_unload_all()  ) {
 			// passengers/cargos cannot keep boarding beyond this stop.
 			break;

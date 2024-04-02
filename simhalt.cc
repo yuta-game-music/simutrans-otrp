@@ -1286,9 +1286,10 @@ sint32 haltestelle_t::rebuild_connections()
 
 		// aggregate_weight: When TBGR is enabled, (average goods waiting time) + (median journey time)
 		// When TBGR is disabled, it is route cost. e.g. WEIGHT_HALT + WEIGHT_WAIT * (stops count)
-		uint32 aggregate_weight;
+		sint32 aggregate_weight;
 		if(  is_tbgr_enabled  ) {
-			aggregate_weight = start_entry.get_average_waiting_time();
+			// the journey time of the first entry contains the stopping time at the starting point, which should be excluded.
+			aggregate_weight = start_entry.get_average_waiting_time() - start_entry.get_median_convoy_stopping_time();
 		}
 		else {
 			aggregate_weight = WEIGHT_WAIT;
@@ -1319,7 +1320,11 @@ sint32 haltestelle_t::rebuild_connections()
 					}
 				}
 				// reset aggregate weight and no_load_section
-				aggregate_weight = is_tbgr_enabled ? current_entry.get_average_waiting_time() : WEIGHT_WAIT;
+				if(  is_tbgr_enabled  ) {
+					aggregate_weight = current_entry.get_average_waiting_time() - current_entry.get_median_convoy_stopping_time();
+				} else {
+					aggregate_weight = WEIGHT_HALT;
+				}
 			 	force_transfer_search |= (current_entry.is_unload_all()  ||  current_entry.is_no_load()  ||  current_entry.is_no_unload());
 				no_load_section = current_entry.is_no_load();
 				no_unload_halts.clear();
