@@ -484,6 +484,10 @@ private:
 	// when the journey time based goods routing is enabled.
 	void push_goods_waiting_time_if_needed();
 
+	/// A sub routine of hat_gehalten()
+	/// Pushes the convoy stopping time at the current halt to the schedule
+	void push_convoy_stopping_time();
+
 public:
 	/**
 	* Convoi haelt an Haltestelle und setzt quote fuer Fracht

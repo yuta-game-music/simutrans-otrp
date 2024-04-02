@@ -3723,6 +3723,7 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 		// Advance schedule
 		if(  !is_coupled()  ) {
 			push_goods_waiting_time_if_needed();
+			push_convoy_stopping_time();
 			schedule->advance();
 			state = ROUTING_1;
 			loading_limit = 0;
@@ -3732,6 +3733,7 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 			convoihandle_t c_cnv = coupling_convoi;
 			while(  c_cnv.is_bound()  ) {
 				c_cnv->push_goods_waiting_time_if_needed();
+				c_cnv->push_convoy_stopping_time();
 				c_cnv->get_schedule()->advance();
 				c_cnv->set_state(COUPLED);
 				c_cnv->set_coupling_done(false);
@@ -3805,6 +3807,19 @@ void convoi_t::push_goods_waiting_time_if_needed() {
 	if(  window  ) {
 		window->update();
 	}
+}
+
+
+void convoi_t::push_convoy_stopping_time() {
+	const uint32 current_ticks = welt->get_ticks();
+	if(  time_last_arrived==0  ||  time_last_arrived >= current_ticks  ) {
+		// time_last_arrived is not available.
+		return;
+	}
+	const uint32 stopping_time = subtract_ticks( current_ticks, time_last_arrived );
+	const linehandle_t line = get_line();
+	schedule_t* schedule_to_push = line.is_bound() ? line->get_schedule() : schedule;
+	schedule_to_push->entries[schedule->get_current_stop()].push_convoy_stopping_time(stopping_time);
 }
 
 

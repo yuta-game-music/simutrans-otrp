@@ -310,6 +310,13 @@ void schedule_t::rdwr(loadsave_t *file)
 					file->rdwr_long(entries[i].waiting_time[j]);
 				}
 			}
+			if(file->get_OTRP_version()>=37) {
+				// read and write convoy stopping times
+				file->rdwr_byte(entries[i].cs_at_index);
+				for(uint8 j=0; j<NUM_STOPPING_TIME_STORED; j++) {
+					file->rdwr_long(entries[i].convoy_stopping_time[j]);
+				}
+			}
 		}
 	}
 	if(file->is_loading()) {

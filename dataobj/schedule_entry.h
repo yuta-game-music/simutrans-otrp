@@ -8,6 +8,7 @@
 
 #define NUM_ARRIVAL_TIME_STORED 5
 #define NUM_WAITING_TIME_STORED 5
+#define NUM_STOPPING_TIME_STORED 5
 
 #include "koord3d.h"
 
@@ -20,6 +21,7 @@ public:
 	schedule_entry_t() {
 		init_journey_time();
 		init_waiting_time();
+		init_convoy_stopping_time();
 	}
 
 	schedule_entry_t(koord3d const& pos, uint const minimum_loading, uint16 const waiting_time_shift, uint8 const stop_flags) :
@@ -32,6 +34,7 @@ public:
 		spacing_shift = delay_tolerance = 0;
 		init_journey_time();
 		init_waiting_time();
+		init_convoy_stopping_time();
 	}
 
 	enum {
@@ -67,6 +70,7 @@ public:
 	
 	/*
 	 * store last 5 journey time of this stop.
+	 * This is the time between the arrival at the previous stop and the arrival at this stop.
 	 * time = 0 means that journey time is not registered.
 	 */
 	uint32 journey_time[NUM_ARRIVAL_TIME_STORED];
@@ -78,6 +82,14 @@ public:
 	 */
 	uint32 waiting_time[NUM_WAITING_TIME_STORED];
 	uint8 wt_at_index; // which index of waiting_time should be overwritten next.
+
+
+	/*
+	 * store last 5 convoy stopping times at this stop.
+	 * time = 0 means that stopping time is not registered.
+	 */
+	uint32 convoy_stopping_time[NUM_STOPPING_TIME_STORED];
+	uint8 cs_at_index; // which index of convoy_stopping_time should be overwritten next.
 	
 private:
 	uint8 stop_flags;
@@ -93,6 +105,13 @@ private:
 		wt_at_index = 0;
 		for(uint8 i = 0; i < NUM_WAITING_TIME_STORED; i++) {
 			waiting_time[i] = 0;
+		}
+	}
+
+	void init_convoy_stopping_time() {
+		cs_at_index = 0;
+		for(uint8 i = 0; i < NUM_STOPPING_TIME_STORED; i++) {
+			convoy_stopping_time[i] = 0;
 		}
 	}
 	
@@ -124,9 +143,11 @@ public:
 
 	void push_journey_time(uint32 time);
 	void push_waiting_time(uint32 time);
+	void push_convoy_stopping_time(uint32 time);
 	
 	uint32 get_median_journey_time() const;
 	uint32 get_average_waiting_time() const;
+	uint32 get_median_convoy_stopping_time() const;
 	
 	bool operator ==(const schedule_entry_t &a) {
 		return a.pos == this->pos
