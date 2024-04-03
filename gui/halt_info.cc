@@ -165,9 +165,12 @@ private:
 public:
 	uint8 destination_counter; // last destination counter of the halt; if mismatch to current, then redraw destinations
 
+	uint8 last_connection_update_counter; // last connection_update_counter when drawn; if mismatch to current, then redraw destinations
+
 	gui_halt_detail_t(halthandle_t h) : gui_aligned_container_t()
 	{
 		destination_counter = 0xFF;
+		last_connection_update_counter = 0xFF;
 		cached_line_count = 0xFFFFFFFFul;
 		cached_convoy_count = 0xFFFFFFFFul;
 		update_connections(h);
@@ -530,7 +533,8 @@ void gui_halt_detail_t::update_connections( halthandle_t halt )
 		return;
 	}
 
-	if(  halt->get_reconnect_counter()==destination_counter  &&
+	if(  halt->get_reconnect_counter()==destination_counter  &&  
+		 halt->get_connection_update_counter()==last_connection_update_counter  &&
 		 halt->registered_lines.get_count()==cached_line_count  &&  halt->registered_convoys.get_count()==cached_convoy_count  ) {
 		// all current, so do nothing
 		return;
@@ -701,6 +705,7 @@ void gui_halt_detail_t::update_connections( halthandle_t halt )
 
 	// ok, we have now this counter for pending updates
 	destination_counter = halt->get_reconnect_counter();
+	last_connection_update_counter = halt->get_connection_update_counter();
 	cached_line_count = halt->registered_lines.get_count();
 	cached_convoy_count = halt->registered_convoys.get_count();
 

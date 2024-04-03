@@ -387,6 +387,10 @@ private:
 	haltestelle_t(koord pos, player_t *player);
 	~haltestelle_t();
 
+	// incremented when the connection weight is updated.
+	// Use this to check if the connection is updated.
+	static uint8 connection_update_counter;
+
 public:
 	/**
 	* Called after schedule calculation of all stations is finished
@@ -483,6 +487,8 @@ public:
 	 * Called every month/every 24 game hours
 	 */
 	void new_month();
+
+	uint8 get_connection_update_counter() const { return connection_update_counter;}
 
 private:
 	/* Node used during route search */

@@ -69,6 +69,7 @@ inthashtable_tpl<sint32,halthandle_t> *haltestelle_t::all_koords = NULL;
 
 uint8 haltestelle_t::status_step = 0;
 uint8 haltestelle_t::reconnect_counter = 0;
+uint8 haltestelle_t::connection_update_counter = 0;
 
 
 static vector_tpl<convoihandle_t>stale_convois;
@@ -1442,6 +1443,7 @@ void haltestelle_t::rebuild_connected_components()
 			}
 		}
 	}
+	connection_update_counter += 1; // notify that the connections have been updated
 }
 
 
