@@ -3959,9 +3959,6 @@ bool haltestelle_t::is_departure_booked(uint32 dep_tick, uint8 stop_index, lineh
 	return false;
 }
 
-
-#define JOURNEY_TIME_COMPARE_MARGIN_TICKS 4000u
-
 void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<halthandle_t>> &destination_halts, const vector_tpl<reachable_halt_t> &reachable_halts, const minivec_tpl<uint8> &goods_category_indexes, convoihandle_t cnv) {
 	// initialize destination_halts
 	destination_halts.clear();
@@ -4004,7 +4001,7 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 			// This convoy is already calculated as the fastest traveler to the halt.
 			const bool is_fastest_traveler = connection.best_weight_traveler==traveler;
 			// The journey time is shorter than (wait time + journey time) of the fastest route.
-			const bool is_shortest_journey = rh.journey_time < connection.weight + JOURNEY_TIME_COMPARE_MARGIN_TICKS;
+			const bool is_shortest_journey = rh.journey_time < connection.weight;
 			
 			if(  is_fastest_traveler  ||  is_shortest_journey  ) {
 				destination_halts.access(g_index)->append(rh.halt);
