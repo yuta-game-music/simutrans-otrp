@@ -3492,7 +3492,7 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 	// The estimated journey time from the current stop
 	// The convoy stopping time at the starting point is subtracted because the journey time of
 	// the first entry contains the stopping time at the starting point, which should be excluded.
-	sint32 journey_time = -line_schedule->get_current_entry().get_median_convoy_stopping_time(); 
+	sint32 journey_time = -line_schedule->entries[schedule->get_current_stop()].get_median_convoy_stopping_time(); 
 
 	uint8 interval = 0;
 	for(  uint8 i=1;  i<count;  i++  ) {
