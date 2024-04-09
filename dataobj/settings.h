@@ -354,6 +354,13 @@ private:
 	// divide a month for departure spacing
 	uint16 spacing_shift_divisor;
 
+	// time based goods routing stuff
+	// These values are added to the connection weight for each ride.
+	uint32 base_waiting_ticks_for_rail_convoi;
+	uint32 base_waiting_ticks_for_road_convoi;
+	uint32 base_waiting_ticks_for_ship_convoi;
+	uint32 base_waiting_ticks_for_air_convoi;
+
 public:
 	/* the big cost section */
 	sint32 maint_building; // normal building
@@ -710,6 +717,8 @@ public:
 	uint8 get_routecost_wait() const { return routecost_wait; }
 	
 	uint16 get_spacing_shift_divisor() const { return spacing_shift_divisor; }
+
+	uint32 get_base_waiting_ticks(waytype_t waytype) const;
 };
 
 #endif

@@ -261,6 +261,11 @@ void settings_routing_stats_t::init(settings_t const* const sets)
 	goods_routing_policy.set_focusable( false );
 	add_component( &goods_routing_policy, 2);
 	INIT_NUM( "waiting_limit_for_first_come_first_serve", sets->get_waiting_limit_for_first_come_first_serve(), 100, 0x7FFFFFFFul, gui_numberinput_t::POWER2, false );
+	SEPERATOR
+	INIT_NUM ( "base_waiting_ticks_for_rail_convoi", sets->base_waiting_ticks_for_rail_convoi, 0, 0x7FFFFFFFul, gui_numberinput_t::POWER2, false );
+	INIT_NUM ( "base_waiting_ticks_for_road_convoi", sets->base_waiting_ticks_for_road_convoi, 0, 0x7FFFFFFFul, gui_numberinput_t::POWER2, false );
+	INIT_NUM ( "base_waiting_ticks_for_ship_convoi", sets->base_waiting_ticks_for_ship_convoi, 0, 0x7FFFFFFFul, gui_numberinput_t::POWER2, false );
+	INIT_NUM ( "base_waiting_ticks_for_air_convoi", sets->base_waiting_ticks_for_air_convoi, 0, 0x7FFFFFFFul, gui_numberinput_t::POWER2, false );
 
 	INIT_END
 }
@@ -298,6 +303,11 @@ void settings_routing_stats_t::read(settings_t* const sets)
 	READ_BOOL_VALUE( sets->advance_to_end );
 	sets->goods_routing_policy = (goods_routing_policy_t)::clamp(goods_routing_policy.get_selection(), (int)GRP_NF_RC, (int)GRP_FIFO_ET );
 	READ_NUM_VALUE( sets->waiting_limit_for_first_come_first_serve );
+
+	READ_NUM_VALUE( sets->base_waiting_ticks_for_rail_convoi );
+	READ_NUM_VALUE( sets->base_waiting_ticks_for_road_convoi );
+	READ_NUM_VALUE( sets->base_waiting_ticks_for_ship_convoi );
+	READ_NUM_VALUE( sets->base_waiting_ticks_for_air_convoi );
 }
 
 
