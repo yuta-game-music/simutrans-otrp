@@ -361,6 +361,8 @@ private:
 	uint32 base_waiting_ticks_for_ship_convoi;
 	uint32 base_waiting_ticks_for_air_convoi;
 
+	bool tbgr_use_goods_waiting_history;
+
 public:
 	/* the big cost section */
 	sint32 maint_building; // normal building
@@ -719,6 +721,8 @@ public:
 	uint16 get_spacing_shift_divisor() const { return spacing_shift_divisor; }
 
 	uint32 get_base_waiting_ticks(waytype_t waytype) const;
+
+	bool get_tbgr_use_goods_waiting_history() const { return tbgr_use_goods_waiting_history; }
 };
 
 #endif

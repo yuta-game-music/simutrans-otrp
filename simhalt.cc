@@ -1159,6 +1159,31 @@ void haltestelle_t::remove_fabriken(fabrik_t *fab)
 }
 
 
+// A helper method of rebuild_connections() when the time based goods routing is enabled.
+// Returns the estimated interval of the given schedule, for the given index halt.
+uint32 convoy_interval_ticks(const schedule_t* schedule, uint8 index) {
+	// first, find minimum spacing value of the departure timetable.
+	uint16 minimum_spacing = 65535u;
+	for(uint8 i=0; i<schedule->get_count(); i++) {
+		const schedule_entry_t entry = schedule->entries[i];
+		if(  entry.get_wait_for_time()  ) {
+			minimum_spacing = min(minimum_spacing, entry.spacing);
+		}
+	}
+	const uint32 average_waiting_time = schedule->entries[index].get_average_waiting_time();
+	if(  minimum_spacing == 65535u  ||  minimum_spacing == 0  ) {
+		// no departure timetable is available. Use the waiting time history.
+		return average_waiting_time;
+	}
+	const uint32 interval_ticks_from_schedule = world()->ticks_per_world_month / minimum_spacing;
+	if(  world()->get_settings().get_tbgr_use_goods_waiting_history()  ) {
+		return min(interval_ticks_from_schedule, average_waiting_time);
+	} else {
+		return interval_ticks_from_schedule;
+	}
+}
+
+
 /**
  * Rebuilds the list of connections to directly reachable halts
  * Returns the number of stops considered
@@ -1290,7 +1315,7 @@ sint32 haltestelle_t::rebuild_connections()
 		sint32 aggregate_weight;
 		if(  is_tbgr_enabled  ) {
 			// the journey time of the first entry contains the stopping time at the starting point, which should be excluded.
-			aggregate_weight = start_entry.get_average_waiting_time() - start_entry.get_median_convoy_stopping_time();
+			aggregate_weight = convoy_interval_ticks(schedule, start_index-1) - start_entry.get_median_convoy_stopping_time();
 		}
 		else {
 			aggregate_weight = WEIGHT_WAIT;
@@ -1322,7 +1347,7 @@ sint32 haltestelle_t::rebuild_connections()
 				}
 				// reset aggregate weight and no_load_section
 				if(  is_tbgr_enabled  ) {
-					aggregate_weight = current_entry.get_average_waiting_time() - current_entry.get_median_convoy_stopping_time();
+					aggregate_weight = convoy_interval_ticks(schedule, current_entry_index) - current_entry.get_median_convoy_stopping_time();
 				} else {
 					aggregate_weight = WEIGHT_HALT;
 				}
