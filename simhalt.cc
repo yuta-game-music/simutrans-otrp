@@ -1160,8 +1160,9 @@ void haltestelle_t::remove_fabriken(fabrik_t *fab)
 
 
 // A helper method of rebuild_connections() when the time based goods routing is enabled.
-// Returns the estimated interval of the given schedule, for the given index halt.
-uint32 convoy_interval_ticks(const schedule_t* schedule, uint8 index) {
+// Returns the estimated waiting time for the given schedule, for the given index halt.
+// The base waiting ticks is added as a waiting time.
+uint32 estimated_waiting_ticks(const schedule_t* schedule, uint8 index) {
 	// first, find minimum spacing value of the departure timetable.
 	uint16 minimum_spacing = 65535u;
 	for(uint8 i=0; i<schedule->get_count(); i++) {
@@ -1170,16 +1171,20 @@ uint32 convoy_interval_ticks(const schedule_t* schedule, uint8 index) {
 			minimum_spacing = min(minimum_spacing, entry.spacing);
 		}
 	}
-	const uint32 average_waiting_time = schedule->entries[index].get_average_waiting_time();
+	const uint32 base_waiting_ticks = world()->get_settings().get_base_waiting_ticks(schedule->get_waytype());
+	const schedule_entry_t schedule_entry = schedule->entries[index];
+	const uint32 average_waiting_time = schedule_entry.get_average_waiting_time();
 	if(  minimum_spacing == 65535u  ||  minimum_spacing == 0  ) {
 		// no departure timetable is available. Use the waiting time history.
-		return average_waiting_time;
+		return average_waiting_time + base_waiting_ticks;
 	}
 	const uint32 interval_ticks_from_schedule = world()->ticks_per_world_month / minimum_spacing;
 	if(  world()->get_settings().get_tbgr_use_goods_waiting_history()  ) {
-		return min(interval_ticks_from_schedule, average_waiting_time);
+		return min(interval_ticks_from_schedule, average_waiting_time) + base_waiting_ticks;
 	} else {
-		return interval_ticks_from_schedule;
+		// NOTE: interval_ticks_from_schedule / 2 is more appropriate, 
+		// but we use the full interval as an incentive for avoiding a transfer.
+		return interval_ticks_from_schedule + base_waiting_ticks;
 	}
 }
 
@@ -1315,7 +1320,7 @@ sint32 haltestelle_t::rebuild_connections()
 		sint32 aggregate_weight;
 		if(  is_tbgr_enabled  ) {
 			// the journey time of the first entry contains the stopping time at the starting point, which should be excluded.
-			aggregate_weight = convoy_interval_ticks(schedule, start_index-1) - start_entry.get_median_convoy_stopping_time();
+			aggregate_weight = estimated_waiting_ticks(schedule, start_index-1) - start_entry.get_median_convoy_stopping_time();
 		}
 		else {
 			aggregate_weight = WEIGHT_WAIT;
@@ -1347,7 +1352,7 @@ sint32 haltestelle_t::rebuild_connections()
 				}
 				// reset aggregate weight and no_load_section
 				if(  is_tbgr_enabled  ) {
-					aggregate_weight = convoy_interval_ticks(schedule, current_entry_index) - current_entry.get_median_convoy_stopping_time();
+					aggregate_weight = estimated_waiting_ticks(schedule, current_entry_index) - current_entry.get_median_convoy_stopping_time();
 				} else {
 					aggregate_weight = WEIGHT_HALT;
 				}
@@ -4026,7 +4031,13 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 			// This convoy is already calculated as the fastest traveler to the halt.
 			const bool is_fastest_traveler = connection.best_weight_traveler==traveler;
 			// The journey time is shorter than (wait time + journey time) of the fastest route.
-			const bool is_shortest_journey = rh.journey_time < connection.weight;
+			// The connection weight contains the base waiting time offset, so we subtract it.
+			const waytype_t fastest_traveler_waytype = std::visit(
+				[](const auto &v) { return v->get_schedule()->get_waytype(); }, 
+				connection.best_weight_traveler
+			);
+			const uint32 base_waiting_time = world()->get_settings().get_base_waiting_ticks(fastest_traveler_waytype);
+			const bool is_shortest_journey = rh.journey_time < connection.weight - base_waiting_time;
 			
 			if(  is_fastest_traveler  ||  is_shortest_journey  ) {
 				destination_halts.access(g_index)->append(rh.halt);
