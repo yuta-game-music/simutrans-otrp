@@ -769,8 +769,11 @@ void gebaeude_t::info(cbuffer_t & buf) const
 #ifdef DEBUG
 		buf.append( "\n\nrotation " );
 		buf.append( tile->get_layout(), 0 );
-		buf.append( " best layout " );
-		buf.append( stadt_t::orient_city_building( get_pos().get_2d() - tile->get_offset(), tile->get_desc(), koord(3,3) ), 0 );
+		if(  !env_t::networkmode  ) {
+			// Calling stadt_t::orient_city_building here in a network game causes a crash.
+			buf.append( " best layout " );
+			buf.append( stadt_t::orient_city_building( get_pos().get_2d() - tile->get_offset(), tile->get_desc(), koord(3,3) ), 0 );
+		}
 		buf.append( "\n" );
 #endif
 	}
