@@ -1288,7 +1288,7 @@ void print_string_json_value(cbuffer_t* buf, char const* key, char const* value,
 		valueAsString.replace(pos, 1, "\\\"");
 		pos += 2;
 	}
-	buf->printf("\"%s\":\"%s\"", key, valueAsString);
+	buf->printf("\"%s\":\"%s\"", key, valueAsString.c_str());
 	buf->printf("\"");
 	print_comma_json_value(buf, isLast);
 }
