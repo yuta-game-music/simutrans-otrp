@@ -1282,17 +1282,13 @@ void print_int_json_value(cbuffer_t* buf, char const* key, sint64 value, bool is
 	print_comma_json_value(buf, isLast);
 }
 void print_string_json_value(cbuffer_t* buf, char const* key, char const* value, bool isLast = false) {
-	buf->printf("\"%s\":\"", key);
-	char current = *value;
-	while (current != '\0') {
-		if (current == '"') {
-			buf->printf("\\\"");
-		}
-		else {
-			buf->printf("%c", current);
-		}
-		current = *(value++);
+	std::string valueAsString(value);
+	std::string::size_type pos = 0;
+	while ((pos = valueAsString.find("\"", pos)) != std::string::npos) {
+		valueAsString.replace(pos, 1, "\\\"");
+		pos += 2;
 	}
+	buf->printf("\"%s\":\"%s\"", key, valueAsString);
 	buf->printf("\"");
 	print_comma_json_value(buf, isLast);
 }
