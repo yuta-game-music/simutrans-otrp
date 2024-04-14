@@ -1289,7 +1289,6 @@ void print_string_json_value(cbuffer_t* buf, char const* key, char const* value,
 		pos += 2;
 	}
 	buf->printf("\"%s\":\"%s\"", key, valueAsString.c_str());
-	buf->printf("\"");
 	print_comma_json_value(buf, isLast);
 }
 void print_array_start_json_value(cbuffer_t* buf) {
