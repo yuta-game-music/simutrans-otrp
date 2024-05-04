@@ -3997,7 +3997,7 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 	}
 
 	const bool is_tbgr_enabled = welt->get_settings().get_goods_routing_policy()==goods_routing_policy_t::GRP_FIFO_ET;
-	if(  !is_tbgr_enabled  ) {
+	if(  !is_tbgr_enabled  ||  cnv->get_schedule()->is_temporary()  ) {
 		// We accept all halts in reachable_halts
 		FOR(const minivec_tpl<uint8>, const& i, goods_category_indexes) {
 			FOR(const vector_tpl<reachable_halt_t>, const& rh, reachable_halts) {
