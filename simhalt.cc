@@ -1090,6 +1090,10 @@ bool haltestelle_t::reroute_goods(sint16 &units_remaining)
 		// remove all goods whose destination was removed from the map
 		for(  slist_tpl<halt_waiting_goods_t>::iterator ware = warray->begin();  ware!=warray->end();  ) {
 			ware_t& goods = ware->goods;
+			if(  !is_route_search_needed(goods)  ) {
+				ware++;
+				continue;
+			}
 			search_route_resumable(goods);
 			if(  goods.get_ziel()==halthandle_t()  ) {
 				// remove invalid destinations
@@ -1644,10 +1648,10 @@ int haltestelle_t::search_route( const halthandle_t *const start_halts, const ui
 				if(  halt==start_halts[s]  ) {
 					// destination halt is also a start halt -> within walking distance
 					ware.set_ziel( start_halts[s] );
-					ware.set_zwischenziel( halthandle_t() );
+					ware.clear_transit_halts();
 					if(  return_ware  ) {
 						return_ware->set_ziel( start_halts[s] );
-						return_ware->set_zwischenziel( halthandle_t() );
+						ware.clear_transit_halts();
 					}
 					return ROUTE_WALK;
 				}
@@ -1672,10 +1676,10 @@ int haltestelle_t::search_route( const halthandle_t *const start_halts, const ui
 	if(  end_halts.empty()  ) {
 		// no end halt found
 		ware.set_ziel( halthandle_t() );
-		ware.set_zwischenziel( halthandle_t() );
+		ware.clear_transit_halts();
 		if(  return_ware  ) {
 			return_ware->set_ziel( halthandle_t() );
-			return_ware->set_zwischenziel( halthandle_t() );
+			return_ware->clear_transit_halts();
 		}
 		return NO_ROUTE;
 	}
@@ -1754,7 +1758,7 @@ int haltestelle_t::search_route( const halthandle_t *const start_halts, const ui
 				// if the end halt and its connections contain more than one transfer halt then
 				// the transfer halt may not be the last transfer of the forward route
 				// (the re-routing will happen in haltestelle_t::fetch_goods)
-				return_ware->set_zwischenziel(current_halt_data.transfer);
+
 				// count the connected transfer halts (including end halt)
 				uint8 t = current_node.halt->is_transfer(ware_catg_idx);
 				FOR(vector_tpl<connection_t>, const& i, current_node.halt->all_links[ware_catg_idx].connections) {
@@ -1763,18 +1767,23 @@ int haltestelle_t::search_route( const halthandle_t *const start_halts, const ui
 					}
 					t += i.halt.is_bound() && i.is_transfer;
 				}
-				return_ware->set_zwischenziel(  t<=1  ?  current_halt_data.transfer  : halthandle_t());
+				if(  t<=1  ) {
+					vector_tpl<halthandle_t> transit_halts;
+					transit_halts.append(current_halt_data.transfer);
+					return_ware->set_transit_halts( transit_halts );
+				} else {
+					return_ware->clear_transit_halts();
+				}
 			}
-			// find the next transfer
-			halthandle_t transfer_halt = current_node.halt;
-			while(  halt_data[ transfer_halt.get_id() ].depth > 1   ) {
-				transfer_halt = halt_data[ transfer_halt.get_id() ].transfer;
-			}
-			ware.set_zwischenziel(transfer_halt);
+			// build the transit_halts
+			vector_tpl<halthandle_t> transit_halts;
+			build_transit_halts_from_halt_data(transit_halts, current_node.halt);
+			ware.set_transit_halts(transit_halts);
+			const halthandle_t first_transfer_halt = transit_halts.front();
 			if(  return_ware  ) {
 				// return ware's destination halt is the start halt of the forward trip
-				assert( halt_data[ transfer_halt.get_id() ].transfer.get_id() );
-				return_ware->set_ziel( halt_data[ transfer_halt.get_id() ].transfer );
+				assert( halt_data[ first_transfer_halt.get_id() ].transfer.get_id() );
+				return_ware->set_ziel( halt_data[ first_transfer_halt.get_id() ].transfer );
 			}
 			return current_halt_data.overcrowded ? ROUTE_OVERCROWDED : ROUTE_OK;
 		}
@@ -1877,10 +1886,10 @@ int haltestelle_t::search_route( const halthandle_t *const start_halts, const ui
 
 	// if the loop ends, nothing was found
 	ware.set_ziel( halthandle_t() );
-	ware.set_zwischenziel( halthandle_t() );
+	ware.clear_transit_halts();
 	if(  return_ware  ) {
 		return_ware->set_ziel( halthandle_t() );
-		return_ware->set_zwischenziel( halthandle_t() );
+		return_ware->clear_transit_halts();
 	}
 	return NO_ROUTE;
 }
@@ -1913,7 +1922,7 @@ void haltestelle_t::search_route_resumable(  ware_t &ware   )
 
 	// reset next transfer and destination halt to null -> if they remain null after search, no route can be found
 	ware.set_ziel( halthandle_t() );
-	ware.set_zwischenziel( halthandle_t() );
+	ware.clear_transit_halts();
 	// find suitable destination halts for the ware packet's target position
 	const planquadrat_t *const plan = welt->access( ware.get_zielpos() );
 	const halthandle_t *const halt_list = plan->get_haltlist();
@@ -1934,7 +1943,9 @@ void haltestelle_t::search_route_resumable(  ware_t &ware   )
 			if (markers[ halt.get_id() ]==current_marker  &&  halt_data[ halt.get_id() ].best_weight < best_destination_weight  &&  halt.is_bound()) {
 				best_destination_weight = halt_data[ halt.get_id() ].best_weight;
 				ware.set_ziel( halt );
-				ware.set_zwischenziel( halt_data[ halt.get_id() ].transfer );
+				vector_tpl<halthandle_t> transit_halts;
+				build_transit_halts_from_halt_data(transit_halts, halt);
+				ware.set_transit_halts(transit_halts);
 			}
 		}
 		// for all halts with halt_data.weight < explored_weight one of the best routes is found
@@ -2029,7 +2040,9 @@ void haltestelle_t::search_route_resumable(  ware_t &ware   )
 		if(  current_halt_data.destination  ) {
 			// destination found
 			ware.set_ziel( current_node.halt );
-			ware.set_zwischenziel( current_halt_data.transfer );
+			vector_tpl<halthandle_t> transit_halts;
+			build_transit_halts_from_halt_data(transit_halts, current_node.halt);
+			ware.set_transit_halts(transit_halts);
 			// update best_destination_weight to leave loop due to first check above
 			best_destination_weight = current_weight;
 			// if this destination halt is not a transfer halt -> do not proceed to process its reachable halt(s)
@@ -2068,7 +2081,7 @@ void haltestelle_t::search_route_resumable(  ware_t &ware   )
 				halt_data[ reachable_halt_id ].best_weight = total_weight;
 				halt_data[ reachable_halt_id ].destination = false; // reset necessary if this was set by search_route
 				halt_data[ reachable_halt_id ].depth       = current_halt_data.depth + 1u;
-				halt_data[ reachable_halt_id ].transfer    = current_halt_data.transfer.get_id() ? current_halt_data.transfer : current_conn.halt;
+				halt_data[ reachable_halt_id ].transfer    = current_node.halt;
 
 				if(  current_conn.is_transfer  &&  allocation_pointer<max_hops  ) {
 					// Case : transfer halt
@@ -2083,7 +2096,7 @@ void haltestelle_t::search_route_resumable(  ware_t &ware   )
 					// new weight is lower than lowest weight --> update halt data
 
 					halt_data[ reachable_halt_id ].best_weight = total_weight;
-					halt_data[ reachable_halt_id ].transfer    = current_halt_data.transfer.get_id() ? current_halt_data.transfer : current_conn.halt;
+					halt_data[ reachable_halt_id ].transfer    = current_node.halt;
 
 					// for transfer/destination nodes create new node
 					if ( (halt_data[ reachable_halt_id ].destination  ||  current_conn.is_transfer )  &&  allocation_pointer<max_hops ) {
@@ -2103,6 +2116,21 @@ void haltestelle_t::search_route_resumable(  ware_t &ware   )
 			// not processed -> reset marker
 			--markers[i];
 		}
+	}
+}
+
+
+/* 
+ * A helper function of search_route and search_route_resumable.
+ * The consturcted vector is set to transit_halts.
+ * The vector includes all transit halts and the final destination.
+ */
+void haltestelle_t::build_transit_halts_from_halt_data(vector_tpl<halthandle_t> &transit_halts, const halthandle_t destination) {
+	halthandle_t transfer_halt = destination;
+	transit_halts.append(transfer_halt);
+	while(  halt_data[ transfer_halt.get_id() ].depth > 1   ) {
+		transfer_halt = halt_data[ transfer_halt.get_id() ].transfer;
+		transit_halts.insert_at(0, transfer_halt);
 	}
 }
 
@@ -2386,7 +2414,7 @@ bool haltestelle_t::vereinige_waren(const ware_t &ware)
 		if(ware.same_destination(tmp)) {
 			if(  ware.get_zwischenziel().is_bound()  &&  ware.get_zwischenziel()!=self  ) {
 				// update route if there is newer route
-				tmp.set_zwischenziel( ware.get_zwischenziel() );
+				tmp.set_transit_halts( ware.get_transit_halts() );
 			}
 			tmp.menge += ware.menge;
 			resort_freight_info = true;
@@ -2489,19 +2517,25 @@ dbg->warning("haltestelle_t::liefere_an()","%d %s delivered to %s have no longer
 		return ware.menge;
 	}
 
-	// not near enough => we need to do a re-routing
-	halthandle_t old_target = ware.get_ziel();
+	// not near enough => we may need to do a re-routing
+	if(  ware.get_zwischenziel()==self  ) {
+		ware.pop_first_transit_halts();
+	}
+	if(  is_route_search_needed(ware)  ) {
+		halthandle_t old_target = ware.get_ziel();
 
-	search_route_resumable(ware);
-	if (!ware.get_ziel().is_bound()) {
-		// target halt no longer there => delete and remove from fab in transit
-		fabrik_t::update_transit( &ware, false );
-		return ware.menge;
+		search_route_resumable(ware);
+		if (!ware.get_ziel().is_bound()) {
+			// target halt no longer there => delete and remove from fab in transit
+			fabrik_t::update_transit( &ware, false );
+			return ware.menge;
+		}
+		// try to join with existing freight only if target has changed
+		if(old_target != ware.get_ziel()  &&  vereinige_waren(ware)) {
+			return ware.menge;
+		}
 	}
-	// try to join with existing freight only if target has changed
-	if(old_target != ware.get_ziel()  &&  vereinige_waren(ware)) {
-		return ware.menge;
-	}
+	
 	// add to internal storage
 	add_goods_to_halt(halt_waiting_goods_t(ware, welt->get_ticks()));
 
@@ -4044,4 +4078,26 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 			}
 		}
 	}
+}
+
+
+// Returns if the route search is needed for the given ware.
+// When TBGR is enabled, the route search is needed only when the next transfer halt is not valid.
+bool haltestelle_t::is_route_search_needed(const ware_t &ware) const {
+	if(  world()->get_settings().get_goods_routing_policy()!=goods_routing_policy_t::GRP_FIFO_ET  ) {
+		// Not using time based goods routing -> Always reroute
+		return true;
+	}
+	const halthandle_t next_transfer_halt = ware.get_zwischenziel();
+	if(  !next_transfer_halt.is_bound()  ||  next_transfer_halt==self  ) {
+		// The next transfer halt is not planned.
+		return true;
+	}
+	FOR(vector_tpl<connection_t>, const& i, all_links[ware.get_desc()->get_catg_index()].connections) {
+		if(  i.halt==next_transfer_halt  ) {
+			// The planned next transfer halt is valid.
+			return false;
+		}
+	}
+	return true;
 }

@@ -884,7 +884,9 @@ void vehicle_t::remove_stale_cargo()
 					if(  halt.is_bound()  ) {
 						if(  halt->is_enabled(tmp.get_index())  ) {
 							// ok, lets change here, since goods are accepted here
-							tmp.access_zwischenziel() = halt;
+							vector_tpl<halthandle_t> transit_halts;
+							transit_halts.append(halt);
+							tmp.set_transit_halts(transit_halts);
 							if (!tmp.get_ziel().is_bound()) {
 								// set target, to prevent that unload_freight drops cargo
 								tmp.set_ziel( halt );
@@ -1645,7 +1647,7 @@ DBG_MESSAGE("vehicle_t::rdwr_from_convoi()","bought at %i/%i.",(purchase_time%12
 			ware_t ware( desc->get_freight_type() );
 			ware.menge = 0;
 			ware.set_ziel( halthandle_t() );
-			ware.set_zwischenziel( halthandle_t() );
+			ware.clear_transit_halts();
 			ware.set_zielpos( get_pos().get_2d() );
 			ware.rdwr(file);
 		}

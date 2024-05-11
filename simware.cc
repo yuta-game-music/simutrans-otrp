@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <functional>
 
 #include "simmem.h"
 #include "simdebug.h"
@@ -23,25 +24,47 @@
 
 const goods_desc_t *ware_t::index_to_desc[256];
 
-ware_t::ware_t() : ziel(), zwischenziel(), zielpos(-1, -1)
+ware_t::ware_t() : ziel(), zielpos(-1, -1)
 {
 	menge = 0;
 	index = 0;
 	to_factory = 0;
+	clear_transit_halts();
 }
 
 
-ware_t::ware_t(const goods_desc_t *wtyp) : ziel(), zwischenziel(), zielpos(-1, -1)
+ware_t::ware_t(const goods_desc_t *wtyp) : ziel(), zielpos(-1, -1)
 {
 	menge = 0;
 	index = wtyp->get_index();
 	to_factory = 0;
+	clear_transit_halts();
 }
 
 
 ware_t::ware_t(loadsave_t *file)
 {
 	rdwr(file);
+}
+
+
+ware_t::ware_t(const ware_t &w)
+{
+	this->operator=(w);
+}
+
+
+ware_t& ware_t::operator=(const ware_t &w) {
+	index = w.index;
+	menge = w.menge;
+	to_factory = w.to_factory;
+	ziel = w.ziel;
+	zielpos = w.zielpos;
+
+	// Copy all transit_halts entries
+	vector_tpl<halthandle_t> tmp_vector(w.transit_halts);
+	swap(transit_halts, tmp_vector);
+	return *this;
 }
 
 
@@ -93,7 +116,7 @@ void ware_t::rdwr(loadsave_t *file)
 		if(file->is_saving()) {
 			uint16 halt_id = ziel.is_bound() ? ziel.get_id() : 0;
 			file->rdwr_short(halt_id);
-			halt_id = zwischenziel.is_bound() ? zwischenziel.get_id() : 0;
+			halt_id = !transit_halts.empty() ? transit_halts[0].get_id() : 0;
 			file->rdwr_short(halt_id);
 		}
 		else {
@@ -101,25 +124,37 @@ void ware_t::rdwr(loadsave_t *file)
 			file->rdwr_short(halt_id);
 			ziel.set_id(halt_id);
 			file->rdwr_short(halt_id);
+			transit_halts.clear();
+			halthandle_t zwischenziel = halthandle_t();
 			zwischenziel.set_id(halt_id);
+			transit_halts.append(zwischenziel);
 		}
 
 	}
 	else {
 		// save halthandles via coordinates
-		if(file->is_saving()) {
-			koord ziel_koord = ziel.is_bound() ? ziel->get_basis_pos() : koord::invalid;
-			ziel_koord.rdwr(file);
-			koord zwischenziel_koord = zwischenziel.is_bound() ? zwischenziel->get_basis_pos() : koord::invalid;
-			zwischenziel_koord.rdwr(file);
-		}
-		else {
-			koord ziel_koord;
-			ziel_koord.rdwr(file);
+		koord ziel_koord = ziel.is_bound() ? ziel->get_basis_pos() : koord::invalid;
+		ziel_koord.rdwr(file);
+		if(  file->is_loading()  ) {
 			ziel = haltestelle_t::get_halt_koord_index(ziel_koord);
-			koord zwischen_ziel_koord;
-			zwischen_ziel_koord.rdwr(file);
-			zwischenziel = haltestelle_t::get_halt_koord_index(zwischen_ziel_koord);
+		}
+
+		if(  file->get_OTRP_version()<39  ) {
+			ziel_koord = !transit_halts.empty() ? transit_halts[0]->get_basis_pos() : koord::invalid;
+			ziel_koord.rdwr(file);
+			if(  file->is_loading()  ) {
+				transit_halts.clear();
+				transit_halts.append(haltestelle_t::get_halt_koord_index(ziel_koord));
+			}
+		} else {
+			std::function<void(loadsave_t*, halthandle_t&)> rdwr_halt = [](loadsave_t *file, halthandle_t &h) {
+				koord halt_koord = h.is_bound() ? h->get_basis_pos() : koord::invalid;
+				halt_koord.rdwr(file);
+				if(  file->is_loading()  ) {
+					h = haltestelle_t::get_halt_koord_index(halt_koord);
+				}
+			};
+			file->rdwr_vector(transit_halts, rdwr_halt);
 		}
 	}
 	zielpos.rdwr(file);
@@ -140,8 +175,10 @@ void ware_t::finish_rd(karte_t *welt)
 		if(ziel.is_bound()) {
 			ziel = haltestelle_t::get_halt_koord_index(ziel->get_init_pos());
 		}
-		if(zwischenziel.is_bound()) {
-			zwischenziel = haltestelle_t::get_halt_koord_index(zwischenziel->get_init_pos());
+		FOR(vector_tpl<halthandle_t>, &h, transit_halts) {
+			if(h.is_bound()) {
+				h = haltestelle_t::get_halt_koord_index(h->get_init_pos());
+			}
 		}
 	}
 	update_factory_target();

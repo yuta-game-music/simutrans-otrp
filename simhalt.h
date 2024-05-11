@@ -537,6 +537,10 @@ private:
 	 */
 	static halthandle_t last_search_origin;
 	static uint8        last_search_ware_catg_idx;
+
+	static void build_transit_halts_from_halt_data(vector_tpl<halthandle_t> &transit_halts, const halthandle_t destination);
+
+	bool is_route_search_needed(const ware_t &ware) const;
 	
 	// data structure of departure_slot_table below.
 	struct departure_t{
