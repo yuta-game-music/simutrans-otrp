@@ -4025,6 +4025,30 @@ bool haltestelle_t::is_departure_booked(uint32 dep_tick, uint8 stop_index, lineh
 	return false;
 }
 
+
+// A subroutine of calc_destination_halt.
+// Returns if the schedule entry whose journey time is not registered exists.
+bool unregistered_journey_time_exists(haltestelle_t::traveler_t traveler, player_t* player) {
+	const schedule_t* schedule = std::visit(
+		[&](const auto &t) { return t->get_schedule(); }, traveler
+	);
+	for(uint8 i=1; i<schedule->get_count()+1; i++) {
+		const schedule_entry_t& this_entry = schedule->entries[i%schedule->get_count()];
+		const schedule_entry_t& prev_entry = schedule->entries[i-1];
+		if(  
+			this_entry.get_median_journey_time()>0  || // valid record exists
+			this_entry.pos==prev_entry.pos  ||
+			haltestelle_t::get_halt(this_entry.pos, player)==haltestelle_t::get_halt(prev_entry.pos, player)
+		) {
+			// valid record exists.
+			continue;
+		}
+		return true;
+	}
+	return false;
+}
+
+
 void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<halthandle_t>> &destination_halts, const vector_tpl<reachable_halt_t> &reachable_halts, const minivec_tpl<uint8> &goods_category_indexes, convoihandle_t cnv) {
 	// initialize destination_halts
 	destination_halts.clear();
@@ -4032,8 +4056,14 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 		destination_halts.put(i);
 	}
 
+	traveler_t traveler;
+	if(  cnv->get_line().is_bound()  ) {
+		traveler = cnv->get_line();
+	} else {
+		traveler = cnv;
+	}
 	const bool is_tbgr_enabled = welt->get_settings().get_goods_routing_policy()==goods_routing_policy_t::GRP_FIFO_ET;
-	if(  !is_tbgr_enabled  ||  cnv->get_schedule()->is_temporary()  ) {
+	if(  !is_tbgr_enabled  ||  cnv->get_schedule()->is_temporary()  ||  unregistered_journey_time_exists(traveler, cnv->get_owner()) ) {
 		// We accept all halts in reachable_halts
 		FOR(const minivec_tpl<uint8>, const& i, goods_category_indexes) {
 			FOR(const vector_tpl<reachable_halt_t>, const& rh, reachable_halts) {
@@ -4055,13 +4085,6 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 			if(  !connection.halt.is_bound()  ) {
 				// We cannot find the connection. We have to skip this halt.
 				continue;
-			}
-
-			traveler_t traveler;
-			if(  cnv->get_line().is_bound()  ) {
-				traveler = cnv->get_line();
-			} else {
-				traveler = cnv;
 			}
 
 			// This convoy is already calculated as the fastest traveler to the halt.
