@@ -31,6 +31,7 @@
 #include "gui/messagebox.h"
 #include "gui/convoi_detail_t.h"
 #include "gui/journey_time_info.h"
+#include "gui/goods_waiting_time.h"
 #include "boden/grund.h"
 #include "boden/wege/schiene.h"	// for railblocks
 #include "boden/wege/strasse.h"
@@ -58,7 +59,6 @@
 #include "utils/simrandom.h"
 #include "utils/simstring.h"
 #include "utils/cbuffer_t.h"
-
 
 /*
  * Waiting time for loading (ms)
@@ -3320,6 +3320,26 @@ bool is_first_ticks_bigger(uint32 v1, uint32 v2) {
 }
 
 
+// a helper function to calculate v1 - v2 considering ticks overflow
+sint32 subtract_ticks(uint32 v1, uint32 v2) {
+	const sint64 v1e = (sint64)v1;
+	const sint64 v2e = (sint64)v2;
+	const sint64 uint32_width = UINT32_MAX+1;
+	if(  v2e-v1e>(1<<31)  ) {
+		// assume v1 is over flow
+		return (sint32)(v1e+uint32_width-v2e);
+	}
+	else if(  v1e-v2e>(1<<31)  ) {
+		// assume v2 is over flow
+		return (sint32)(v1e-v2e-uint32_width);
+	}
+	else {
+		// normal case
+		return (sint32)(v1e-v2e);
+	}
+}
+
+
 /*
  * a helper function of convoi_t::hat_gehalten()
  * This judges whether the convoy satisfies all departure conditions.
@@ -3454,6 +3474,64 @@ uint32 convoi_t::calc_available_halt_length_in_vehicle_steps(koord3d front_vehic
 }
 
 
+// A sub routine of hat_gehalten()
+// Calculate the reachable halts from the current stop of the given convoy, considering the convoy state.
+// Results are stored in reachable_halts.
+void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable_halts, convoihandle_t cnv) {
+	reachable_halts.clear();
+	const schedule_t* schedule = cnv->get_schedule();
+	const schedule_t* line_schedule = cnv->get_line().is_bound() ? cnv->get_line()->get_schedule() : schedule;
+	const player_t* owner = cnv->get_owner();
+	if (  cnv->get_no_load()  ||  schedule->get_current_entry().is_no_load()  ) {
+		// Nothing is allowed to load here.
+		return;
+	}
+
+	const halthandle_t current_halt = haltestelle_t::get_halt(schedule->get_current_entry().pos, owner);
+	const uint8 count = schedule->get_count();
+	// The estimated journey time from the current stop
+	// The convoy stopping time at the starting point is subtracted because the journey time of
+	// the first entry contains the stopping time at the starting point, which should be excluded.
+	sint32 journey_time = -line_schedule->entries[schedule->get_current_stop()].get_median_convoy_stopping_time(); 
+
+	uint8 interval = 0;
+	for(  uint8 i=1;  i<count;  i++  ) {
+		const uint8 wrap_i = (i + schedule->get_current_stop()) % count;
+
+		const halthandle_t plan_halt = haltestelle_t::get_halt(schedule->entries[wrap_i].pos, owner);
+		if(plan_halt == current_halt) {
+			// we will come later here again ...
+			break;
+		}
+		else if(  !plan_halt.is_bound()  ||  schedule->entries[wrap_i].is_no_unload()  ) {
+			// not a halt or set no_unload. no_unload -> we cannot unload the cargo there.
+			if(  grund_t *gr = world()->lookup( schedule->entries[wrap_i].pos )  ) {
+				if(  gr->get_depot()  ) {
+					// do not load for stops after a depot
+					break;
+				}
+			}
+			continue;
+		}
+		// Use the median of the journey time history to stabilize the estimated value
+		// when something irregular happens on a single convoy.
+		journey_time += line_schedule->get_median_journey_time(wrap_i, cnv->get_speedbonus_kmh());
+		reachable_halts.append(haltestelle_t::reachable_halt_t(plan_halt, (uint32)max(journey_time, 0)));
+		if(  schedule->entries[wrap_i].is_unload_all()  ) {
+			// passengers/cargos cannot keep boarding beyond this stop.
+			break;
+		}
+		else if( schedule->entries[wrap_i].is_transfer_interval() ){
+			if(interval == 1){
+				break;
+			}
+			++interval;
+		}
+	}
+	return;
+}
+
+
 /**
  * convoi an haltestelle anhalten
  *
@@ -3473,47 +3551,9 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 		vehicles_loading += 1;
 	}
 
+	const grund_t *next_gr = welt->lookup( schedule->get_next_entry().pos );
 	// next stop in schedule will be a depot
-	bool next_depot = false;
-
-	// prepare a list of all destination halts in the schedule
-	vector_tpl<halthandle_t> destination_halts(schedule->get_count());
-	if (  !no_load  &&  !schedule->get_current_entry().is_no_load()  ) {
-		const uint8 count = schedule->get_count();
-		uint8 interval = 0;
-		for(  uint8 i=1;  i<count;  i++  ) {
-			const uint8 wrap_i = (i + schedule->get_current_stop()) % count;
-
-			const halthandle_t plan_halt = haltestelle_t::get_halt(schedule->entries[wrap_i].pos, owner);
-			if(plan_halt == halt) {
-				// we will come later here again ...
-				break;
-			}
-			else if(  !plan_halt.is_bound()  ||  schedule->entries[wrap_i].is_no_unload()  ) {
-				// not a halt or set no_unload. no_unload -> we cannot unload the cargo there.
-				if(  grund_t *gr = welt->lookup( schedule->entries[wrap_i].pos )  ) {
-					if(  gr->get_depot()  ) {
-
-						next_depot = i==1;
-						// do not load for stops after a depot
-						break;
-					}
-				}
-				continue;
-			}
-			destination_halts.append(plan_halt);
-			if(  schedule->entries[wrap_i].is_unload_all()  ) {
-				// passengers/cargos cannot keep boarding beyond this stop.
-				break;
-			}
-			else if( schedule->entries[wrap_i].is_transfer_interval() ){
-				if(interval == 1){
-					break;
-				}
-				++interval;
-			}
-		}
-	}
+	const bool next_depot = next_gr ? next_gr->get_depot()!=NULL : false;
 
 	// only load vehicles in station
 	// don't load when vehicle is being withdrawn
@@ -3532,6 +3572,11 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 		loading_needed &= (schedule->get_current_entry().waiting_time_shift > 0  &&  welt->get_ticks() - arrived_time >= welt->ticks_per_world_month / schedule->get_current_entry().waiting_time_shift);
 	}
 
+	vector_tpl<haltestelle_t::reachable_halt_t> reachable_halts;
+	calc_reachable_halts(reachable_halts, self);
+	inthashtable_tpl<uint8, vector_tpl<halthandle_t>> destination_halts;
+	halt->calc_destination_halt(destination_halts, reachable_halts, goods_catg_index, self);
+
 	for(unsigned i=0; i<vehicles_loading; i++) {
 		vehicle_t* v = fahr[i];
 
@@ -3544,13 +3589,17 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 			v->last_stop_pos = v->get_pos();
 		}
 
+		// The total amount of goods which are loaded and unloaded
 		uint16 amount = v->unload_cargo(halt, next_depot  );
 
-		if(  loading_needed  &&  v->get_total_cargo() < v->get_cargo_max()  ) {
+		const uint16 capacity_left = v->get_cargo_max() - v->get_total_cargo();
+
+		if(  loading_needed  &&  capacity_left > 0  &&  halt->gibt_ab(v->get_cargo_type())  ) {
 			// load if: unloaded something (might go back) or previous non-filled car requested different cargo type
 			if (amount>0  ||  cargo_type_prev==NULL  ||  !cargo_type_prev->is_interchangeable(v->get_cargo_type())) {
 				// load
-				amount += v->load_cargo(halt, destination_halts);
+				const vector_tpl<halthandle_t> &destinations = destination_halts.get(v->get_cargo_type()->get_catg_index());
+				amount += fetch_goods_and_load(v, halt, destinations, capacity_left);
 			}
 			if (v->get_total_cargo() < v->get_cargo_max()) {
 				// not full
@@ -3677,6 +3726,8 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 
 		// Advance schedule
 		if(  !is_coupled()  ) {
+			push_goods_waiting_time_if_needed();
+			push_convoy_stopping_time();
 			schedule->advance();
 			state = ROUTING_1;
 			loading_limit = 0;
@@ -3685,6 +3736,8 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 			// Advance schedule of coupling convoy recursively.
 			convoihandle_t c_cnv = coupling_convoi;
 			while(  c_cnv.is_bound()  ) {
+				c_cnv->push_goods_waiting_time_if_needed();
+				c_cnv->push_convoy_stopping_time();
 				c_cnv->get_schedule()->advance();
 				c_cnv->set_state(COUPLED);
 				c_cnv->set_coupling_done(false);
@@ -3705,6 +3758,72 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 		}
 	}
 	wait_lock = time;
+}
+
+
+uint16 convoi_t::fetch_goods_and_load(vehicle_t* vehicle, const halthandle_t halt, const vector_tpl<halthandle_t> destination_halts, uint32 requested_amount) {
+	slist_tpl<ware_t> fetched_goods;
+	slist_tpl<halt_waiting_goods_t> fetched_waiting_goods;
+	const goods_routing_policy_t goods_routing_policy = welt->get_settings().get_goods_routing_policy();
+	if(  goods_routing_policy==goods_routing_policy_t::GRP_NF_RC  ) {
+		halt->fetch_goods_nearest_first(fetched_goods, vehicle->get_cargo_type(), requested_amount, destination_halts);
+	} else {
+		// GRP_FIFO_ET or GRP_FIFO_RC
+		halt->fetch_goods_FIFO(fetched_waiting_goods, vehicle->get_cargo_type(), requested_amount, destination_halts);
+		FOR(slist_tpl<halt_waiting_goods_t>, const& g, fetched_waiting_goods) {
+			fetched_goods.append(g.goods);
+			loaded_goods.append(g);
+		}
+	}
+	return vehicle->load_cargo(fetched_goods);
+}
+
+
+void convoi_t::push_goods_waiting_time_if_needed() {
+	if(  welt->get_settings().get_goods_routing_policy()!=GRP_FIFO_ET  ||  loaded_goods.empty() ) {
+		// No need to calculate and push the goods waiting time.
+		return;
+	}
+	
+	const uint32 current_ticks = welt->get_ticks();
+	uint64 weighed_sum_waiting_time = 0;
+	uint64 total_goods_amount = 0;
+	FOR(vector_tpl<halt_waiting_goods_t>, const& g, loaded_goods) {
+		const sint32 waiting_time = subtract_ticks(current_ticks, g.arrived_time);
+		if(  g.arrived_time==INVALID_CARGO_ARRIVED_TIME  ||  waiting_time<=0  ) {
+			continue;
+		}
+		weighed_sum_waiting_time += g.goods.menge * (uint32)waiting_time;
+		total_goods_amount += g.goods.menge;
+	}
+	loaded_goods.clear();
+
+	if(  total_goods_amount==0  ) {
+		return;
+	}
+	uint32 average_waiting_time = weighed_sum_waiting_time / total_goods_amount;
+	const linehandle_t line = get_line();
+	schedule_t* schedule_to_push = line.is_bound() ? line->get_schedule() : schedule;
+	schedule_to_push->entries[schedule->get_current_stop()].push_waiting_time(average_waiting_time);
+
+	// update journey time window
+	gui_goods_waiting_time_t* window = dynamic_cast<gui_goods_waiting_time_t*>(win_get_magic((ptrdiff_t)line.get_rep()));
+	if(  window  ) {
+		window->update();
+	}
+}
+
+
+void convoi_t::push_convoy_stopping_time() {
+	const uint32 current_ticks = welt->get_ticks();
+	if(  time_last_arrived==0  ||  time_last_arrived >= current_ticks  ) {
+		// time_last_arrived is not available.
+		return;
+	}
+	const uint32 stopping_time = subtract_ticks( current_ticks, time_last_arrived );
+	const linehandle_t line = get_line();
+	schedule_t* schedule_to_push = line.is_bound() ? line->get_schedule() : schedule;
+	schedule_to_push->entries[schedule->get_current_stop()].push_convoy_stopping_time(stopping_time);
 }
 
 
@@ -4953,7 +5072,7 @@ void convoi_t::register_journey_time() {
 		time_last_arrived = world()->get_ticks();
 		return;
 	}
-	const uint32 journey_time = world()->get_ticks() - time_last_arrived;
+	const uint32 journey_time = subtract_ticks( world()->get_ticks(), time_last_arrived );
 	convoihandle_t c = self;
 	while(  c.is_bound()  ) {
 		if(  c->get_line().is_bound()  ) {
