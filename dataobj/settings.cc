@@ -318,7 +318,6 @@ settings_t::settings_t() :
 	base_waiting_ticks_for_road_convoi = 60000;
 	base_waiting_ticks_for_ship_convoi = 60000;
 	base_waiting_ticks_for_air_convoi = 200000;
-	tbgr_use_goods_waiting_history = true;
 }
 
 
@@ -962,7 +961,6 @@ void settings_t::rdwr(loadsave_t *file)
 			file->rdwr_long(base_waiting_ticks_for_road_convoi);
 			file->rdwr_long(base_waiting_ticks_for_ship_convoi);
 			file->rdwr_long(base_waiting_ticks_for_air_convoi);
-			file->rdwr_bool(tbgr_use_goods_waiting_history);
 		}
 		if(  file->is_version_atleast(122, 1)  ) {
 			file->rdwr_enum(climate_generator);

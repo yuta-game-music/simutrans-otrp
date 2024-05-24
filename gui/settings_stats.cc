@@ -266,8 +266,6 @@ void settings_routing_stats_t::init(settings_t const* const sets)
 	INIT_NUM ( "base_waiting_ticks_for_road_convoi", sets->base_waiting_ticks_for_road_convoi, 0, 0x7FFFFFFFul, gui_numberinput_t::POWER2, false );
 	INIT_NUM ( "base_waiting_ticks_for_ship_convoi", sets->base_waiting_ticks_for_ship_convoi, 0, 0x7FFFFFFFul, gui_numberinput_t::POWER2, false );
 	INIT_NUM ( "base_waiting_ticks_for_air_convoi", sets->base_waiting_ticks_for_air_convoi, 0, 0x7FFFFFFFul, gui_numberinput_t::POWER2, false );
-	INIT_BOOL( "tbgr_use_goods_waiting_history", sets->tbgr_use_goods_waiting_history );
-
 	INIT_END
 }
 
@@ -309,7 +307,6 @@ void settings_routing_stats_t::read(settings_t* const sets)
 	READ_NUM_VALUE( sets->base_waiting_ticks_for_road_convoi );
 	READ_NUM_VALUE( sets->base_waiting_ticks_for_ship_convoi );
 	READ_NUM_VALUE( sets->base_waiting_ticks_for_air_convoi );
-	READ_BOOL_VALUE( sets->tbgr_use_goods_waiting_history );
 }
 
 

@@ -1170,28 +1170,7 @@ uint32 estimated_waiting_ticks(const schedule_t* schedule, uint8 index) {
 	const schedule_entry_t schedule_entry = schedule->entries[index];
 	const uint32 average_waiting_time = schedule_entry.get_average_waiting_time();
 	const uint32 base_waiting_ticks = world()->get_settings().get_base_waiting_ticks(schedule->get_waytype());
-	if(  world()->get_settings().get_tbgr_use_goods_waiting_history()  ) {
-		// Use the actual waiting time history.
-		return average_waiting_time + base_waiting_ticks;
-	}
-	// find minimum spacing value of the departure timetable.
-	uint16 minimum_spacing = 65535u;
-	for(uint8 i=0; i<schedule->get_count(); i++) {
-		const schedule_entry_t entry = schedule->entries[i];
-		if(  entry.get_wait_for_time()  ) {
-			minimum_spacing = min(minimum_spacing, entry.spacing);
-		}
-	}
-	if(  minimum_spacing<65535u  &&  minimum_spacing>0  ) {
-		// Use the scheduled interval as the waiting time.
-		// NOTE: interval_ticks_from_schedule / 2 is more appropriate, 
-		// but we use the full interval as an incentive for avoiding a transfer.
-		const uint32 interval_ticks_from_schedule = world()->ticks_per_world_month / minimum_spacing;
-		return interval_ticks_from_schedule + base_waiting_ticks;
-	} else {
-		// Use the actual waiting time history.
-		return average_waiting_time + base_waiting_ticks;
-	}
+	return average_waiting_time + base_waiting_ticks;
 }
 
 
