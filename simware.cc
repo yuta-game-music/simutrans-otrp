@@ -139,7 +139,7 @@ void ware_t::rdwr(loadsave_t *file)
 			ziel = haltestelle_t::get_halt_koord_index(ziel_koord);
 		}
 
-		if(  file->get_OTRP_version()<39  ) {
+		if(  file->get_OTRP_version()<38  ) {
 			ziel_koord = !transit_halts.empty() ? transit_halts[0]->get_basis_pos() : koord::invalid;
 			ziel_koord.rdwr(file);
 			if(  file->is_loading()  ) {
