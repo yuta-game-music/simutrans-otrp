@@ -1295,8 +1295,6 @@ sint32 haltestelle_t::rebuild_connections()
 
 		INT_CHECK("simhalt.cc 612");
 
-		minivec_tpl<halthandle_t> no_unload_halts;
-
 		// now we add the schedule to the connection array
 		const schedule_entry_t start_entry = schedule->entries[start_index-1];
 
@@ -1343,16 +1341,7 @@ sint32 haltestelle_t::rebuild_connections()
 				}
 			 	force_transfer_search |= (current_entry.is_unload_all()  ||  current_entry.is_no_load()  ||  current_entry.is_no_unload());
 				no_load_section = current_entry.is_no_load();
-				no_unload_halts.clear();
 				interval = 0;
-				continue;
-			}
-			else if(  current_entry.is_no_unload()  ) {
-				no_unload_halts.append_unique(current_halt);
-			}
-
-			if(  no_unload_halts.is_contained(current_halt)  ||  no_load_section  ) {
-				// do not add connection if this halt is set no_unload or if the previous self stop is set no_load.
 				continue;
 			}
 
@@ -1362,6 +1351,12 @@ sint32 haltestelle_t::rebuild_connections()
 			} else {
 				aggregate_weight += WEIGHT_HALT;
 			}
+
+			if(  current_entry.is_no_unload()  ||  no_load_section  ) {
+				// do not add connection if this halt is set no_unload or if the previous self stop is set no_load.
+				continue;
+			}
+
 			no_load_section |= current_entry.is_unload_all();
 			
 			if(current_entry.is_transfer_interval()){
