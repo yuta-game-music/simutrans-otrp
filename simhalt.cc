@@ -4061,18 +4061,24 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 				continue;
 			}
 
-			// This convoy is already calculated as the fastest traveler to the halt.
-			const bool is_fastest_traveler = connection.best_weight_traveler==traveler;
-			// The journey time is shorter than (wait time + journey time) of the fastest route.
-			// The connection weight contains the base waiting time offset, so we subtract it.
-			const waytype_t fastest_traveler_waytype = std::visit(
-				[](const auto &v) { return v->get_schedule()->get_waytype(); }, 
+			const bool is_fastest_traveler_valid = std::visit(
+				[](const auto &v) { return v.is_bound(); }, 
 				connection.best_weight_traveler
 			);
-			const uint32 base_waiting_time = world()->get_settings().get_base_waiting_ticks(fastest_traveler_waytype);
-			const bool is_shortest_journey = rh.journey_time < connection.weight - base_waiting_time;
+			// This convoy is already calculated as the fastest traveler to the halt.
+			const bool is_fastest_traveler = connection.best_weight_traveler==traveler;
+			const auto is_shortest_journey = [&]() {
+				const waytype_t fastest_traveler_waytype = std::visit(
+					[](const auto &v) { return v->get_schedule()->get_waytype(); }, 
+					connection.best_weight_traveler
+				);
+				const uint32 base_waiting_time = world()->get_settings().get_base_waiting_ticks(fastest_traveler_waytype);
+				// The journey time is shorter than (wait time + journey time) of the fastest route.
+				// The connection weight contains the base waiting time offset, so we subtract it.
+				return rh.journey_time < connection.weight - base_waiting_time;
+			};
 			
-			if(  is_fastest_traveler  ||  is_shortest_journey  ) {
+			if(  !is_fastest_traveler_valid  ||  is_fastest_traveler  ||  is_shortest_journey()  ) {
 				destination_halts.access(g_index)->append(rh.halt);
 			}
 		}
