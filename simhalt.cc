@@ -4117,3 +4117,16 @@ bool haltestelle_t::is_route_search_needed(const ware_t &ware) const {
 	}
 	return false;
 }
+
+
+void haltestelle_t::extinguish_all_waiting_goods() {
+	for(uint8 goods_ctg_idx=0; goods_ctg_idx<goods_manager_t::get_max_catg_index(); goods_ctg_idx++) {
+		slist_tpl<halt_waiting_goods_t>* goods_list = cargo[goods_ctg_idx];
+		if(  !goods_list  ) {
+			continue;
+		}
+		while(  !goods_list->empty()  ) {
+			halt_waiting_goods_t ware = goods_list->remove_first();
+		}
+	}
+}

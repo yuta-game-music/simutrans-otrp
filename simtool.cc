@@ -7641,6 +7641,16 @@ bool tool_remove_halt_t::remove_halt(player_t* player, koord3d const &pos)
 }
 
 
+const char* tool_extinguish_waiting_goods_t::work(player_t* player, koord3d pos) {
+	const halthandle_t halt = haltestelle_t::get_halt(pos, player);
+	if(  !halt.is_bound()  ) {
+		return "No stop found, or different player!";
+	}
+	halt->extinguish_all_waiting_goods();
+	return NULL;
+}
+
+
 bool tool_show_trees_t::init( player_t * )
 {
 	env_t::hide_trees = !env_t::hide_trees;

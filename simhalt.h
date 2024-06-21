@@ -888,6 +888,7 @@ public:
 	
 	bool is_departure_booked(uint32 dep_tick, uint8 stop_index, linehandle_t line) const;
 
+	void extinguish_all_waiting_goods();
 };
 
 ENUM_BITSET(haltestelle_t::stationtyp)
