@@ -660,11 +660,11 @@ void schedule_t::set_delay_tolerance_for_all(uint16 v) {
 	}
 }
 
-schedule_entry_t* schedule_t::access_corresponding_entry(schedule_t* other, uint8 n) {
+sint16 schedule_t::get_corresponding_entry_index(const schedule_t* other, uint8 n) const {
 	if(  n >= other->get_count()  ) {
 		// out of range;
 		dbg->error("schedule_t::access_corresponding_entry", "index %d is out of range %d", n, other->get_count());
-		return NULL;
+		return -1;
 	}
 	uint8 o_idx = n;
 	// count the number of depot entries
@@ -682,14 +682,14 @@ schedule_entry_t* schedule_t::access_corresponding_entry(schedule_t* other, uint
 		if(  !gr  ||  !gr->get_depot()  ) {
 			// this entry is not a depot entry
 			if(  k==o_idx  ) {
-				return &entries[h];
+				return h;
 			}
 			k++;
 		}
 		h++;
 	}
 	dbg->error("schedule_t::access_corresponding_entry", "corresponding entry not found.");
-	return NULL;
+	return -1;
 }
 
 uint8 schedule_t::get_current_stop_exluding_depot() const {

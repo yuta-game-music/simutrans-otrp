@@ -3492,8 +3492,11 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 	// The estimated journey time from the current stop
 	// The convoy stopping time at the starting point is subtracted because the journey time of
 	// the first entry contains the stopping time at the starting point, which should be excluded.
-	// TODO: calculate the correct index of line_schedule.
-	const uint8 line_schedule_current_index = min(schedule->get_current_stop(), line_schedule->get_count() - 1);
+	const uint8 line_schedule_current_index = line_schedule->get_corresponding_entry_index(schedule, schedule->get_current_stop());
+	if(  line_schedule_current_index < 0  ) {
+		dbg->error("calc_reachable_halts", "Could not find line_schedule_current_index.");
+		return; // The current stop is not found in the line schedule. Abort as an illegal case.
+	}
 	sint32 journey_time = -line_schedule->entries[line_schedule_current_index].get_median_convoy_stopping_time(); 
 
 	uint8 interval = 0;
@@ -3517,8 +3520,11 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 		}
 		// Use the median of the journey time history to stabilize the estimated value
 		// when something irregular happens on a single convoy.
-		// TODO: calculate the correct index of line_schedule.
-		const uint8 line_schedule_index = min(wrap_i, line_schedule->get_count() - 1);
+		const uint8 line_schedule_index = line_schedule->get_corresponding_entry_index(schedule, wrap_i);
+		if(  line_schedule_index < 0  ) {
+			dbg->error("calc_reachable_halts", "Could not find line_schedule_index for index %d", wrap_i);
+			continue; // Skip as an illegal case.
+		}
 		journey_time += line_schedule->get_median_journey_time(line_schedule_index, cnv->get_speedbonus_kmh());
 		reachable_halts.append(haltestelle_t::reachable_halt_t(plan_halt, (uint32)max(journey_time, 0)));
 		if(  schedule->entries[wrap_i].is_unload_all()  ) {
@@ -5079,9 +5085,13 @@ void convoi_t::register_journey_time() {
 	const uint32 journey_time = subtract_ticks( world()->get_ticks(), time_last_arrived );
 	convoihandle_t c = self;
 	while(  c.is_bound()  ) {
-		if(  c->get_line().is_bound()  ) {
+		schedule_t* line_schedule = c->get_line().is_bound() ? c->get_line()->get_schedule() : c->get_schedule();
+		const sint16 current_index_on_line_schedule = line_schedule->get_corresponding_entry_index(c->get_schedule(), c->get_schedule()->get_current_stop());
+		if(  current_index_on_line_schedule>=0  ) {
 			// register journey time
-			c->get_line()->get_schedule()->access_corresponding_entry(c->get_schedule(), c->get_schedule()->get_current_stop())->push_journey_time(journey_time);
+			line_schedule->entries[current_index_on_line_schedule].push_journey_time(journey_time);
+		}
+		if(  c->get_line().is_bound()  ) {
 			// update journey time window
 			gui_journey_time_info_t* window = dynamic_cast<gui_journey_time_info_t*>(win_get_magic((ptrdiff_t)c->get_line().get_rep()));
 			if(  window  ) {

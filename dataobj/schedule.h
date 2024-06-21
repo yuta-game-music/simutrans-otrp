@@ -218,11 +218,11 @@ public:
 	static void gimme_stop_name(cbuffer_t& buf, karte_t* welt, player_t const* player_, schedule_entry_t const& entry, int max_chars);
 	
 	/*
-	 * Get corresponding entry of this schedule to Nth entry of the other schedule.
+	 * Get the index of the corresponding entry of this schedule to Nth entry of the other schedule.
 	 * Removes the effect of depot entries.
-	 * Return NULL if it does not exist.
+	 * Returns -1 if it does not exist.
 	 */
-	schedule_entry_t* access_corresponding_entry(schedule_t* other, uint8 n);
+	sint16 get_corresponding_entry_index(const schedule_t* other, uint8 n) const;
 	
 	// get current_stop excluding depot entries
 	uint8 get_current_stop_exluding_depot() const;
