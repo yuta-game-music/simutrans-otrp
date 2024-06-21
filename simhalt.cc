@@ -4098,11 +4098,22 @@ bool haltestelle_t::is_route_search_needed(const ware_t &ware) const {
 		// The next transfer halt is not planned.
 		return true;
 	}
-	FOR(vector_tpl<connection_t>, const& i, all_links[ware.get_desc()->get_catg_index()].connections) {
-		if(  i.halt==next_transfer_halt  ) {
-			// The planned next transfer halt is valid.
-			return false;
+	// Check if the valid connection exists for each transfer step.
+	halthandle_t transfer_halt = self;
+	for(uint8 t_idx = 0; t_idx < ware.get_transit_halts().get_count(); t_idx++) {
+		const halthandle_t next_transfer_halt = ware.get_transit_halts()[t_idx];
+		bool connection_found = false;
+		FOR(vector_tpl<connection_t>, const& i, transfer_halt->get_connections(ware.get_desc()->get_catg_index())) {
+			if(  i.halt==next_transfer_halt  ) {
+				// The planned next transfer halt is valid. Check the next step.
+				connection_found = true;
+				break;
+			}
 		}
+		if(  !connection_found  ) {
+			return true; // No available connection for this step.
+		}
+		transfer_halt = next_transfer_halt;
 	}
-	return true;
+	return false;
 }
