@@ -111,7 +111,24 @@ void ware_t::rdwr(loadsave_t *file)
 		}
 	}
 	// convert coordinate to halt indices
-	if(file->is_version_atleast(110, 6)) {
+	if(  file->get_OTRP_version() >= 39  ) {
+		// rdwr ziel
+		uint16 ziel_halt_id = ziel.is_bound() ? ziel.get_id() : 0;
+		file->rdwr_short(ziel_halt_id);
+		if(  file->is_loading()  ) {
+			ziel.set_id(ziel_halt_id);
+		}
+		// rwdr transit_halts
+		std::function<void(loadsave_t*, halthandle_t&)> rdwr_halt = [](loadsave_t *file, halthandle_t &h) {
+			uint16 halt_id = h.is_bound() ? h.get_id() : 0;
+			file->rdwr_short(halt_id);
+			if(  file->is_loading()  ) {
+				h.set_id(halt_id);
+			}
+		};
+		file->rdwr_vector(transit_halts, rdwr_halt);
+	}
+	else if(file->is_version_atleast(110, 6)) {
 		// save halt id directly
 		if(file->is_saving()) {
 			uint16 halt_id = ziel.is_bound() ? ziel.get_id() : 0;
@@ -129,32 +146,17 @@ void ware_t::rdwr(loadsave_t *file)
 			zwischenziel.set_id(halt_id);
 			transit_halts.append(zwischenziel);
 		}
-
 	}
 	else {
 		// save halthandles via coordinates
 		koord ziel_koord = ziel.is_bound() ? ziel->get_basis_pos() : koord::invalid;
+		koord zwischen_ziel_koord = (!transit_halts.empty()  &&  transit_halts.front().is_bound()) ? transit_halts.front()->get_basis_pos() : koord::invalid;
 		ziel_koord.rdwr(file);
+		zwischen_ziel_koord.rdwr(file);
 		if(  file->is_loading()  ) {
 			ziel = haltestelle_t::get_halt_koord_index(ziel_koord);
-		}
-
-		if(  file->get_OTRP_version()<38  ) {
-			ziel_koord = !transit_halts.empty() ? transit_halts[0]->get_basis_pos() : koord::invalid;
-			ziel_koord.rdwr(file);
-			if(  file->is_loading()  ) {
-				transit_halts.clear();
-				transit_halts.append(haltestelle_t::get_halt_koord_index(ziel_koord));
-			}
-		} else {
-			std::function<void(loadsave_t*, halthandle_t&)> rdwr_halt = [](loadsave_t *file, halthandle_t &h) {
-				koord halt_koord = h.is_bound() ? h->get_basis_pos() : koord::invalid;
-				halt_koord.rdwr(file);
-				if(  file->is_loading()  ) {
-					h = haltestelle_t::get_halt_koord_index(halt_koord);
-				}
-			};
-			file->rdwr_vector(transit_halts, rdwr_halt);
+			transit_halts.clear();
+			transit_halts.append(haltestelle_t::get_halt_koord_index(zwischen_ziel_koord));
 		}
 	}
 	zielpos.rdwr(file);
