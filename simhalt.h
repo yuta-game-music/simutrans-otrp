@@ -28,6 +28,9 @@
 #include "tpl/vector_tpl.h"
 #include "tpl/minivec_tpl.h"
 #include <variant>
+#include <list>
+#include <vector>
+#include <memory>
 
 
 #define RECONNECTING (1)
@@ -69,7 +72,7 @@ struct halt_waiting_goods_t {
     // When this is INVALID_CARGO_ARRIVED_TIME, arrived_time is not available.
     uint32 arrived_time;
 
-    halt_waiting_goods_t(const ware_t &w, uint32 t) : goods(w), arrived_time(t) {}
+	halt_waiting_goods_t(const ware_t& w, uint32 t) : goods(w), arrived_time(t) {}
     halt_waiting_goods_t() : arrived_time(INVALID_CARGO_ARRIVED_TIME) {}
 };
 
@@ -329,8 +332,15 @@ private:
 	 */
 	void fill_connected_component(uint8 catg, uint16 comp);
 
+	using cargo_item_t = std::shared_ptr<halt_waiting_goods_t>;
+
 	// Array with different categories that contains all waiting goods at this stop
-	slist_tpl<halt_waiting_goods_t> **cargo;
+	slist_tpl<cargo_item_t> **cargo;
+
+	// Array with different categories that contains the reference of
+	// waiting goods which haven't had a chance to be loaded yet.
+	// Valid only when TBGR is enabled.
+	std::vector<std::list<std::weak_ptr<halt_waiting_goods_t>>> fresh_cargo;
 
 	/**
 	 * Liste der angeschlossenen Fabriken
@@ -364,7 +374,8 @@ private:
 	bool vereinige_waren(const ware_t &ware);
 
 	// add the goods to the internal storage, called only internally
-	void add_goods_to_halt(halt_waiting_goods_t);
+	// Returns the shared_ptr reference of the added goods.
+	std::shared_ptr<halt_waiting_goods_t> add_goods_to_halt(halt_waiting_goods_t);
 
 	/**
 	 * liefert wartende ware an eine Fabrik
@@ -693,7 +704,7 @@ public:
 	 * @param good_category Specifies the kind of good (or compatible goods) we are requesting to fetch from this stop.
 	 * @param requested_amount How many units of the cargo we can fetch.
 	 */
-	void fetch_goods_FIFO(slist_tpl<halt_waiting_goods_t> &load, const goods_desc_t *good_category, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts);
+	void fetch_goods_FIFO(slist_tpl<ware_t> &load, const goods_desc_t *good_category, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts);
 
 	/**
 	 * Fetches goods from this halt. 
@@ -720,6 +731,8 @@ public:
 	 * @param cnv The convoy which is requesting the destination halts.
 	 */
 	void calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<halthandle_t>> &destination_halts, const vector_tpl<reachable_halt_t> &reachable_halts, const minivec_tpl<uint8> &goods_category_indexes, convoihandle_t cnv);
+
+	void append_loadable_fresh_goods_to_array(vector_tpl<halt_waiting_goods_t>& to, const uint8 goods_category_index, const vector_tpl<halthandle_t>& destination_halts);
 
 	/**
 	 * Delivers goods (ware_t) to this halt.

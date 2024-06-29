@@ -3587,6 +3587,15 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 	inthashtable_tpl<uint8, vector_tpl<halthandle_t>> destination_halts;
 	halt->calc_destination_halt(destination_halts, reachable_halts, goods_catg_index, self);
 
+	// fetch fresh cargos.
+	vector_tpl<uint8> available_goods_category_indexes;
+	for(  uint8 idx = 0;  idx < get_vehicle_count();  idx++  ) {
+		available_goods_category_indexes.append_unique(get_vehikel(idx)->get_cargo_type()->get_catg_index());
+	}
+	FOR(vector_tpl<uint8>, category_idx, available_goods_category_indexes) {
+		halt->append_loadable_fresh_goods_to_array(loaded_goods, category_idx, destination_halts.get(category_idx));
+	}
+
 	for(unsigned i=0; i<vehicles_loading; i++) {
 		vehicle_t* v = fahr[i];
 
@@ -3773,17 +3782,12 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 
 uint16 convoi_t::fetch_goods_and_load(vehicle_t* vehicle, const halthandle_t halt, const vector_tpl<halthandle_t> destination_halts, uint32 requested_amount) {
 	slist_tpl<ware_t> fetched_goods;
-	slist_tpl<halt_waiting_goods_t> fetched_waiting_goods;
 	const goods_routing_policy_t goods_routing_policy = welt->get_settings().get_goods_routing_policy();
 	if(  goods_routing_policy==goods_routing_policy_t::GRP_NF_RC  ) {
 		halt->fetch_goods_nearest_first(fetched_goods, vehicle->get_cargo_type(), requested_amount, destination_halts);
 	} else {
 		// GRP_FIFO_ET or GRP_FIFO_RC
-		halt->fetch_goods_FIFO(fetched_waiting_goods, vehicle->get_cargo_type(), requested_amount, destination_halts);
-		FOR(slist_tpl<halt_waiting_goods_t>, const& g, fetched_waiting_goods) {
-			fetched_goods.append(g.goods);
-			loaded_goods.append(g);
-		}
+		halt->fetch_goods_FIFO(fetched_goods, vehicle->get_cargo_type(), requested_amount, destination_halts);
 	}
 	return vehicle->load_cargo(fetched_goods);
 }

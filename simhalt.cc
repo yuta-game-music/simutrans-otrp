@@ -420,7 +420,8 @@ haltestelle_t::haltestelle_t(loadsave_t* file)
 {
 	last_loading_step = welt->get_steps();
 
-	cargo = (slist_tpl<halt_waiting_goods_t> **)calloc( goods_manager_t::get_max_catg_index(), sizeof(slist_tpl<halt_waiting_goods_t> *) );
+	cargo = (slist_tpl<cargo_item_t> **)calloc( goods_manager_t::get_max_catg_index(), sizeof(slist_tpl<cargo_item_t> *) );
+	fresh_cargo.resize( goods_manager_t::get_max_catg_index() );
 	all_links = new link_t[ goods_manager_t::get_max_catg_index() ];
 	staged_all_links = NULL;
 
@@ -461,7 +462,8 @@ haltestelle_t::haltestelle_t(koord k, player_t* player)
 	reconnect_counter = welt->get_schedule_counter()-1;
 	last_catg_index = 255;
 
-	cargo = (slist_tpl<halt_waiting_goods_t> **)calloc( goods_manager_t::get_max_catg_index(), sizeof(slist_tpl<halt_waiting_goods_t> *) );
+	cargo = (slist_tpl<cargo_item_t> **)calloc( goods_manager_t::get_max_catg_index(), sizeof(slist_tpl<cargo_item_t> *) );
+	fresh_cargo.resize( goods_manager_t::get_max_catg_index() );
 	all_links = new link_t[ goods_manager_t::get_max_catg_index() ];
 	staged_all_links = NULL;
 
@@ -526,8 +528,8 @@ haltestelle_t::~haltestelle_t()
 
 	for(unsigned i=0; i<goods_manager_t::get_max_catg_index(); i++) {
 		if (cargo[i]) {
-			FOR(slist_tpl<halt_waiting_goods_t>, const &w, *cargo[i]) {
-				fabrik_t::update_transit(&w.goods, false);
+			FOR(slist_tpl<cargo_item_t>, const &w, *cargo[i]) {
+				fabrik_t::update_transit(&w->goods, false);
 			}
 			delete cargo[i];
 			cargo[i] = NULL;
@@ -552,10 +554,10 @@ void haltestelle_t::rotate90( const sint16 y_size )
 	// iterate over all different categories
 	for(unsigned i=0; i<goods_manager_t::get_max_catg_index(); i++) {
 		if(cargo[i]) {
-			slist_tpl<halt_waiting_goods_t>& warray = *cargo[i];
-			for (  slist_tpl<halt_waiting_goods_t>::iterator ware = warray.begin();  ware!=warray.end();  ) {
-				if(  ware->goods.menge>0  ) {
-					ware->goods.rotate90(y_size);
+			slist_tpl<cargo_item_t>& warray = *cargo[i];
+			for (  slist_tpl<cargo_item_t>::iterator ware = warray.begin();  ware!=warray.end();  ) {
+				if(  ware->get()->goods.menge>0  ) {
+					ware->get()->goods.rotate90(y_size);
 					ware ++;
 				} else {
 					// empty => remove
@@ -1058,9 +1060,9 @@ bool haltestelle_t::reroute_goods(sint16 &units_remaining)
 		}
 
 		// first: clean out the array
-		slist_tpl<halt_waiting_goods_t> * warray = cargo[last_catg_index];
-		for (  slist_tpl<halt_waiting_goods_t>::iterator ware = warray->begin(); ware!=warray->end();  ) {
-			const ware_t& goods = ware->goods;
+		slist_tpl<cargo_item_t> * warray = cargo[last_catg_index];
+		for (  slist_tpl<cargo_item_t>::iterator ware = warray->begin(); ware!=warray->end();  ) {
+			const ware_t& goods = ware->get()->goods;
 			if(  goods.menge==0  ) {
 				ware = warray->erase(ware);
 				continue;
@@ -1088,8 +1090,8 @@ bool haltestelle_t::reroute_goods(sint16 &units_remaining)
 		// if something left
 		// re-route goods to adapt to changes in world layout,
 		// remove all goods whose destination was removed from the map
-		for(  slist_tpl<halt_waiting_goods_t>::iterator ware = warray->begin();  ware!=warray->end();  ) {
-			ware_t& goods = ware->goods;
+		for(  slist_tpl<cargo_item_t>::iterator ware = warray->begin();  ware!=warray->end();  ) {
+			ware_t& goods = ware->get()->goods;
 			if(  !is_route_search_needed(goods)  ) {
 				ware++;
 				continue;
@@ -2165,10 +2167,10 @@ void haltestelle_t::liefere_an_fabrik(const ware_t& ware) const
 bool haltestelle_t::recall_ware( ware_t& w, uint32 menge )
 {
 	w.menge = 0;
-	slist_tpl<halt_waiting_goods_t> *warray = cargo[w.get_desc()->get_catg_index()];
+	slist_tpl<cargo_item_t> *warray = cargo[w.get_desc()->get_catg_index()];
 	if(warray!=NULL) {
-		FOR(slist_tpl<halt_waiting_goods_t>, & tmp, *warray) {
-			ware_t& goods = tmp.goods;
+		FOR(slist_tpl<cargo_item_t>, & tmp, *warray) {
+			ware_t& goods = tmp->goods;
 			// skip empty entries
 			if(goods.menge==0  ||  w.get_index()!=goods.get_index()  ||  w.get_zielpos()!=goods.get_zielpos()) {
 				continue;
@@ -2197,7 +2199,7 @@ bool haltestelle_t::recall_ware( ware_t& w, uint32 menge )
 
 
 void haltestelle_t::fetch_goods_nearest_first(slist_tpl<ware_t> &load, const goods_desc_t *good_category, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts) {
-	slist_tpl<halt_waiting_goods_t> *wares = cargo[good_category->get_catg_index()];
+	slist_tpl<cargo_item_t> *wares = cargo[good_category->get_catg_index()];
 	if(  !wares  ||  wares->empty()  ) {
 		return;
 	}
@@ -2208,8 +2210,8 @@ void haltestelle_t::fetch_goods_nearest_first(slist_tpl<ware_t> &load, const goo
 		halthandle_t plan_halt = destination_halts[i];
 
 		// REMOVED: The random offset will ensure that all goods have an equal chance to be loaded.
-		for(  slist_tpl<halt_waiting_goods_t>::iterator tmp = wares->begin();  tmp!=wares->end();  tmp++) {
-			ware_t& goods = tmp->goods;
+		for(  slist_tpl<cargo_item_t>::iterator tmp = wares->begin();  tmp!=wares->end();  tmp++) {
+			ware_t& goods = tmp->get()->goods;
 			// skip empty entries
 			if(goods.menge==0) {
 				continue;
@@ -2263,13 +2265,13 @@ void haltestelle_t::fetch_goods_nearest_first(slist_tpl<ware_t> &load, const goo
 }
 
 
-void haltestelle_t::fetch_goods_FIFO(slist_tpl<halt_waiting_goods_t> &load, const goods_desc_t *good_category, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts) {
-	slist_tpl<halt_waiting_goods_t> *wares = cargo[good_category->get_catg_index()];
+void haltestelle_t::fetch_goods_FIFO(slist_tpl<ware_t> &load, const goods_desc_t *good_category, uint32 requested_amount, const vector_tpl<halthandle_t>& destination_halts) {
+	slist_tpl<cargo_item_t> *wares = cargo[good_category->get_catg_index()];
 	if(  !wares  ||  wares->empty()  ) {
 		return;
 	}
-	for(  slist_tpl<halt_waiting_goods_t>::iterator ware = wares->begin();  ware!=wares->end();  ) {
-		ware_t& goods = ware->goods;
+	for(  slist_tpl<cargo_item_t>::iterator ware = wares->begin();  ware!=wares->end();  ) {
+		ware_t& goods = ware->get()->goods;
 		// empty entry -> remove
 		if(goods.menge==0) {
 			ware = wares->erase(ware);
@@ -2299,10 +2301,10 @@ void haltestelle_t::fetch_goods_FIFO(slist_tpl<halt_waiting_goods_t> &load, cons
 		}
 
 		// not too much?
-		halt_waiting_goods_t neu(goods, ware->arrived_time);
+		ware_t neu(goods);
 		if(  goods.menge > requested_amount  ) {
 			// not all can be loaded
-			neu.goods.menge = requested_amount;
+			neu.menge = requested_amount;
 			goods.menge -= requested_amount;
 			requested_amount = 0;
 		}
@@ -2314,7 +2316,7 @@ void haltestelle_t::fetch_goods_FIFO(slist_tpl<halt_waiting_goods_t> &load, cons
 		}
 		load.insert(neu);
 
-		book(neu.goods.menge, HALT_DEPARTED);
+		book(neu.menge, HALT_DEPARTED);
 		resort_freight_info = true;
 
 		if (requested_amount==0) {
@@ -2327,11 +2329,11 @@ void haltestelle_t::fetch_goods_FIFO(slist_tpl<halt_waiting_goods_t> &load, cons
 uint32 haltestelle_t::get_ware_summe(const goods_desc_t *wtyp) const
 {
 	int sum = 0;
-	const slist_tpl<halt_waiting_goods_t> * warray = cargo[wtyp->get_catg_index()];
+	const slist_tpl<cargo_item_t> * warray = cargo[wtyp->get_catg_index()];
 	if(warray!=NULL) {
-		FOR(slist_tpl<halt_waiting_goods_t>, const& i, *warray) {
-			if (wtyp->get_index() == i.goods.get_index()) {
-				sum += i.goods.menge;
+		FOR(slist_tpl<cargo_item_t>, const& i, *warray) {
+			if (wtyp->get_index() == i->goods.get_index()) {
+				sum += i->goods.menge;
 			}
 		}
 	}
@@ -2341,10 +2343,10 @@ uint32 haltestelle_t::get_ware_summe(const goods_desc_t *wtyp) const
 
 uint32 haltestelle_t::get_ware_fuer_zielpos(const goods_desc_t *wtyp, const koord zielpos) const
 {
-	const slist_tpl<halt_waiting_goods_t> * warray = cargo[wtyp->get_catg_index()];
+	const slist_tpl<cargo_item_t> * warray = cargo[wtyp->get_catg_index()];
 	if(warray!=NULL) {
-		FOR(slist_tpl<halt_waiting_goods_t>, const& ware, *warray) {
-			const ware_t& goods = ware.goods;
+		FOR(slist_tpl<cargo_item_t>, const& ware, *warray) {
+			const ware_t& goods = ware->goods;
 			if(wtyp->get_index()==goods.get_index()  &&  goods.get_zielpos()==zielpos) {
 				return goods.menge;
 			}
@@ -2357,10 +2359,10 @@ uint32 haltestelle_t::get_ware_fuer_zielpos(const goods_desc_t *wtyp, const koor
 uint32 haltestelle_t::get_ware_fuer_zwischenziel(const goods_desc_t *wtyp, const halthandle_t zwischenziel) const
 {
 	uint32 sum = 0;
-	const slist_tpl<halt_waiting_goods_t> * warray = cargo[wtyp->get_catg_index()];
+	const slist_tpl<cargo_item_t> * warray = cargo[wtyp->get_catg_index()];
 	if(warray!=NULL) {
-		FOR(slist_tpl<halt_waiting_goods_t>, const& ware, *warray) {
-			const ware_t& goods = ware.goods;
+		FOR(slist_tpl<cargo_item_t>, const& ware, *warray) {
+			const ware_t& goods = ware->goods;
 			if(wtyp->get_index()==goods.get_index()  &&  goods.get_zwischenziel()==zwischenziel) {
 				sum += goods.menge;
 			}
@@ -2380,12 +2382,12 @@ bool haltestelle_t::vereinige_waren(const ware_t &ware)
 	}
 
 	// pruefen ob die ware mit bereits wartender ware vereinigt werden kann
-	slist_tpl<halt_waiting_goods_t> * warray = cargo[ware.get_desc()->get_catg_index()];
+	slist_tpl<cargo_item_t> * warray = cargo[ware.get_desc()->get_catg_index()];
 	if(  !warray  ) {
 		return false;
 	}
-	FOR(slist_tpl<halt_waiting_goods_t>, & tmp_cargo, *warray) {
-		ware_t& tmp = tmp_cargo.goods;
+	FOR(slist_tpl<cargo_item_t>, & tmp_cargo, *warray) {
+		ware_t& tmp = tmp_cargo->goods;
 		// join packets with same destination
 		if(ware.same_destination(tmp)) {
 			if(  ware.get_zwischenziel().is_bound()  &&  ware.get_zwischenziel()!=self  ) {
@@ -2404,17 +2406,24 @@ bool haltestelle_t::vereinige_waren(const ware_t &ware)
 
 // put the ware into the internal storage
 // take care of all allocation necessary
-void haltestelle_t::add_goods_to_halt(halt_waiting_goods_t wg)
+std::shared_ptr<halt_waiting_goods_t> haltestelle_t::add_goods_to_halt(halt_waiting_goods_t wg)
 {
 	// now we have to add the ware to the stop
-	slist_tpl<halt_waiting_goods_t> * warray = cargo[wg.goods.get_desc()->get_catg_index()];
+	slist_tpl<cargo_item_t> * warray = cargo[wg.goods.get_desc()->get_catg_index()];
 	if(warray==NULL) {
 		// this type was not stored here before ...
-		warray = new slist_tpl<halt_waiting_goods_t>();
+		warray = new slist_tpl<cargo_item_t>();
 		cargo[wg.goods.get_desc()->get_catg_index()] = warray;
 	}
 	resort_freight_info = true;
-	warray->append(wg);
+	cargo_item_t goods_ref = cargo_item_t(new halt_waiting_goods_t(wg));
+	warray->append(goods_ref);
+
+	// Add the goods to fresh_cargo_ids if needed
+	if(  world()->get_settings().get_goods_routing_policy()==goods_routing_policy_t::GRP_FIFO_ET  ) {
+		fresh_cargo[wg.goods.get_desc()->get_catg_index()].push_back(std::weak_ptr<halt_waiting_goods_t>(goods_ref));
+	}
+	return goods_ref;
 }
 
 
@@ -2534,8 +2543,8 @@ void haltestelle_t::get_freight_info(cbuffer_t & buf)
 				continue;
 			}
 			vector_tpl<ware_t> wvector;
-			FOR(slist_tpl<halt_waiting_goods_t>, & w, *cargo[i]) {
-				wvector.append(w.goods);
+			FOR(slist_tpl<cargo_item_t>, & w, *cargo[i]) {
+				wvector.append(w->goods);
 			}
 			freight_list_sorter_t::sort_freight(wvector, buf, (freight_list_sorter_t::sort_mode_t)sortierung, NULL, "waiting");
 		}
@@ -2864,10 +2873,10 @@ void haltestelle_t::transfer_goods(halthandle_t halt)
 	}
 	// transfer goods to halt
 	for(uint8 i=0; i<goods_manager_t::get_max_catg_index(); i++) {
-		const slist_tpl<halt_waiting_goods_t> * warray = cargo[i];
+		const slist_tpl<cargo_item_t> * warray = cargo[i];
 		if (warray) {
-			FOR(slist_tpl<halt_waiting_goods_t>, const& j, *warray) {
-				halt->add_goods_to_halt(j);
+			FOR(slist_tpl<cargo_item_t>, const& j, *warray) {
+				halt->add_goods_to_halt(*j.get());
 			}
 			delete cargo[i];
 			cargo[i] = NULL;
@@ -3102,11 +3111,15 @@ void haltestelle_t::rdwr(loadsave_t *file)
 		k.rdwr( file );
 	}
 
+	// Used only in loading, for constructing fresh_cargo reference lists from the archived addresses.
+	// The hash table of (archived address value, shared_ptr) of cargo items.
+	inthashtable_tpl<sint64, cargo_item_t> archived_cargo_address_table;
+
 	init_pos = tiles.empty() ? koord::invalid : tiles.front().grund->get_pos().get_2d();
 	if(file->is_saving()) {
 		const char *s;
 		for(unsigned i=0; i<goods_manager_t::get_max_catg_index(); i++) {
-			slist_tpl<halt_waiting_goods_t> *warray = cargo[i];
+			slist_tpl<cargo_item_t> *warray = cargo[i];
 			if(warray) {
 				s = "y"; // needs to be non-empty
 				file->rdwr_str(s);
@@ -3118,10 +3131,14 @@ void haltestelle_t::rdwr(loadsave_t *file)
 					uint32 count = warray->get_count();
 					file->rdwr_long(count);
 				}
-				FOR(slist_tpl<halt_waiting_goods_t>, & ware, *warray) {
-					ware.goods.rdwr(file);
+				FOR(slist_tpl<cargo_item_t>, & ware, *warray) {
+					ware->goods.rdwr(file);
 					if(  file->get_OTRP_version()>=36  ) {
-						file->rdwr_long(ware.arrived_time);
+						file->rdwr_long(ware->arrived_time);
+					}
+					if(  file->get_OTRP_version()>=40  ) {
+						sint64 pointer = (sint64)ware.get(); 
+						file->rdwr_longlong(pointer); // save the address
 					}
 				}
 			}
@@ -3152,7 +3169,12 @@ void haltestelle_t::rdwr(loadsave_t *file)
 						file->rdwr_long(arrived_time);
 					}
 					if(  ware.get_desc()  &&  ware.menge>0  &&  welt->is_within_limits(ware.get_zielpos())  ) {
-						add_goods_to_halt(halt_waiting_goods_t(ware, arrived_time));
+						cargo_item_t goods_ref = add_goods_to_halt(halt_waiting_goods_t(ware, arrived_time));
+						if(  file->get_OTRP_version()>=40  ) {
+							sint64 archived_address;
+							file->rdwr_longlong(archived_address);
+							archived_cargo_address_table.put(archived_address, goods_ref);
+						}
 						// restore in-transit information
 						fabrik_t::update_transit( &ware, true );
 					}
@@ -3228,6 +3250,46 @@ void haltestelle_t::rdwr(loadsave_t *file)
 			}
 		}
 	}
+
+	// read and write fresh_cargo
+	std::function<void(loadsave_t*, sint64&)> rdwr_longlong_item = [](loadsave_t *file, sint64 &v) {
+		file->rdwr_longlong(v);
+	};
+	if(  file->get_OTRP_version()>=40  ) {
+		if(  file->is_loading()  ) {
+			fresh_cargo.clear();
+			uint8 list_count;
+			file->rdwr_byte(list_count);
+			for(uint8 i=0; i<list_count; i++) {
+				vector_tpl<sint64> ref_addresses;
+				file->rdwr_vector(ref_addresses, rdwr_longlong_item);
+				FOR(vector_tpl<sint64>, &addr, ref_addresses) {
+					if(  cargo_item_t* ptr = archived_cargo_address_table.access(addr)  ) {
+						fresh_cargo[i].push_back(std::weak_ptr(*ptr));
+					}
+				}
+			}
+		} else {
+			uint8 list_count = fresh_cargo.size();
+			file->rdwr_byte(list_count);
+			FOR(std::vector<std::list<std::weak_ptr<halt_waiting_goods_t>>>, &list, fresh_cargo) {
+				vector_tpl<sint64> ref_addresses;
+				FOR(std::list<std::weak_ptr<halt_waiting_goods_t>>, &i, list) {
+					std::shared_ptr<halt_waiting_goods_t> ptr = i.lock();
+					if(  ptr  ) {
+						sint64 pointer = (sint64)ptr.get();
+						ref_addresses.append(pointer);
+					}
+				}
+				file->rdwr_vector(ref_addresses, rdwr_longlong_item);
+			}
+		}
+	}
+	else if(  file->is_loading()  ) {
+		FOR(std::vector<std::list<std::weak_ptr<halt_waiting_goods_t>>>, &list, fresh_cargo) {
+			list.clear();
+		}
+	}
 }
 
 
@@ -3241,9 +3303,9 @@ void haltestelle_t::finish_rd()
 	// fix good destination coordinates
 	for(unsigned i=0; i<goods_manager_t::get_max_catg_index(); i++) {
 		if(cargo[i]) {
-			slist_tpl<halt_waiting_goods_t> * warray = cargo[i];
-			FOR(slist_tpl<halt_waiting_goods_t>, & j, *warray) {
-				j.goods.finish_rd(welt);
+			slist_tpl<cargo_item_t> * warray = cargo[i];
+			FOR(slist_tpl<cargo_item_t>, & j, *warray) {
+				j->goods.finish_rd(welt);
 			}
 		}
 	}
@@ -4121,12 +4183,33 @@ bool haltestelle_t::is_route_search_needed(const ware_t &ware) const {
 
 void haltestelle_t::extinguish_all_waiting_goods() {
 	for(uint8 goods_ctg_idx=0; goods_ctg_idx<goods_manager_t::get_max_catg_index(); goods_ctg_idx++) {
-		slist_tpl<halt_waiting_goods_t>* goods_list = cargo[goods_ctg_idx];
+		slist_tpl<cargo_item_t>* goods_list = cargo[goods_ctg_idx];
 		if(  !goods_list  ) {
 			continue;
 		}
 		while(  !goods_list->empty()  ) {
-			halt_waiting_goods_t ware = goods_list->remove_first();
+			goods_list->remove_first();
 		}
+	}
+}
+
+
+// TODO: Use (amount, arrived_time) type instead of halt_waiting_goods_t.
+void haltestelle_t::append_loadable_fresh_goods_to_array(vector_tpl<halt_waiting_goods_t>& to_array, const uint8 goods_category_index, const vector_tpl<halthandle_t>& destination_halts) {
+	auto iterator = fresh_cargo[goods_category_index].begin();
+	while(  iterator!=fresh_cargo[goods_category_index].end()  ) {
+		cargo_item_t item = iterator->lock();
+		if(  !item  ) {
+			// The reference is not valid. Just remove it from the list.
+			iterator = fresh_cargo[goods_category_index].erase(iterator);
+			continue;
+		}
+		if(  !destination_halts.is_contained(item->goods.get_zwischenziel())  ) {
+			// The goods cannot be loaded.
+			iterator++;
+			continue;
+		}
+		to_array.append(halt_waiting_goods_t(*item.get()));
+		iterator = fresh_cargo[goods_category_index].erase(iterator);
 	}
 }
