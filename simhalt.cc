@@ -3255,9 +3255,13 @@ void haltestelle_t::rdwr(loadsave_t *file)
 	std::function<void(loadsave_t*, sint64&)> rdwr_longlong_item = [](loadsave_t *file, sint64 &v) {
 		file->rdwr_longlong(v);
 	};
+	if(  file->is_loading()  ) {
+		FOR(std::vector<std::list<std::weak_ptr<halt_waiting_goods_t>>>, &list, fresh_cargo) {
+			list.clear();
+		}
+	}
 	if(  file->get_OTRP_version()>=40  ) {
 		if(  file->is_loading()  ) {
-			fresh_cargo.clear();
 			uint8 list_count;
 			file->rdwr_byte(list_count);
 			for(uint8 i=0; i<list_count; i++) {
@@ -3283,11 +3287,6 @@ void haltestelle_t::rdwr(loadsave_t *file)
 				}
 				file->rdwr_vector(ref_addresses, rdwr_longlong_item);
 			}
-		}
-	}
-	else if(  file->is_loading()  ) {
-		FOR(std::vector<std::list<std::weak_ptr<halt_waiting_goods_t>>>, &list, fresh_cargo) {
-			list.clear();
 		}
 	}
 }
