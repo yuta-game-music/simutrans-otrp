@@ -3588,12 +3588,12 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 	halt->calc_destination_halt(destination_halts, reachable_halts, goods_catg_index, self);
 
 	// fetch fresh cargos.
-	vector_tpl<uint8> available_goods_category_indexes;
-	for(  uint8 idx = 0;  idx < get_vehicle_count();  idx++  ) {
-		available_goods_category_indexes.append_unique(get_vehikel(idx)->get_cargo_type()->get_catg_index());
-	}
-	FOR(vector_tpl<uint8>, category_idx, available_goods_category_indexes) {
-		halt->append_loadable_fresh_goods_to_array(loaded_goods, category_idx, destination_halts.get(category_idx));
+	FOR(minivec_tpl<uint8>, category_idx, goods_catg_index) {
+		vector_tpl<haltestelle_t::loadable_fresh_goods_t> loadable_fresh_goods;
+		halt->fetch_loadable_fresh_goods(loadable_fresh_goods, category_idx, destination_halts.get(category_idx));
+		FOR(vector_tpl<haltestelle_t::loadable_fresh_goods_t>, &goods, loadable_fresh_goods) {
+			fetched_fresh_goods.append(fetched_fresh_goods_t(goods.amount, goods.arrived_time));
+		}
 	}
 
 	for(unsigned i=0; i<vehicles_loading; i++) {
@@ -3794,7 +3794,7 @@ uint16 convoi_t::fetch_goods_and_load(vehicle_t* vehicle, const halthandle_t hal
 
 
 void convoi_t::push_goods_waiting_time_if_needed() {
-	if(  welt->get_settings().get_goods_routing_policy()!=GRP_FIFO_ET  ||  loaded_goods.empty() ) {
+	if(  welt->get_settings().get_goods_routing_policy()!=GRP_FIFO_ET  ||  fetched_fresh_goods.empty() ) {
 		// No need to calculate and push the goods waiting time.
 		return;
 	}
@@ -3802,15 +3802,16 @@ void convoi_t::push_goods_waiting_time_if_needed() {
 	const uint32 current_ticks = welt->get_ticks();
 	uint64 weighed_sum_waiting_time = 0;
 	uint64 total_goods_amount = 0;
-	FOR(vector_tpl<halt_waiting_goods_t>, const& g, loaded_goods) {
+
+	FOR(vector_tpl<fetched_fresh_goods_t>, const& g, fetched_fresh_goods) {
 		const sint32 waiting_time = subtract_ticks(current_ticks, g.arrived_time);
 		if(  g.arrived_time==INVALID_CARGO_ARRIVED_TIME  ||  waiting_time<=0  ) {
 			continue;
 		}
-		weighed_sum_waiting_time += g.goods.menge * (uint32)waiting_time;
-		total_goods_amount += g.goods.menge;
+		weighed_sum_waiting_time += g.amount * (uint32)waiting_time;
+		total_goods_amount += g.amount;
 	}
-	loaded_goods.clear();
+	fetched_fresh_goods.clear();
 
 	if(  total_goods_amount==0  ) {
 		return;

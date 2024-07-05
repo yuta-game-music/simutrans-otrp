@@ -79,6 +79,18 @@ static vector_tpl<linehandle_t>stale_lines;
 #define UINT32_MAX 4294967295u // (1<<32)-1
 #endif
 
+// The goods info which is waiting at the halt
+struct halt_waiting_goods_t {
+    ware_t goods;
+
+    // The time when the cargo arrived at this stop.
+    // When this is INVALID_CARGO_ARRIVED_TIME, arrived_time is not available.
+    uint32 arrived_time;
+
+	halt_waiting_goods_t(const ware_t& w, uint32 t) : goods(w), arrived_time(t) {}
+    halt_waiting_goods_t() : arrived_time(INVALID_CARGO_ARRIVED_TIME) {}
+};
+
 void haltestelle_t::reset_routing()
 {
 	reconnect_counter = welt->get_schedule_counter()-1;
@@ -4194,7 +4206,7 @@ void haltestelle_t::extinguish_all_waiting_goods() {
 
 
 // TODO: Use (amount, arrived_time) type instead of halt_waiting_goods_t.
-void haltestelle_t::append_loadable_fresh_goods_to_array(vector_tpl<halt_waiting_goods_t>& to_array, const uint8 goods_category_index, const vector_tpl<halthandle_t>& destination_halts) {
+void haltestelle_t::fetch_loadable_fresh_goods(vector_tpl<loadable_fresh_goods_t>& to_array, const uint8 goods_category_index, const vector_tpl<halthandle_t>& destination_halts) {
 	auto iterator = fresh_cargo[goods_category_index].begin();
 	while(  iterator!=fresh_cargo[goods_category_index].end()  ) {
 		cargo_item_t item = iterator->lock();
@@ -4208,7 +4220,7 @@ void haltestelle_t::append_loadable_fresh_goods_to_array(vector_tpl<halt_waiting
 			iterator++;
 			continue;
 		}
-		to_array.append(halt_waiting_goods_t(*item.get()));
+		to_array.append(loadable_fresh_goods_t(item->goods.menge, item->arrived_time));
 		iterator = fresh_cargo[goods_category_index].erase(iterator);
 	}
 }

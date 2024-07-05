@@ -60,21 +60,10 @@ class koord3d;
 class loadsave_t;
 class schedule_t;
 class player_t;
+struct halt_waiting_goods_t;
 template<class T> class bucket_heap_tpl;
 
 #define INVALID_CARGO_ARRIVED_TIME 0
-
-// The goods info which is waiting at the halt
-struct halt_waiting_goods_t {
-    ware_t goods;
-
-    // The time when the cargo arrived at this stop.
-    // When this is INVALID_CARGO_ARRIVED_TIME, arrived_time is not available.
-    uint32 arrived_time;
-
-	halt_waiting_goods_t(const ware_t& w, uint32 t) : goods(w), arrived_time(t) {}
-    halt_waiting_goods_t() : arrived_time(INVALID_CARGO_ARRIVED_TIME) {}
-};
 
 // -------------------------- Haltestelle ----------------------------
 
@@ -732,7 +721,12 @@ public:
 	 */
 	void calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<halthandle_t>> &destination_halts, const vector_tpl<reachable_halt_t> &reachable_halts, const minivec_tpl<uint8> &goods_category_indexes, convoihandle_t cnv);
 
-	void append_loadable_fresh_goods_to_array(vector_tpl<halt_waiting_goods_t>& to, const uint8 goods_category_index, const vector_tpl<halthandle_t>& destination_halts);
+	struct loadable_fresh_goods_t {
+		ware_t::goods_amount_t amount;
+		uint32 arrived_time;
+	};
+
+	void fetch_loadable_fresh_goods(vector_tpl<loadable_fresh_goods_t>& to, const uint8 goods_category_index, const vector_tpl<halthandle_t>& destination_halts);
 
 	/**
 	 * Delivers goods (ware_t) to this halt.

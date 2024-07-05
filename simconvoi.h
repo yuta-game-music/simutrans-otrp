@@ -35,7 +35,6 @@ class vehicle_desc_t;
 class schedule_t;
 class cbuffer_t;
 class signal_t;
-struct halt_waiting_goods_t;
 
 // A struct to represent the directly reachable halts
 struct convoi_reachable_halt_t {
@@ -470,10 +469,15 @@ private:
 	// When this convoy requested lane crossing...
 	uint32 request_cross_ticks;
 
-	// The goods loaded at the stopping halt.
+	struct fetched_fresh_goods_t {
+		uint32 amount;
+		uint32 arrived_time;
+	};
+
+	// The goods fetched with haltestelle_t::fetch_loadable_fresh_goods at the stopping halt.
 	// Used for calculating the average goods waiting time at the halt.
 	// Valid only when journey time based goods routing is enabled and the convoy is in the loading status.
-	vector_tpl<halt_waiting_goods_t> loaded_goods;
+	vector_tpl<fetched_fresh_goods_t> fetched_fresh_goods;
 
 	// A sub routine of hat_gehalten()
 	// Returns the amount of the loaded goods
