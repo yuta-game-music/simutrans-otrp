@@ -4075,10 +4075,7 @@ bool haltestelle_t::is_departure_booked(uint32 dep_tick, uint8 stop_index, lineh
 
 // A subroutine of calc_destination_halt.
 // Returns if the schedule entry whose journey time is not registered exists.
-bool unregistered_journey_time_exists(haltestelle_t::traveler_t traveler, player_t* player) {
-	const schedule_t* schedule = std::visit(
-		[&](const auto &t) { return t->get_schedule(); }, traveler
-	);
+bool unregistered_journey_time_exists(const schedule_t* schedule, player_t* player) {
 	for(uint8 i=1; i<schedule->get_count()+1; i++) {
 		const schedule_entry_t& this_entry = schedule->entries[i%schedule->get_count()];
 		const schedule_entry_t& prev_entry = schedule->entries[i-1];
@@ -4110,7 +4107,10 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 		traveler = cnv;
 	}
 	const bool is_tbgr_enabled = welt->get_settings().get_goods_routing_policy()==goods_routing_policy_t::GRP_FIFO_ET;
-	if(  !is_tbgr_enabled  ||  cnv->get_schedule()->is_temporary()  ||  unregistered_journey_time_exists(traveler, cnv->get_owner()) ) {
+	const schedule_t* schedule = std::visit(
+		[&](const auto &t) { return t->get_schedule(); }, traveler
+	);
+	if(  !is_tbgr_enabled  ||  cnv->get_schedule()->is_temporary()  ||  unregistered_journey_time_exists(schedule, cnv->get_owner()) ) {
 		// We accept all halts in reachable_halts
 		FOR(const minivec_tpl<uint8>, const& i, goods_category_indexes) {
 			FOR(const vector_tpl<reachable_halt_t>, const& rh, reachable_halts) {
@@ -4120,6 +4120,7 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 		return;
 	}
 
+	const uint32 base_waiting_time = world()->get_settings().get_base_waiting_ticks(schedule->get_waytype());
 	FOR(const minivec_tpl<uint8>, const& g_index, goods_category_indexes) {
 		FOR(const vector_tpl<reachable_halt_t>, const& rh, reachable_halts) {
 			connection_t connection;
@@ -4141,14 +4142,9 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 			// This convoy is already calculated as the fastest traveler to the halt.
 			const bool is_fastest_traveler = connection.best_weight_traveler==traveler;
 			const auto is_shortest_journey = [&]() {
-				const waytype_t fastest_traveler_waytype = std::visit(
-					[](const auto &v) { return v->get_schedule()->get_waytype(); }, 
-					connection.best_weight_traveler
-				);
-				const uint32 base_waiting_time = world()->get_settings().get_base_waiting_ticks(fastest_traveler_waytype);
 				// The journey time is shorter than (wait time + journey time) of the fastest route.
 				// The connection weight contains the base waiting time offset, so we subtract it.
-				return rh.journey_time < connection.weight - base_waiting_time;
+				return rh.journey_time + base_waiting_time < connection.weight;
 			};
 			
 			if(  !is_fastest_traveler_valid  ||  is_fastest_traveler  ||  is_shortest_journey()  ) {
