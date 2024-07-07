@@ -472,6 +472,9 @@ private:
 	struct fetched_fresh_goods_t {
 		uint32 amount;
 		uint32 arrived_time;
+
+		fetched_fresh_goods_t(uint32 a, uint32 t): amount(a), arrived_time(t) {}
+		fetched_fresh_goods_t(): amount(0), arrived_time(0) {}
 	};
 
 	// The goods fetched with haltestelle_t::fetch_loadable_fresh_goods at the stopping halt.

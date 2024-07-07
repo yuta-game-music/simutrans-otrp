@@ -50,6 +50,7 @@ void schedule_t::copy_from(const schedule_t *src)
 	flags = src->get_flags();
 	max_speed = src->get_max_speed();
 	departure_slot_group_id = src->get_departure_slot_group_id();
+	additional_base_waiting_time = src->get_additional_base_waiting_time();
 }
 
 
@@ -233,6 +234,10 @@ void schedule_t::rdwr(loadsave_t *file)
 		file->rdwr_longlong(departure_slot_group_id);
 	} else {
 		departure_slot_group_id = issue_new_departure_slot_group_id();
+	}
+
+	if(  file->get_OTRP_version()>=41  ) {
+		file->rdwr_long(additional_base_waiting_time);
 	}
 
 	if(file->is_version_less(99, 12)) {
@@ -469,7 +474,7 @@ void schedule_t::add_return_way()
 void schedule_t::sprintf_schedule( cbuffer_t &buf ) const
 {
 	uint32 s = current_stop + (flags<<8) + (max_speed<<16);
-	buf.printf("%u|%ld|%d|", s, departure_slot_group_id, (int)get_type());
+	buf.printf("%u|%ld|%u|%d|", s, departure_slot_group_id, additional_base_waiting_time, (int)get_type());
 	FOR(minivec_tpl<schedule_entry_t>, const& i, entries) {
 		buf.printf("%s,%i,%i,%i,%i,%i,%i|", i.pos.get_str(), (int)i.minimum_loading, (int)i.waiting_time_shift, i.get_stop_flags(), i.spacing, i.spacing_shift, i.delay_tolerance);
 	}
@@ -507,6 +512,16 @@ bool schedule_t::sscanf_schedule( const char *ptr )
 	}
 	if(  *p!='|'  ) {
 		dbg->error( "schedule_t::sscanf_schedule()","incomplete entry termination for departure_slot_group_id!" );
+		return false;
+	}
+	p++;
+	// then additional_base_waiting_time
+	additional_base_waiting_time = atoi( p );
+	while(  *p  &&  *p!='|'  ) {
+		p++;
+	}
+	if(  *p!='|'  ) {
+		dbg->error( "schedule_t::sscanf_schedule()","incomplete entry termination for additional_base_waiting_time!" );
 		return false;
 	}
 	p++;

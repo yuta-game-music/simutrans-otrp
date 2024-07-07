@@ -724,6 +724,9 @@ public:
 	struct loadable_fresh_goods_t {
 		ware_t::goods_amount_t amount;
 		uint32 arrived_time;
+
+		loadable_fresh_goods_t(ware_t::goods_amount_t a, uint32 t) : amount(a), arrived_time(t) {}
+		loadable_fresh_goods_t() : amount(0), arrived_time(INVALID_CARGO_ARRIVED_TIME) {}
 	};
 
 	void fetch_loadable_fresh_goods(vector_tpl<loadable_fresh_goods_t>& to, const uint8 goods_category_index, const vector_tpl<halthandle_t>& destination_halts);

@@ -37,6 +37,10 @@ class schedule_t
 	// defined in sint64 since uint64 value cannot be handled with rdwr_longlong
 	sint64 departure_slot_group_id;
 
+	// The base waiting time of the schedule on the goods route search when TBGR is enabled.
+	// The unit is OTRP divided time, same as the departure time slot offset.
+	uint32 additional_base_waiting_time;
+
 	static schedule_entry_t dummy_entry;
 
 	/**
@@ -53,7 +57,7 @@ class schedule_t
 	}
 
 protected:
-	schedule_t() : editing_finished(false), current_stop(0), flags(0), max_speed(0), departure_slot_group_id(0) {}
+	schedule_t() : editing_finished(false), current_stop(0), flags(0), max_speed(0), departure_slot_group_id(0), additional_base_waiting_time(0) {}
 
 public:
 	enum schedule_type {
@@ -143,6 +147,8 @@ public:
 
 	bool is_full_load_time() const { return (flags&FULL_LOAD_TIME)>0; }
 	void set_full_load_time(bool y) { y ? flags |= FULL_LOAD_TIME : flags &= ~FULL_LOAD_TIME; }
+	uint32 get_additional_base_waiting_time() const { return additional_base_waiting_time; }
+	void set_additional_base_waiting_time(uint32 w) { additional_base_waiting_time = w; }
 	
 	void set_spacing_for_all(uint16);
 	void set_spacing_shift_for_all(uint16);

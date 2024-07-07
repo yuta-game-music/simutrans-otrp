@@ -1184,7 +1184,8 @@ uint32 estimated_waiting_ticks(const schedule_t* schedule, uint8 index) {
 	const schedule_entry_t schedule_entry = schedule->entries[index];
 	const uint32 average_waiting_time = schedule_entry.get_average_waiting_time();
 	const uint32 base_waiting_ticks = world()->get_settings().get_base_waiting_ticks(schedule->get_waytype());
-	return average_waiting_time + base_waiting_ticks;
+	const uint32 additional_ticks_by_schedule = (uint64)schedule->get_additional_base_waiting_time() * world()->ticks_per_world_month / world()->get_settings().get_spacing_shift_divisor();
+	return average_waiting_time + base_waiting_ticks + additional_ticks_by_schedule;
 }
 
 
@@ -4120,7 +4121,8 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 		return;
 	}
 
-	const uint32 base_waiting_time = world()->get_settings().get_base_waiting_ticks(schedule->get_waytype());
+	const uint32 additional_ticks_by_schedule = (uint64)schedule->get_additional_base_waiting_time() * world()->ticks_per_world_month / world()->get_settings().get_spacing_shift_divisor();
+	const uint32 base_waiting_ticks = world()->get_settings().get_base_waiting_ticks(schedule->get_waytype()) + additional_ticks_by_schedule;
 	FOR(const minivec_tpl<uint8>, const& g_index, goods_category_indexes) {
 		FOR(const vector_tpl<reachable_halt_t>, const& rh, reachable_halts) {
 			connection_t connection;
@@ -4144,7 +4146,7 @@ void haltestelle_t::calc_destination_halt(inthashtable_tpl<uint8, vector_tpl<hal
 			const auto is_shortest_journey = [&]() {
 				// The journey time is shorter than (wait time + journey time) of the fastest route.
 				// The connection weight contains the base waiting time offset, so we subtract it.
-				return rh.journey_time + base_waiting_time < connection.weight;
+				return rh.journey_time + base_waiting_ticks < connection.weight;
 			};
 			
 			if(  !is_fastest_traveler_valid  ||  is_fastest_traveler  ||  is_shortest_journey()  ) {
