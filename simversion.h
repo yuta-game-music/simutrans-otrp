@@ -29,7 +29,7 @@
 
 #define OTRP_VERSION_MAJOR 41
 #define OTRP_VERSION_MINOR 0
-#define OTRP_VERSION_PATCH 90
+#define OTRP_VERSION_PATCH 91
 // NOTE: increment OTRP_VERSION_MAJOR when the save data structure changes.
 
 #define MAKEOBJ_VERSION "60.5"
