@@ -201,6 +201,7 @@ const char *tool_t::id_to_string(uint16 id)
 		CASE_TO_STRING(DIALOG_LIST_VEHICLE);
 		CASE_TO_STRING(DIALOG_SCRIPT_TOOL);
 		CASE_TO_STRING(DIALOG_EDIT_GROUNDOBJ);
+		CASE_TO_STRING(DIALOG_ROUTE_SEARCH);
 		}
 	}
 
@@ -384,6 +385,7 @@ tool_t *create_dialog_tool(int toolnr)
 		case DIALOG_LIST_VEHICLE:    tool = new dialog_list_vehicle_t();    break;
 		case DIALOG_SCRIPT_TOOL:     tool = new dialog_script_tool_t();     break;
 		case DIALOG_EDIT_GROUNDOBJ:  tool = new dialog_edit_groundobj_t();  break;
+		case DIALOG_ROUTE_SEARCH:    tool = new dialog_route_search_t();    break;
 		default:
 			dbg->error("create_dialog_tool()","cannot satisfy request for dialog_tool[%i]!",toolnr);
 			return NULL;
