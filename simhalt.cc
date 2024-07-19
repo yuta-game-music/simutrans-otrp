@@ -4016,9 +4016,15 @@ bool haltestelle_t::book_departure (uint32 arr_tick, uint32 dep_tick, uint32 exp
 	const uint8 idx = dep_tick % DST_SIZE;
 	slist_tpl<departure_t>::iterator i = departure_slot_table[idx].begin();
 	const uint8 stop_index = cnv->get_schedule()->get_current_stop_exluding_depot();
+	const uint32 current_ticks = welt->get_ticks();
 	while(  i!=departure_slot_table[idx].end()  ) {
-		if(  welt->get_ticks()>i->exp_tick  ||  !i->cnv.is_bound()  ) {
+		if(  is_first_ticks_bigger(welt->get_ticks(), i->exp_tick)  ||  !i->cnv.is_bound()  ) {
 			// This entry is already obsolete. Just remove it.
+			i = departure_slot_table[idx].erase(i);
+			continue;
+		}
+		if(  is_first_ticks_bigger(i->dep_tick, current_ticks) && (world()->lookup(i->cnv->get_pos())->get_halt() != self)  ) {
+			// The convoy is not on this halt while the convoy is yet to depart. Handle it as an invalid.
 			i = departure_slot_table[idx].erase(i);
 			continue;
 		}

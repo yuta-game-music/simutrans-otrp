@@ -3322,12 +3322,6 @@ void convoi_t::calc_gewinn()
 }
 
 
-// a helper function to compare two ticks considering ticks overflow
-bool is_first_ticks_bigger(uint32 v1, uint32 v2) {
-	return (v1>v2  &&  v1-v2<(1<<30))  ||  (v2>v1  &&  v2-v1>(1<<30));
-}
-
-
 // a helper function to calculate v1 - v2 considering ticks overflow
 sint32 subtract_ticks(uint32 v1, uint32 v2) {
 	const sint64 v1e = (sint64)v1;
@@ -3398,10 +3392,6 @@ bool can_depart(convoihandle_t cnv, halthandle_t halt, uint32 arrived_time, uint
 			// If the reservation request is denied, increment slot.
 			slot++;
 			go_on_ticks = slot * world()->ticks_per_world_month / current_entry.spacing + spacing_shift;
-		}
-		// avoid ticks overflow
-		if(  go_on_ticks > go_on_ticks + world()->ticks_per_world_month  ) {
-			go_on_ticks %= world()->ticks_per_world_month;
 		}
 		return is_first_ticks_bigger(world()->get_ticks(), go_on_ticks - time_to_load);
 	}

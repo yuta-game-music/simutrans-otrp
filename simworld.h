@@ -1866,4 +1866,9 @@ private:
 	operator bool () const;
 };
 
+// a helper function to compare two ticks considering ticks overflow
+inline bool is_first_ticks_bigger(uint32 v1, uint32 v2) {
+	return (v1 != v2) && ((v1 > v2) ^ ((v1&0x80000000) != (v2&0x80000000)));
+}
+
 #endif
