@@ -3586,13 +3586,16 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 	halt->calc_destination_halt(destination_halts, reachable_halts, goods_catg_index, self);
 
 	// fetch fresh cargos.
-	FOR(minivec_tpl<uint8>, category_idx, goods_catg_index) {
-		vector_tpl<haltestelle_t::loadable_fresh_goods_t> loadable_fresh_goods;
-		halt->fetch_loadable_fresh_goods(loadable_fresh_goods, category_idx, destination_halts.get(category_idx));
-		FOR(vector_tpl<haltestelle_t::loadable_fresh_goods_t>, &goods, loadable_fresh_goods) {
-			fetched_fresh_goods.append(fetched_fresh_goods_t(goods.amount, goods.arrived_time));
+	if(  loading_needed  ) {
+		FOR(minivec_tpl<uint8>, category_idx, goods_catg_index) {
+			vector_tpl<haltestelle_t::loadable_fresh_goods_t> loadable_fresh_goods;
+			halt->fetch_loadable_fresh_goods(loadable_fresh_goods, category_idx, destination_halts.get(category_idx));
+			FOR(vector_tpl<haltestelle_t::loadable_fresh_goods_t>, &goods, loadable_fresh_goods) {
+				fetched_fresh_goods.append(fetched_fresh_goods_t(goods.amount, goods.arrived_time));
+			}
 		}
 	}
+	
 
 	for(unsigned i=0; i<vehicles_loading; i++) {
 		vehicle_t* v = fahr[i];
