@@ -3067,7 +3067,7 @@ void convoi_t::rdwr(loadsave_t *file)
 		file->rdwr_bool( in_delay_recovery );
 	}
 
-	if(  file->get_OTRP_version()>=41  ) {
+	if(  file->get_OTRP_version()>=40  ) {
 		std::function<void(loadsave_t*, fetched_fresh_goods_t&)> rdwr_goods = [](loadsave_t *file, fetched_fresh_goods_t &v) {
 			file->rdwr_long(v.amount);
 			file->rdwr_long(v.arrived_time);

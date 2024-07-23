@@ -236,7 +236,7 @@ void schedule_t::rdwr(loadsave_t *file)
 		departure_slot_group_id = issue_new_departure_slot_group_id();
 	}
 
-	if(  file->get_OTRP_version()>=41  ) {
+	if(  file->get_OTRP_version()>=40  ) {
 		file->rdwr_long(additional_base_waiting_time);
 	}
 
