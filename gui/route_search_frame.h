@@ -24,6 +24,7 @@ class route_search_frame_t : public gui_frame_t, public action_listener_t
 
 	void search_route();
 	void append_connection_row(haltestelle_t::connection_t connection);
+	void append_halt_row(halthandle_t halt);
 	void swap_halt_inputs();
 
  public:

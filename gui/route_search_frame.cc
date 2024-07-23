@@ -38,6 +38,23 @@ public:
     }
 };
 
+class gui_halt_button_t : public button_t, public action_listener_t {
+    halthandle_t halt;
+public:
+    gui_halt_button_t(halthandle_t halt) : button_t()
+    {
+        this->halt = halt;
+        init(button_t::posbutton, NULL);
+        add_listener(this);
+    }
+
+    bool action_triggered(gui_action_creator_t*, value_t) OVERRIDE
+    {
+        halt->open_info_window();
+        return true;
+    }
+};
+
 route_search_frame_t::route_search_frame_t()
 : gui_frame_t( translator::translate("Pax route search") ),
 from_halt_label("From:"),
@@ -170,6 +187,13 @@ void route_search_frame_t::append_connection_row(haltestelle_t::connection_t con
     result_container.end_table();
 }
 
+void route_search_frame_t::append_halt_row(halthandle_t halt) {
+    result_container.add_table(2, 1);
+    result_container.new_component<gui_halt_button_t>(halt);
+    result_container.new_component<gui_label_t>(halt->get_name());
+    result_container.end_table();
+}
+
 void route_search_frame_t::search_route() {
     result_container.remove_all();
     halthandle_t from_halt = find_halt(from_halt_input.get_text());
@@ -194,13 +218,13 @@ void route_search_frame_t::search_route() {
         return;
     }
 
-    result_container.new_component<gui_label_t>(from_halt->get_name());
+    append_halt_row(from_halt);
     halthandle_t transit_from = from_halt;
     FOR(vector_tpl<halthandle_t>, const h, dummy_ware.get_transit_halts()) {
         // Fetch the fastest traveler
         auto connection = find_connection(transit_from, h);
         append_connection_row(connection);
-        result_container.new_component<gui_label_t>(h->get_name());
+        append_halt_row(h);
         transit_from = h;
     }
 
