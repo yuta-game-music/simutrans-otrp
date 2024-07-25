@@ -8078,6 +8078,12 @@ bool tool_change_convoi_t::init( player_t *player )
 
 		case 'g': // change schedule
 			{
+				cbuffer_t schedule_cmp_buf;
+				cnv->get_schedule()->sprintf_schedule( schedule_cmp_buf );
+				if(  strncmp(schedule_cmp_buf, p, schedule_cmp_buf.len())==0  ) {
+					// No need to update the schedule.  Avoid discarding the time history.
+					break;
+				}
 				schedule_t *schedule = cnv->create_schedule()->copy();
 				schedule->finish_editing();
 				if (schedule->sscanf_schedule( p )  &&  (no_check()  ||  scenario_check_schedule(welt, player, schedule, can_use_gui())) ) {
@@ -8307,6 +8313,12 @@ bool tool_change_line_t::init( player_t *player )
 		case 'g': // change schedule
 			{
 				if (line.is_bound()) {
+					cbuffer_t schedule_cmp_buf;
+					line->get_schedule()->sprintf_schedule( schedule_cmp_buf );
+					if(  strncmp(schedule_cmp_buf, p, schedule_cmp_buf.len())==0  ) {
+						// No need to update the schedule. Avoid discarding the time history.
+						break;
+					}
 					schedule_t *schedule = line->get_schedule()->copy();
 					if (schedule->sscanf_schedule( p )  &&  (no_check()  ||  scenario_check_schedule(welt, player, schedule, can_use_gui())) ) {
 						schedule->finish_editing();
