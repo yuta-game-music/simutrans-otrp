@@ -685,7 +685,7 @@ sint16 schedule_t::get_corresponding_entry_index(const schedule_t* other, uint8 
 	// count the number of depot entries
 	for(uint8 i=0; i<n; i++) {
 		grund_t* gr = world()->lookup(other->entries[i].pos);
-		if(  gr  &&  gr->get_depot()  ) {
+		if(  gr  &&  gr->has_depot()  ) {
 			// this entry is a depot entry
 			o_idx -= 1;
 		}
@@ -694,7 +694,7 @@ sint16 schedule_t::get_corresponding_entry_index(const schedule_t* other, uint8 
 	uint8 k = 0;
 	while(  h<get_count()  ) {
 		grund_t* gr = world()->lookup(entries[h].pos);
-		if(  !gr  ||  !gr->get_depot()  ) {
+		if(  !gr  ||  !gr->has_depot()  ) {
 			// this entry is not a depot entry
 			if(  k==o_idx  ) {
 				return h;

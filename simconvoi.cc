@@ -3509,7 +3509,7 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 		else if(  !plan_halt.is_bound()  ||  schedule->entries[wrap_i].is_no_unload()  ) {
 			// not a halt or set no_unload. no_unload -> we cannot unload the cargo there.
 			if(  grund_t *gr = world()->lookup( schedule->entries[wrap_i].pos )  ) {
-				if(  gr->get_depot()  ) {
+				if(  gr->has_depot()  ) {
 					// do not load for stops after a depot
 					break;
 				}
