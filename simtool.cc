@@ -8080,9 +8080,12 @@ bool tool_change_convoi_t::init( player_t *player )
 			{
 				if(  cnv->get_schedule()!=NULL  ) {
 					cbuffer_t schedule_cmp_buf;
-					cnv->get_schedule()->sprintf_schedule( schedule_cmp_buf );
+					schedule_t* const cnv_schedule = cnv->get_schedule();
+					cnv_schedule->sprintf_schedule( schedule_cmp_buf );
 					if(  strncmp(schedule_cmp_buf, p, schedule_cmp_buf.len() + 1)==0  ) {
 						// No need to update the schedule.  Avoid discarding the time history.
+						cnv_schedule->finish_editing();
+						cnv->set_schedule(cnv_schedule);
 						break;
 					}
 				}
@@ -8319,6 +8322,7 @@ bool tool_change_line_t::init( player_t *player )
 					line->get_schedule()->sprintf_schedule( schedule_cmp_buf );
 					if(  strncmp(schedule_cmp_buf, p, schedule_cmp_buf.len() + 1)==0  ) {
 						// No need to update the schedule. Avoid discarding the time history.
+						line->get_schedule()->finish_editing();
 						break;
 					}
 					schedule_t *schedule = line->get_schedule()->copy();
