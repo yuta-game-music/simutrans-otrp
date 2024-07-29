@@ -3486,50 +3486,70 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 	}
 
 	const halthandle_t current_halt = haltestelle_t::get_halt(schedule->get_current_entry().pos, owner);
-	const uint8 count = schedule->get_count();
-	// The estimated journey time from the current stop
-	// The convoy stopping time at the starting point is subtracted because the journey time of
-	// the first entry contains the stopping time at the starting point, which should be excluded.
+	const uint8 schedule_count = schedule->get_count();
+
+	// We use the line schedule instead of convoy's schedule to fetch the journey time.
+	// First, determine the valid schedule range in the line schedule.
+	sint16 first_depot_entry_offset = -1;
+	for(  uint8 i=1;  i<schedule_count;  i++  ) {
+		const uint8 wrap_i = (i + schedule->get_current_stop()) % schedule_count;
+		grund_t *gr = world()->lookup(schedule->entries[wrap_i].pos);
+		if(  gr  &&  gr->has_depot()  ) {
+			first_depot_entry_offset = i;
+			break;
+		}
+	}
+	if(  first_depot_entry_offset==1  ) {
+		// The next entry is a depot. No halts are reachable.
+		return;
+	}
+	// The last reachable schedule entry is the last entry before the depot entry.
+	const sint16 last_reachable_line_schedule_index = first_depot_entry_offset==-1 ? -1 : 
+	line_schedule->get_corresponding_entry_index(schedule, (first_depot_entry_offset - 1 + schedule->get_current_stop()) % schedule_count);
+
+	// The convoy's current stop index in the line schedule
 	const uint8 line_schedule_current_index = line_schedule->get_corresponding_entry_index(schedule, schedule->get_current_stop());
 	if(  line_schedule_current_index < 0  ) {
 		dbg->error("calc_reachable_halts", "Could not find line_schedule_current_index.");
 		return; // The current stop is not found in the line schedule. Abort as an illegal case.
 	}
+	// The estimated journey time from the current stop
+	// The convoy stopping time at the starting point is subtracted because the journey time of
+	// the first entry contains the stopping time at the starting point, which should be excluded.
 	sint32 journey_time = -line_schedule->entries[line_schedule_current_index].get_median_convoy_stopping_time(); 
 
+	const uint8 line_schedule_count = line_schedule->get_count();
 	uint8 interval = 0;
-	for(  uint8 i=1;  i<count;  i++  ) {
-		const uint8 wrap_i = (i + schedule->get_current_stop()) % count;
+	for(  uint8 i=1;  i<line_schedule_count;  i++  ) {
+		const uint8 wrap_i = (i + line_schedule_current_index) % line_schedule_count;
 
-		const halthandle_t plan_halt = haltestelle_t::get_halt(schedule->entries[wrap_i].pos, owner);
+		const halthandle_t plan_halt = haltestelle_t::get_halt(line_schedule->entries[wrap_i].pos, owner);
 		if(plan_halt == current_halt) {
 			// we will come later here again ...
 			break;
 		}
-		else if(  !plan_halt.is_bound()  ||  schedule->entries[wrap_i].is_no_unload()  ) {
+		else if(  !plan_halt.is_bound()  ||  line_schedule->entries[wrap_i].is_no_unload()  ) {
 			// not a halt or set no_unload. no_unload -> we cannot unload the cargo there.
-			if(  grund_t *gr = world()->lookup( schedule->entries[wrap_i].pos )  ) {
-				if(  gr->has_depot()  ) {
-					// do not load for stops after a depot
-					break;
-				}
-			}
+			continue;
+		}
+		const grund_t* gr = world()->lookup(line_schedule->entries[wrap_i].pos);
+		if(  gr  &&  gr->has_depot()  ) {
+			// Just ignore the depot entry of the line schedule.
 			continue;
 		}
 		// Use the median of the journey time history to stabilize the estimated value
 		// when something irregular happens on a single convoy.
-		const uint8 line_schedule_index = line_schedule->get_corresponding_entry_index(schedule, wrap_i);
-		if(  line_schedule_index < 0  ) {
-			dbg->error("calc_reachable_halts", "Could not find line_schedule_index for index %d", wrap_i);
-			continue; // Skip as an illegal case.
-		}
-		journey_time += line_schedule->get_median_journey_time(line_schedule_index, cnv->get_speedbonus_kmh());
+		journey_time += line_schedule->get_median_journey_time(wrap_i, cnv->get_speedbonus_kmh());
 		reachable_halts.append(haltestelle_t::reachable_halt_t(plan_halt, (uint32)max(journey_time, 0)));
-		if(  schedule->entries[wrap_i].is_unload_all()  ) {
+		if(  line_schedule->entries[wrap_i].is_unload_all()  ) {
 			// passengers/cargos cannot keep boarding beyond this stop.
 			break;
 		}
-		else if( schedule->entries[wrap_i].is_transfer_interval() ){
+		else if(  wrap_i==last_reachable_line_schedule_index  ) {
+			// This is the last schedule entry which the convoy allows to reach.
+			break;
+		}
+		else if( line_schedule->entries[wrap_i].is_transfer_interval() ){
 			if(interval == 1){
 				break;
 			}
