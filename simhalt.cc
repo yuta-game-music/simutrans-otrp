@@ -2389,8 +2389,8 @@ bool haltestelle_t::vereinige_waren(const ware_t &ware)
 {
 	// merge cargos only when "load nearest first" policy is applied.
 	const settings_t &settings = world()->get_settings();
-	if(  settings.get_goods_routing_policy()!=GRP_NF_RC  &&  
-  		get_ware_summe(ware.get_desc()) <= settings.get_waiting_limit_for_first_come_first_serve()  ) {
+	const bool* wefl = waiting_amount_exceeds_FIFO_limit.access(ware.get_desc()->get_catg_index());
+	if(  settings.get_goods_routing_policy()!=GRP_NF_RC  &&  (wefl==NULL  ||  !*wefl)  ) {
 		return false;
 	}
 
@@ -3369,6 +3369,8 @@ void haltestelle_t::finish_rd()
 			all_names.set( current_name, self );
 		}
 	}
+
+	recalc_status();
 }
 
 
@@ -3454,6 +3456,15 @@ void haltestelle_t::recalc_status()
 	}
 
 	financial_history[0][HALT_WAITING] = total_sum;
+
+	// update waiting_amount_exceeds_FIFO_limit
+	const uint32 fifo_limit = world()->get_settings().get_waiting_limit_for_first_come_first_serve();
+	for(  uint32 i = 0;  i<goods_manager_t::get_count();  i++  ) {
+		if(  slist_tpl<cargo_item_t> * warray = cargo[i]  ) {
+			const uint32 ware_sum = get_ware_summe(goods_manager_t::get_info(i));
+			waiting_amount_exceeds_FIFO_limit.set(i, ware_sum > fifo_limit);
+		}
+	}
 }
 
 

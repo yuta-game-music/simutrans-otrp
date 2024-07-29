@@ -560,6 +560,14 @@ private:
 	 * Treated like hash table that allows hash collision.
 	 */
 	slist_tpl<departure_t> departure_slot_table[DST_SIZE];
+
+	/**
+	 * Holds whether the amount of waiting goods exceeds the limit to use FIFO fetching policy,
+	 * to avoid calling computational get_ware_summe function repeatedly.
+	 * Updated by recalc_status().
+	 * The key is the goods category index.
+	 */
+	inthashtable_tpl<uint8, bool> waiting_amount_exceeds_FIFO_limit;
 	
 public:
 	enum routing_result_flags {
