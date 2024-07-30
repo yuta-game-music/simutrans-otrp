@@ -2283,6 +2283,14 @@ void haltestelle_t::fetch_goods_FIFO(slist_tpl<ware_t> &load, const goods_desc_t
 	if(  !wares  ||  wares->empty()  ) {
 		return;
 	}
+	// The table to check if a specific halt is contained in the destination_halts vector quickly.
+	// The vector size is 65536 because the halt id is 16 bit.
+	bool dest_halts_table[65536];
+	MEMZERON(dest_halts_table, 65536);
+	FOR(vector_tpl<halthandle_t>, const& h, destination_halts) {
+		dest_halts_table[h.get_id()] = true;
+	}
+
 	for(  slist_tpl<cargo_item_t>::iterator ware = wares->begin();  ware!=wares->end();  ) {
 		ware_t& goods = ware->get()->goods;
 		// empty entry -> remove
@@ -2304,7 +2312,7 @@ void haltestelle_t::fetch_goods_FIFO(slist_tpl<ware_t> &load, const goods_desc_t
 		// right target stop, and not overcrowding?
 		// do not go for transfer to overcrowded transfer stop
 		if(
-			!destination_halts.is_contained(goods.get_zwischenziel())  ||
+			!dest_halts_table[goods.get_zwischenziel().get_id()]  ||
 			(welt->get_settings().is_avoid_overcrowding()  &&
 				goods.get_zwischenziel()->is_overcrowded( goods.get_index() )  &&
 				goods.get_ziel() != goods.get_zwischenziel())
