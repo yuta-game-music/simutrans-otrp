@@ -3508,7 +3508,7 @@ void calc_reachable_halts(vector_tpl<haltestelle_t::reachable_halt_t>& reachable
 	line_schedule->get_corresponding_entry_index(schedule, (first_depot_entry_offset - 1 + schedule->get_current_stop()) % schedule_count);
 
 	// The convoy's current stop index in the line schedule
-	const uint8 line_schedule_current_index = line_schedule->get_corresponding_entry_index(schedule, schedule->get_current_stop());
+	const sint16 line_schedule_current_index = line_schedule->get_corresponding_entry_index(schedule, schedule->get_current_stop());
 	if(  line_schedule_current_index < 0  ) {
 		dbg->error("calc_reachable_halts", "Could not find line_schedule_current_index.");
 		return; // The current stop is not found in the line schedule. Abort as an illegal case.
