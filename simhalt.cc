@@ -3189,11 +3189,13 @@ void haltestelle_t::rdwr(loadsave_t *file)
 					if(  file->get_OTRP_version()>=36  ) {
 						file->rdwr_long(arrived_time);
 					}
+					sint64 archived_address;
+					if(  file->get_OTRP_version()>=40  ) {
+						file->rdwr_longlong(archived_address);
+					}
 					if(  ware.get_desc()  &&  ware.menge>0  &&  welt->is_within_limits(ware.get_zielpos())  ) {
 						cargo_item_t goods_ref = add_goods_to_halt(halt_waiting_goods_t(ware, arrived_time));
 						if(  file->get_OTRP_version()>=40  ) {
-							sint64 archived_address;
-							file->rdwr_longlong(archived_address);
 							archived_cargo_address_table.put(archived_address, goods_ref);
 						}
 						// restore in-transit information
