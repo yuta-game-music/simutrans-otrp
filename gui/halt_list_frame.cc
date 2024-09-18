@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <string.h>
+#include <cmath>
 
 #include "halt_list_frame.h"
 #include "halt_list_filter_frame.h"
@@ -84,7 +85,8 @@ const char *halt_list_frame_t::sort_text[SORT_MODES] = {
 	"hl_btn_sort_name",
 	"hl_btn_sort_waiting",
 	"hl_btn_sort_type",
-	"hl_btn_sort_transfers"
+	"hl_btn_sort_transfers",
+	"hl_btn_sort_waiting_percentage"
 };
 
 
@@ -95,7 +97,7 @@ const char *halt_list_frame_t::sort_text[SORT_MODES] = {
 */
 bool halt_list_frame_t::compare_halts(halthandle_t const halt1, halthandle_t const halt2)
 {
-	int order;
+	int order = 0;
 
 	/***********************************
 	* Compare station 1 and station 2
@@ -112,6 +114,7 @@ bool halt_list_frame_t::compare_halts(halthandle_t const halt1, halthandle_t con
 			order = halt1->get_station_type() - halt2->get_station_type();
 			break;
 		case nach_transfer: // sort by no of transfers in previous month
+		{
 			int id1 = halt1->get_finance_history( 1, HALT_ARRIVED) == 0 ||
 				halt1->get_finance_history( 1, HALT_DEPARTED) == 0 ? 0 : 1;
 			auto halt1_transfers = halt1->get_finance_history(id1, HALT_ARRIVED)
@@ -127,6 +130,32 @@ bool halt_list_frame_t::compare_halts(halthandle_t const halt1, halthandle_t con
 			order = halt1_transfers > halt2_transfers ? 1 :
 				halt1_transfers < halt2_transfers ? -1 : 0;
 			break;
+		}
+		case nach_wartend_percent: // sort by waiting goods percentage
+		{
+			sint64 sum1 = 0;
+			sint64 sum2 = 0;
+			for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
+				const goods_desc_t *wtyp = goods_manager_t::get_info(i);
+				if(halt1->gibt_ab(wtyp)) {
+					sum1 += halt1->get_capacity( i>2?2:i );
+				}
+				if(halt2->gibt_ab(wtyp)) {
+					sum2 += halt2->get_capacity( i>2?2:i );
+				}
+			}
+
+			if (sum1 == 0 && sum2 != 0) {
+    			order = -1; // Halt2 has non-zero sum, so it comes first
+			} else if (sum1 != 0 && sum2 == 0) {
+				order = 1; // Halt1 has non-zero sum, so it comes first
+			} else if (sum1 != 0 && sum2 != 0) {
+				double per1 = (double) halt1->get_finance_history( 0, HALT_WAITING )/sum1 * 100;
+				double per2 = (double) halt2->get_finance_history( 0, HALT_WAITING )/sum2 * 100;
+				order = per1 > per2 ? 1 : (per1 < per2 ? -1 : 0);
+			}
+			break;
+		}
 	}
 	/**
 	 * use name as an additional sort, to make sort more stable.

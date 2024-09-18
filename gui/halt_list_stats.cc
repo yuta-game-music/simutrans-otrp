@@ -90,6 +90,9 @@ halt_list_stats_t::halt_list_stats_t(halthandle_t h)
 		if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_transfer) {
 			halt->get_transfers_info( label_cargo.buf() );
 			label_cargo.update();
+		} else if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_wartend_percent) {
+			halt->get_percent_info( label_cargo.buf() );
+			label_cargo.update();
 		} else {
 			halt->get_short_freight_info( label_cargo.buf() );
 			label_cargo.update();
@@ -120,6 +123,9 @@ void halt_list_stats_t::draw(scr_coord offset)
 
 	if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_transfer) {
 		halt->get_transfers_info( label_cargo.buf() );
+		label_cargo.update();
+	} else if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_wartend_percent) {
+		halt->get_percent_info( label_cargo.buf() );
 		label_cargo.update();
 	} else {
 		halt->get_short_freight_info( label_cargo.buf() );

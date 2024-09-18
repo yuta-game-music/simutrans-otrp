@@ -2480,6 +2480,33 @@ void haltestelle_t::get_transfers_info(cbuffer_t& buf) const
 	buf.append("\n");
 }
 
+void haltestelle_t::get_percent_info(cbuffer_t& buf) const
+{
+	bool got_one = false;
+	sint64 sum = 0;
+	for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
+		const goods_desc_t *wtyp = goods_manager_t::get_info(i);
+		if(gibt_ab(wtyp)) {
+			sum += get_capacity( i>2?2:i );
+		}
+	}
+	if (sum > 0) {
+		got_one = true;
+	}
+
+	if(got_one) {
+		auto per = (double) get_finance_history( 0, HALT_WAITING )/sum * 100;
+		buf.printf("%.2f%%", per);
+		buf.append(" ");
+		buf.append(translator::translate("waiting"));
+		buf.append("\n");
+	}
+	else {
+		buf.append(translator::translate("no goods waiting"));
+		buf.append("\n");
+	}
+}
+
 
 void haltestelle_t::open_info_window()
 {
