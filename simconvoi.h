@@ -86,6 +86,7 @@ public:
 		CAN_START_TWO_MONTHS,
 		LEAVING_DEPOT,
 		ENTERING_DEPOT,
+		REVERSING,
 		COUPLED,
 		COUPLED_LOADING,
 		WAITING_FOR_LEAVING_DEPOT,
@@ -495,7 +496,20 @@ private:
 	/// Pushes the convoy stopping time at the current halt to the schedule
 	void push_convoy_stopping_time();
 
+	// Reverses the order of the convoy.
+	// @author: jamespetts
+	uint8 vehicle_count;
+	void reverse_order(bool rev);
+
+	bool reversed;// Whether this convoy's vehicles are currently arranged in reverse order.
+
+	bool reverse_p_c;// Reverse the order of the coupling/coupled convois 
 public:
+	// Reorder the vehicle array
+	// Can be executed even with a vehicle array that does not belong to convoy for UI
+	static void execute_reverse_order(array_tpl<vehicle_t*> &vehicles, uint8 vehicle_count, bool rev);
+	// Reverse the order of the coupling/coupled convois
+	static void execute_reverse_p_c(convoihandle_t self);
 	/**
 	* Convoi haelt an Haltestelle und setzt quote fuer Fracht
 	*/

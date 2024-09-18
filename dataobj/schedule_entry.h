@@ -24,11 +24,12 @@ public:
 		init_convoy_stopping_time();
 	}
 
-	schedule_entry_t(koord3d const& pos, uint const minimum_loading, uint16 const waiting_time_shift, uint8 const stop_flags) :
+	schedule_entry_t(koord3d const& pos, uint const minimum_loading, uint16 const waiting_time_shift, uint8 const stop_flags, uint8 const stop_flag2) :
 		pos(pos),
 		minimum_loading(minimum_loading),
 		waiting_time_shift(waiting_time_shift),
-		stop_flags(stop_flags)
+		stop_flags(stop_flags),
+		stop_flag2(stop_flag2)
 	{
 		spacing = 1;
 		spacing_shift = delay_tolerance = 0;
@@ -47,7 +48,10 @@ public:
 		UNLOAD_ALL        = 1U << 5, // The convoy unloads all loads here.
 		LOAD_BEFORE_DEP   = 1U << 6, // The convoy loads just before the departure.
 		TRANSFER_INTERVAL = 1U << 7,
-	};
+		REVERSE_CONVOY	= 1U << 0,// The reverse order of vehicles in convoy
+		REVERSE_p_c		= 1U << 1,// The reverse order of connected convoys
+	}
+	;
 
 	/**
 	 * target position
@@ -93,6 +97,7 @@ public:
 	
 private:
 	uint8 stop_flags;
+	uint8 stop_flag2;
 	
 	void init_journey_time() {
 		jt_at_index = 0;
@@ -134,6 +139,15 @@ public:
 	void set_transfer_interval(bool y) { y ? stop_flags |= TRANSFER_INTERVAL : stop_flags &= ~TRANSFER_INTERVAL; }
 	uint8 get_stop_flags() const { return stop_flags; }
 	void set_stop_flags(uint8 f) { stop_flags = f; }
+
+
+	bool is_reverse_convoy() const { return (stop_flag2&REVERSE_CONVOY)>0; }
+	void set_reverse_convoy(bool y) { y ? stop_flag2 |= REVERSE_CONVOY : stop_flag2&= ~REVERSE_CONVOY; }
+	uint8 get_coupling_reverse() const { return (stop_flag2&0x02); }
+	bool is_reverse_p_c() const { return (stop_flag2&REVERSE_p_c)>0; } 
+	void set_reverse_p_c(bool y) { y ? stop_flag2 |= REVERSE_p_c : stop_flag2 &= ~REVERSE_p_c; }
+	uint8 get_stop_flag2() const { return stop_flag2; }
+	void set_stop_flag2(uint8 f) { stop_flag2 = f; }
 	
 	void set_spacing(uint16 a, uint16 b, uint16 c) {
 		spacing = a;
@@ -154,6 +168,7 @@ public:
 		  &&  a.minimum_loading    == this->minimum_loading
 			&&  a.waiting_time_shift == this->waiting_time_shift
 			&&  a.get_stop_flags()   == this->stop_flags
+			&&  a.get_stop_flag2()   == this->stop_flag2
 			&&  a.spacing            == this->spacing
 			&&  a.spacing_shift      == this->spacing_shift
 			&&  a.delay_tolerance    == this->delay_tolerance;

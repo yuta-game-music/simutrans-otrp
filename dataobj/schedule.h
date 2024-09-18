@@ -29,6 +29,7 @@ class schedule_t
 	uint8 current_stop;
 	
 	uint8 flags;
+	uint8 flag2;
 	
 	// operational maximum speed of this schedule. 0 => no limit.
 	uint16 max_speed;
@@ -132,6 +133,7 @@ public:
 	void start_editing() { editing_finished = false; }
 	
 	uint8 get_flags() const { return flags; }
+	uint8 get_flag2() const { return flag2; }
 	void set_flags(uint8 f) { flags = f; }
 	bool is_temporary() const { return (flags&TEMPORARY)>0; }
 	void set_temporary(bool y) { y ? flags |= TEMPORARY : flags &= ~TEMPORARY; }
@@ -169,12 +171,12 @@ public:
 	/**
 	 * Inserts a coordinate at current_stop into the schedule.
 	 */
-	bool insert(const grund_t* gr, uint8 minimum_loading = 0, uint16 waiting_time_shift = 0, uint8 coupling_point = 0);
+	bool insert(const grund_t* gr, uint8 minimum_loading = 0, uint16 waiting_time_shift = 0, uint8 coupling_point = 0, uint8 reverse_flag = 0);
 
 	/**
 	 * Appends a coordinate to the schedule.
 	 */
-	bool append(const grund_t* gr, uint8 minimum_loading = 0, uint16 waiting_time_shift = 0, uint8 coupling_point = 0);
+	bool append(const grund_t* gr, uint8 minimum_loading = 0, uint16 waiting_time_shift = 0, uint8 coupling_point = 0, uint8 reverse_flag = 0);
 
 	/**
 	 * Cleanup a schedule, removes double entries.
