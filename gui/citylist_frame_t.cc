@@ -109,14 +109,13 @@ citylist_frame_t::citylist_frame_t() :
 	list.new_component<gui_label_t>("Filter:");
 	name_filter_input.set_text(name_filter, lengthof(name_filter));
 	list.add_component(&name_filter_input);
-	list.new_component<gui_fill_t>();
 
 	// add copy csv button
 	bt_copy_csv.init(button_t::roundbox | button_t::flexible, translator::translate("Copy csv format"));
-	bt_copy_csv.set_tooltip("Copy station names and journey time to clipboard in csv format.");
+	bt_copy_csv.set_tooltip("Copy citylist data to clipboard in csv format.");
 	bt_copy_csv.add_listener(this);
 	list.add_component(&bt_copy_csv);
-
+	
 	filter_by_owner.init( button_t::square_automatic, "Served by" );
 	filter_by_owner.add_listener(this);
 	filter_by_owner.set_tooltip( "At least one stop is connected to the town" );
@@ -148,7 +147,6 @@ citylist_frame_t::citylist_frame_t() :
 	sorteddir.pressed = citylist_stats_t::sort_mode > citylist_stats_t::SORT_MODES;
 	sorteddir.add_listener(this);
 	list.add_component(&sorteddir);
-
 
 	list.end_table();
 	list.add_component(&scrolly);

@@ -2467,6 +2467,19 @@ void haltestelle_t::get_short_freight_info(cbuffer_t & buf) const
 }
 
 
+void haltestelle_t::get_transfers_info(cbuffer_t& buf) const
+{
+	int idx = get_finance_history( 1, HALT_ARRIVED) == 0 ||
+		get_finance_history( 1, HALT_DEPARTED) == 0 ? 0 : 1;
+	auto transfers = get_finance_history( idx, HALT_ARRIVED) <
+		get_finance_history( idx, HALT_DEPARTED) ?
+		get_finance_history( idx, HALT_ARRIVED) :
+		get_finance_history( idx, HALT_DEPARTED);
+	buf.printf("%d ", transfers);
+	buf.append(translator::translate("transfers"));
+	buf.append("\n");
+}
+
 
 void haltestelle_t::open_info_window()
 {

@@ -616,7 +616,7 @@ void env_t::rdwr(loadsave_t *file)
 
 		file->rdwr_short( fullscreen );
 	}
-	
+
 	if( file->is_version_atleast(123, 1) ) {
 		file->rdwr_short(display_scale_percent);
 		file->rdwr_bool(scroll_infinite);

@@ -83,7 +83,8 @@ slist_tpl<const goods_desc_t *> halt_list_frame_t::waren_filter_an;
 const char *halt_list_frame_t::sort_text[SORT_MODES] = {
 	"hl_btn_sort_name",
 	"hl_btn_sort_waiting",
-	"hl_btn_sort_type"
+	"hl_btn_sort_type",
+	"hl_btn_sort_transfers"
 };
 
 
@@ -109,6 +110,22 @@ bool halt_list_frame_t::compare_halts(halthandle_t const halt1, halthandle_t con
 			break;
 		case nach_typ: // sort by station type
 			order = halt1->get_station_type() - halt2->get_station_type();
+			break;
+		case nach_transfer: // sort by no of transfers in previous month
+			int id1 = halt1->get_finance_history( 1, HALT_ARRIVED) == 0 ||
+				halt1->get_finance_history( 1, HALT_DEPARTED) == 0 ? 0 : 1;
+			auto halt1_transfers = halt1->get_finance_history(id1, HALT_ARRIVED)
+				< halt1->get_finance_history(id1, HALT_DEPARTED) ?
+				halt1->get_finance_history(id1, HALT_ARRIVED) :
+				halt1->get_finance_history(id1, HALT_DEPARTED);
+			int id2 = halt2->get_finance_history( 1, HALT_ARRIVED) == 0 ||
+				halt2->get_finance_history( 1, HALT_DEPARTED) == 0 ? 0 : 1;
+			auto halt2_transfers = halt2->get_finance_history(id2, HALT_ARRIVED)
+				< halt2->get_finance_history(id2, HALT_DEPARTED) ?
+				halt2->get_finance_history(id2, HALT_ARRIVED) :
+				halt2->get_finance_history(id2, HALT_DEPARTED);
+			order = halt1_transfers > halt2_transfers ? 1 :
+				halt1_transfers < halt2_transfers ? -1 : 0;
 			break;
 	}
 	/**
@@ -361,7 +378,7 @@ bool halt_list_frame_t::infowin_event(const event_t *ev)
 bool halt_list_frame_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 {
 	if (  comp == &sortedby  ) {
-		set_sortierung((sort_mode_t)((get_sortierung() + 1) % SORT_MODES));
+		set_sortierung((sort_mode_t)((sortedby.get_selection()) % SORT_MODES));
 		sort_list();
 	}
 	else if (comp == &tabs) {

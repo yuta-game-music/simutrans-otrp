@@ -32,6 +32,7 @@ public:
 		nach_name,
 		nach_wartend,
 		nach_typ,
+		nach_transfer,
 		SORT_MODES
 	};
 
