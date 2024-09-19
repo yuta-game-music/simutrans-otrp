@@ -28,10 +28,7 @@
 *.patch
 *.log
 /doxygen
-.*
-configure
-autom4te.cache
-simres.d.vs/
+.vs/
 revision.h
 .idea
 *.d
