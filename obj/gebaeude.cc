@@ -371,7 +371,7 @@ void gebaeude_t::calc_image()
 
 image_id gebaeude_t::get_image() const
 {
-	if(env_t::hide_buildings!=0 &&  tile->has_image()) {
+	if(env_t::hide_buildings!=0  &&  tile->has_image()) {
 		// opaque houses
 		if(is_city_building()) {
 			return env_t::hide_with_transparency ? skinverwaltung_t::fussweg->get_image_id(0) : skinverwaltung_t::construction_site->get_image_id(0);
