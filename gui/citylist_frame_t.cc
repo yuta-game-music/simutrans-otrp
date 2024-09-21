@@ -104,16 +104,20 @@ citylist_frame_t::citylist_frame_t() :
 	main.add_tab( &list, translator::translate("City list") );
 
 	list.set_table_layout(1,0);
-	list.add_table(3, 3);
+
+	list.add_table(3, 4);
 	list.new_component<gui_label_t>("Filter:");
 	name_filter_input.set_text(name_filter, lengthof(name_filter));
 	list.add_component(&name_filter_input);
+	list.new_component<gui_fill_t>();
 
 	// add copy csv button
 	bt_copy_csv.init(button_t::roundbox | button_t::flexible, translator::translate("Copy csv format"));
 	bt_copy_csv.set_tooltip("Copy citylist data to clipboard in csv format.");
 	bt_copy_csv.add_listener(this);
 	list.add_component(&bt_copy_csv);
+	list.new_component<gui_fill_t>();
+	list.new_component<gui_fill_t>();
 
 	filter_by_owner.init( button_t::square_automatic, "Served by" );
 	filter_by_owner.add_listener(this);
