@@ -179,10 +179,12 @@ bool dr_set_screen_scale(sint16 /*scale_percent*/)
 #endif
 }
 
+
 sint16 dr_get_screen_scale()
 {
 	return 100;
 }
+
 
 /*
  * Hier sind die Basisfunktionen zur Initialisierung der

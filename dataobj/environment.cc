@@ -230,6 +230,8 @@ void env_t::init()
 	hide_under_cursor = false;
 	cursor_hide_range = 5;
 
+	scroll_infinite = false;
+
 	visualize_schedule = true;
 
 	/* station stuff */
@@ -607,6 +609,13 @@ void env_t::rdwr(loadsave_t *file)
 		file->rdwr_byte( show_factory_storage_bar );
 
 		file->rdwr_short( fullscreen );
+	}
+	if (file->get_OTRP_version()>=33) {
+		file->rdwr_bool(scroll_infinite);
+	}
+
+	if(  file->is_version_atleast(123, 1)  ||  file->get_OTRP_version()>=33  ) {
+		file->rdwr_short(display_scale_percent);
 	}
 
 	if( file->is_version_atleast(123, 1) ) {

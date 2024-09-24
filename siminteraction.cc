@@ -42,11 +42,11 @@ void interaction_t::move_view( const event_t &ev )
 
 	// move the mouse pointer back to starting location => infinite mouse movement
 	if ((ev.mx - ev.cx) != 0 || (ev.my - ev.cy) != 0) {
-		if(!env_t::scroll_infinite  ||  !move_pointer(ev.cx, ev.cy)) {
+		if (!env_t::scroll_infinite || !move_pointer(ev.cx, ev.cy)) {
 			// fails in finger mode
 			change_drag_start(ev.mx - ev.cx, ev.my - ev.cy);
 		}
-	}
+		}
 }
 
 

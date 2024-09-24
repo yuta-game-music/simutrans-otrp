@@ -15,6 +15,7 @@
 #endif
 
 #include <cstddef>
+#include <stdio.h>
 
 // Provide chdir().
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -72,6 +73,7 @@ extern sys_event_t sys_event;
 
 extern char const PATH_SEPARATOR[];
 
+
 /// @param scale_percent
 ///   Possible values:
 ///     -1:    auto (scale according to screen DPI setting)
@@ -82,6 +84,7 @@ bool dr_set_screen_scale(sint16 scale_percent);
 
 /// @returns Relative size of the virtual display, in percent
 sint16 dr_get_screen_scale();
+
 
 bool dr_os_init(int const* parameter);
 

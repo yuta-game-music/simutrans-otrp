@@ -28,3 +28,9 @@
 *.patch
 *.log
 /doxygen
+.vs/
+revision.h
+.idea
+*.d
+*.res
+.DS_Store
