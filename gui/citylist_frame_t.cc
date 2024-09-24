@@ -101,16 +101,12 @@ citylist_frame_t::citylist_frame_t() :
 	main.add_tab( &list, translator::translate("City list") );
 
 	list.set_table_layout(1,0);
-	list.new_component<gui_label_t>("hl_txt_sort");
 
-	list.add_table(4,0);
-	sortedby.init(button_t::roundbox, sort_text[citylist_stats_t::sort_mode & 0x1F]);
-	sortedby.add_listener(this);
-	list.add_component(&sortedby);
-
-	sorteddir.init(button_t::roundbox, citylist_stats_t::sort_mode > citylist_stats_t::SORT_MODES ? "hl_btn_sort_desc" : "hl_btn_sort_asc");
-	sorteddir.add_listener(this);
-	list.add_component(&sorteddir);
+	list.add_table(3, 3);
+	list.new_component<gui_label_t>("Filter:");
+	name_filter_input.set_text(name_filter, lengthof(name_filter));
+	list.add_component(&name_filter_input);
+	list.new_component<gui_fill_t>();
 
 	filter_by_owner.init( button_t::square_automatic, "Served by" );
 	filter_by_owner.add_listener(this);
@@ -143,6 +139,7 @@ citylist_frame_t::citylist_frame_t() :
 	sorteddir.pressed = citylist_stats_t::sort_mode > citylist_stats_t::SORT_MODES;
 	sorteddir.add_listener(this);
 	list.add_component(&sorteddir);
+
 
 	list.end_table();
 	list.add_component(&scrolly);
