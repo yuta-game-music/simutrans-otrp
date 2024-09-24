@@ -52,8 +52,7 @@ enum {
 	IDBTN_INFINITE_SCROLL,
 	IDBTN_RIBI_ARROW,
 	IDBTN_ONEWAY_RIBI_ONLY,
-	IDBTN_INFINITE_SCROLL,
-	COLORS_MAX_BUTTONS
+	COLORS_MAX_BUTTONS, 
 };
 
 static button_t buttons[COLORS_MAX_BUTTONS];
@@ -87,11 +86,10 @@ public:
 
 gui_settings_t::gui_settings_t()
 {
-	set_table_layout( 3, 0 );
-
+	set_table_layout( 1, 0 );
 	// Show thememanager
 	buttons[ IDBTN_SHOW_THEMEMANAGER ].init( button_t::roundbox_state | button_t::flexible, "Select a theme for display" );
-	add_component( buttons + IDBTN_SHOW_THEMEMANAGER, 3 );
+	add_component( buttons + IDBTN_SHOW_THEMEMANAGER );
 
 	// Change font
 	buttons[ IDBTN_CHANGE_FONT ].init( button_t::roundbox_state | button_t::flexible, "Select display font" );
@@ -125,41 +123,41 @@ gui_settings_t::gui_settings_t()
 		case MENU_BOTTOM: toolbar_pos.init(button_t::arrowdown, NULL); break;
 		case MENU_RIGHT: toolbar_pos.init(button_t::arrowright, NULL); break;
 	}
-	add_component(&toolbar_pos, 2 );
+	add_component(&toolbar_pos);
 
 	fullscreen.init( button_t::square_state, "Fullscreen (changed after restart)" );
 	fullscreen.pressed = ( dr_get_fullscreen() == FULLSCREEN );
 	fullscreen.enable(dr_has_fullscreen());
-	add_component( &fullscreen, 3 );
+	add_component( &fullscreen, 2 );
 
 	borderless.init( button_t::square_state, "Borderless (disabled on fullscreen)" );
 	borderless.enable ( dr_get_fullscreen() != FULLSCREEN );
 	borderless.pressed = ( dr_get_fullscreen() == BORDERLESS );
-	add_component( &borderless, 3 );
+	add_component( &borderless, 2 );
 
 	reselect_closes_tool.init( button_t::square_state, "Reselect closes tools" );
 	reselect_closes_tool.pressed = env_t::reselect_closes_tool;
-	add_component( &reselect_closes_tool, 3 );
+	add_component( &reselect_closes_tool, 2 );
 	
 	put_below_others.init( button_t::square_state, "Put new toolbar below others" );
 	put_below_others.pressed = env_t::put_new_toolbar_below_others;
-	add_component( &put_below_others, 3 );
+	add_component( &put_below_others, 2 );
 
 	// Frame time label
 	new_component<gui_label_t>("Frame time:");
 	frame_time_value_label.buf().printf(" 9999 ms");
 	frame_time_value_label.update();
-	add_component( &frame_time_value_label, 2 );
+	add_component( &frame_time_value_label );
 	// Idle time label
 	new_component<gui_label_t>("Idle:");
 	idle_time_value_label.buf().printf(" 9999 ms");
 	idle_time_value_label.update();
-	add_component( &idle_time_value_label, 2 );
+	add_component( &idle_time_value_label );
 	// FPS label
 	new_component<gui_label_t>("FPS:");
 	fps_value_label.buf().printf(" 99.9 fps");
 	fps_value_label.update();
-	add_component( &fps_value_label, 2 );
+	add_component( &fps_value_label );
 	// Simloops label
 	new_component<gui_label_t>("Sim:");
 	simloops_value_label.buf().printf(" 999.9");

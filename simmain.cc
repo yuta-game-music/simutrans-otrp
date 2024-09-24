@@ -830,7 +830,7 @@ int simu_main(int argc, char** argv)
 	// Get optimal resolution.
 	if (disp_width == 0 || disp_height == 0) {
 		resolution const res = dr_query_screen_resolution();
-		if (fullscreen != WINDOWED) {
+		if (fullscreen) {
 			disp_width  = res.w;
 			disp_height = res.h;
 		}

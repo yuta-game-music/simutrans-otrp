@@ -8,7 +8,6 @@
 
 
 #include "../simtypes.h"
-#include "../display/scr_coord.h"
 
 #ifndef NETTOOL
 #include <zlib.h>
@@ -91,12 +90,12 @@ bool dr_os_init(int const* parameter);
 /* maximum size possible (if there) */
 struct resolution
 {
-	scr_coord_val w;
-	scr_coord_val h;
+	int w;
+	int h;
 };
 resolution dr_query_screen_resolution();
 
-int dr_os_open(scr_size window_size, sint16 fullscreen);
+int dr_os_open(int w, int h, sint16 fullscreen);
 void dr_os_close();
 
 // returns the locale; NULL if unknown
