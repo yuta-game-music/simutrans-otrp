@@ -14,9 +14,6 @@
 #include "../utils/cbuffer_t.h"
 #include "components/gui_button_to_chart.h"
 #include "components/gui_scrolled_list.h"
-#include "../sys/simsys.h"
-#include "messagebox.h"
-#include "simwin.h"
 
 
 /**
@@ -104,17 +101,17 @@ citylist_frame_t::citylist_frame_t() :
 	main.add_tab( &list, translator::translate("City list") );
 
 	list.set_table_layout(1,0);
+	list.new_component<gui_label_t>("hl_txt_sort");
 
-	list.add_table(3, 3);
-	list.new_component<gui_label_t>("Filter:");
-	name_filter_input.set_text(name_filter, lengthof(name_filter));
-	list.add_component(&name_filter_input);
+	list.add_table(4,0);
+	sortedby.init(button_t::roundbox, sort_text[citylist_stats_t::sort_mode & 0x1F]);
+	sortedby.add_listener(this);
+	list.add_component(&sortedby);
 
-	bt_copy_csv.init(button_t::roundbox | button_t::flexible, translator::translate("Copy csv format"));
-	bt_copy_csv.set_tooltip("Copy citylist data to clipboard in csv format.");
-	bt_copy_csv.add_listener(this);
-	list.add_component(&bt_copy_csv);
-	
+	sorteddir.init(button_t::roundbox, citylist_stats_t::sort_mode > citylist_stats_t::SORT_MODES ? "hl_btn_sort_desc" : "hl_btn_sort_asc");
+	sorteddir.add_listener(this);
+	list.add_component(&sorteddir);
+
 	filter_by_owner.init( button_t::square_automatic, "Served by" );
 	filter_by_owner.add_listener(this);
 	filter_by_owner.set_tooltip( "At least one stop is connected to the town" );
@@ -250,31 +247,7 @@ bool citylist_frame_t::action_triggered( gui_action_creator_t *comp, value_t v)
 	else if( comp == &filter_by_owner ) {
 		fill_list();
 	}
-	else if( comp == &bt_copy_csv ) {
-		copy_csv_format();
-	}
 	return true;
-}
-
-
-void citylist_frame_t::copy_csv_format() {
-	// copy in csv format. separator is \t.
-	cbuffer_t clipboard;
-	clipboard.append("City\tpopulation\n");
-	player_t *pl = (filter_by_owner.pressed  &&  filterowner.get_selection()>0) ? world()->get_player(filterowner.get_selection()) : NULL;
-	FOR( const weighted_vector_tpl<stadt_t *>, city, world()->get_cities() ) {
-		if( pl == NULL || city->is_within_players_network( pl ) ) {
-			clipboard.printf( "%s\t", city->get_name() );
-			clipboard.printf( "%d\n", city->get_einwohner());
-		}
-	}
-	
-	if(  clipboard.len()>0  ) {
-		dr_copy( clipboard, clipboard.len() );
-		create_win( new news_img("Population data was copied to clipboard.\n"), w_time_delete, magic_none );
-	} else {
-		create_win( new news_img("There is nothing to copy.\n"), w_time_delete, magic_none );
-	}
 }
 
 
