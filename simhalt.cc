@@ -1352,7 +1352,7 @@ sint32 haltestelle_t::rebuild_connections()
 				if(  is_tbgr_enabled  ) {
 					aggregate_weight = estimated_waiting_ticks(schedule, current_entry_index) - current_entry.get_median_convoy_stopping_time();
 				} else {
-					aggregate_weight = WEIGHT_HALT;
+					aggregate_weight = WEIGHT_WAIT;
 				}
 			 	force_transfer_search |= (current_entry.is_unload_all()  ||  current_entry.is_no_load()  ||  current_entry.is_no_unload());
 				no_load_section = current_entry.is_no_load();
