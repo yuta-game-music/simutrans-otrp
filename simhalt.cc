@@ -3469,8 +3469,8 @@ void haltestelle_t::recalc_status()
 
 	// update waiting_amount_exceeds_FIFO_limit
 	const uint32 fifo_limit = world()->get_settings().get_waiting_limit_for_first_come_first_serve();
-	for(  uint32 i = 0;  i<goods_manager_t::get_count();  i++  ) {
-		if(  slist_tpl<cargo_item_t> * warray = cargo[i]  ) {
+	for(  uint32 i = 0;  i<goods_manager_t::get_max_catg_index();  i++  ) {
+		if(  cargo[i] != NULL  ) {
 			const uint32 ware_sum = get_ware_summe(goods_manager_t::get_info(i));
 			waiting_amount_exceeds_FIFO_limit.set(i, ware_sum > fifo_limit);
 		}
