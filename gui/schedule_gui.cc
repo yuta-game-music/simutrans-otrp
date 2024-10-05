@@ -680,9 +680,9 @@ void schedule_gui_t::update_selection()
 			bt_transfer_interval.pressed = schedule->entries[current_stop].is_transfer_interval();
 			bt_reverse_convoy.enable();
 			bt_reverse_convoy.pressed = schedule->entries[current_stop].is_reverse_convoy();
-			const uint8 c2 = schedule->entries[current_stop].get_coupling_reverse();
+			const uint16 c2 = schedule->entries[current_stop].get_coupling_reverse();
 			bt_reverse_parents_children_order.enable();
-			bt_reverse_parents_children_order.pressed = c2==2;
+			bt_reverse_parents_children_order.pressed = c2==0x0200;
 
 			
 			// wait_for_time releated things
@@ -865,7 +865,7 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 	}
 	else if(comp == &bt_reverse_parents_children_order) {
 		if(!schedule->empty()) {
-			schedule->entries[schedule->get_current_stop()].set_reverse_p_c(!bt_reverse_parents_children_order.pressed);
+			schedule->entries[schedule->get_current_stop()].set_reverse_parent_children(!bt_reverse_parents_children_order.pressed);
 			bt_wait_for_child.pressed = false;
 			update_selection();
 		}

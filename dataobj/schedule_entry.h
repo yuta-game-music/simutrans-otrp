@@ -24,12 +24,11 @@ public:
 		init_convoy_stopping_time();
 	}
 
-	schedule_entry_t(koord3d const& pos, uint const minimum_loading, uint16 const waiting_time_shift, uint8 const stop_flags, uint8 const stop_flag2) :
+	schedule_entry_t(koord3d const& pos, uint const minimum_loading, uint16 const waiting_time_shift, uint16 const stop_flags) :
 		pos(pos),
 		minimum_loading(minimum_loading),
 		waiting_time_shift(waiting_time_shift),
-		stop_flags(stop_flags),
-		stop_flag2(stop_flag2)
+		stop_flags(stop_flags)
 	{
 		spacing = 1;
 		spacing_shift = delay_tolerance = 0;
@@ -48,8 +47,8 @@ public:
 		UNLOAD_ALL        = 1U << 5, // The convoy unloads all loads here.
 		LOAD_BEFORE_DEP   = 1U << 6, // The convoy loads just before the departure.
 		TRANSFER_INTERVAL = 1U << 7,
-		REVERSE_CONVOY	= 1U << 0,// The reverse order of vehicles in convoy
-		REVERSE_p_c		= 1U << 1,// The reverse order of connected convoys
+		REVERSE_CONVOY	= 1U << 8,// The reverse order of vehicles in convoy
+		REVERSE_parent_children		= 1U << 9,// The reverse order of connected convoys
 	}
 	;
 
@@ -96,8 +95,7 @@ public:
 	uint8 cs_at_index; // which index of convoy_stopping_time should be overwritten next.
 	
 private:
-	uint8 stop_flags;
-	uint8 stop_flag2;
+	uint16 stop_flags;
 	
 	void init_journey_time() {
 		jt_at_index = 0;
@@ -121,7 +119,7 @@ private:
 	}
 	
 public:
-	uint8 get_coupling_point() const { return (stop_flags&0x03); }
+	uint16 get_coupling_point() const { return (stop_flags&0x0003); }
 	void set_wait_for_coupling() { stop_flags |= WAIT_FOR_COUPLING; stop_flags &= ~TRY_COUPLING; }
 	void set_try_coupling() { stop_flags |= TRY_COUPLING; stop_flags &= ~WAIT_FOR_COUPLING; }
 	void reset_coupling() { stop_flags &= ~TRY_COUPLING; stop_flags &= ~WAIT_FOR_COUPLING; }
@@ -137,17 +135,17 @@ public:
 	void set_load_before_departure(bool y) { y ? stop_flags |= LOAD_BEFORE_DEP : stop_flags &= ~LOAD_BEFORE_DEP; }
 	bool is_transfer_interval() const { return (stop_flags&TRANSFER_INTERVAL)>0; }
 	void set_transfer_interval(bool y) { y ? stop_flags |= TRANSFER_INTERVAL : stop_flags &= ~TRANSFER_INTERVAL; }
-	uint8 get_stop_flags() const { return stop_flags; }
-	void set_stop_flags(uint8 f) { stop_flags = f; }
+	uint16 get_stop_flags() const { return stop_flags; }
+	void set_stop_flags(uint8 f) { stop_flags = f+(stop_flags&0xFF00); }
 
 
-	bool is_reverse_convoy() const { return (stop_flag2&REVERSE_CONVOY)>0; }
-	void set_reverse_convoy(bool y) { y ? stop_flag2 |= REVERSE_CONVOY : stop_flag2&= ~REVERSE_CONVOY; }
-	uint8 get_coupling_reverse() const { return (stop_flag2&0x02); }
-	bool is_reverse_p_c() const { return (stop_flag2&REVERSE_p_c)>0; } 
-	void set_reverse_p_c(bool y) { y ? stop_flag2 |= REVERSE_p_c : stop_flag2 &= ~REVERSE_p_c; }
-	uint8 get_stop_flag2() const { return stop_flag2; }
-	void set_stop_flag2(uint8 f) { stop_flag2 = f; }
+	bool is_reverse_convoy() const { return (stop_flags&REVERSE_CONVOY)>0; }
+	void set_reverse_convoy(bool y) { y ? stop_flags |= REVERSE_CONVOY : stop_flags&= ~REVERSE_CONVOY; }
+	uint16 get_coupling_reverse() const { return (stop_flags&0x0200); }
+	bool is_reverse_parent_children() const { return (stop_flags&REVERSE_parent_children)>0; } 
+	void set_reverse_parent_children(bool y) { y ? stop_flags |= REVERSE_parent_children : stop_flags &= ~REVERSE_parent_children; }
+	uint8 get_stop_flag2() const { return stop_flags>>8; }
+	void set_stop_flag2(uint8 f) { stop_flags = (f<<8)+(stop_flags&0x00FF); }
 	
 	void set_spacing(uint16 a, uint16 b, uint16 c) {
 		spacing = a;
@@ -168,7 +166,6 @@ public:
 		  &&  a.minimum_loading    == this->minimum_loading
 			&&  a.waiting_time_shift == this->waiting_time_shift
 			&&  a.get_stop_flags()   == this->stop_flags
-			&&  a.get_stop_flag2()   == this->stop_flag2
 			&&  a.spacing            == this->spacing
 			&&  a.spacing_shift      == this->spacing_shift
 			&&  a.delay_tolerance    == this->delay_tolerance;

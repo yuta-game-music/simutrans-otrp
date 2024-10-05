@@ -30,6 +30,7 @@
 
 #define NEVER 0xFFFFU
 
+sint8 env_t::reverse_base_offsets[8][3];
 
 settings_t::settings_t() :
 	filename(""),
@@ -1077,6 +1078,37 @@ void settings_t::parse_simuconf( tabfile_t& simuconf, sint16& disp_width, sint16
 	env_t::numpad_always_moves_map = contents.get_int( "numpad_always_moves_map", env_t::numpad_always_moves_map ) != 0;
 
 	env_t::player_finance_display_account = contents.get_int( "player_finance_display_account", env_t::player_finance_display_account ) != 0;
+
+	
+	// vector_tpl<int> offsets[8];
+	// offsets[0] = contents.get_ints("reverse_base_offset_south");
+	// offsets[1] = contents.get_ints("reverse_base_offset_west");
+	// offsets[2] = contents.get_ints("reverse_base_offset_southwest");
+	// offsets[3] = contents.get_ints("reverse_base_offset_southeast");
+	// offsets[4] = contents.get_ints("reverse_base_offset_north");
+	// offsets[5] = contents.get_ints("reverse_base_offset_east");
+	// offsets[6] = contents.get_ints("reverse_base_offset_northeast");
+	// offsets[7] = contents.get_ints("reverse_base_offset_northwest");
+
+
+	for (uint32 i = 0; i < 8; i++)
+	{
+		// if (offsets[i][0] >= 3)
+		// {
+		// 	for (uint32 j = 0; j < 3; j++)
+		// 	{
+		// 		env_t::reverse_base_offsets[i][j] = offsets[i][j+1];
+		// 	}
+		// }
+		// else
+		{
+			for (uint32 j = 0; j < 3; j++)
+			{
+				env_t::reverse_base_offsets[i][j] = 0;
+			}
+		}
+	}
+
 
 	// network stuff
 	env_t::server_frames_ahead              = contents.get_int_clamped( "server_frames_ahead",             env_t::server_frames_ahead,              0, INT_MAX );

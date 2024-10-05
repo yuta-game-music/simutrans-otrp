@@ -2373,7 +2373,7 @@ bool convoi_t::can_go_alte_richtung()
 	}
 
 	// reverse convoi 
-	if((reversed != fahr[0]->is_reversed()) || (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_p_c())){
+	if((reversed != fahr[0]->is_reversed()) || (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_parent_children())){
 		return false;
 	}
 
@@ -3737,9 +3737,9 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 	}
 
 	// reverse order of coupling/coupled convois
-	reverse_p_c = self->get_schedule()->get_current_entry().is_reverse_p_c();
-	if (reverse_p_c&&(coupling_convoi.is_bound()&&!is_coupled())) {
-		execute_reverse_p_c(self);
+	reverse_parent_children = self->get_schedule()->get_current_entry().is_reverse_parent_children();
+	if (reverse_parent_children&&(coupling_convoi.is_bound()&&!is_coupled())) {
+		execute_reverse_parent_children(self);
 	}
 	// reverse convoi
 	reversed = self->get_schedule()->get_current_entry().is_reverse_convoy();
@@ -5223,16 +5223,16 @@ void convoi_t::execute_reverse_order(array_tpl<vehicle_t*> &vehicles, uint8 vehi
 	}
 
 }
-void convoi_t::execute_reverse_p_c(convoihandle_t self)
+void convoi_t::execute_reverse_parent_children(convoihandle_t self)
 {
-	convoihandle_t temp_p_c = self;
+	convoihandle_t temp_parent_children = self;
 	convoihandle_t temp_t_c = self->coupling_convoi; 
-	temp_p_c->uncouple_convoi();
+	temp_parent_children->uncouple_convoi();
 	if (temp_t_c->get_coupling_convoi().is_bound())
 	{
-		execute_reverse_p_c(temp_t_c);
+		execute_reverse_parent_children(temp_t_c);
 	}
 	
-	temp_t_c->couple_convoi(temp_p_c);
+	temp_t_c->couple_convoi(temp_parent_children);
 	
 }

@@ -378,11 +378,11 @@ void vehicle_base_t::get_screen_offset( int &xoff, int &yoff, const sint16 raste
 	// vehicles needs finer steps to appear smoother
 	sint32 display_steps = (uint32)steps*(uint16)raster_width;
 	const vehicle_t* veh= obj_cast<vehicle_t>(this);
+	const int dir = ribi_t::get_dir(get_direction());
 	if (veh && veh->is_reversed())
 	{
 		display_steps += (VEHICLE_STEPS_PER_TILE / 2 - veh->get_desc()->get_length_in_steps());
-		//adjusted_steps += (sint32)(env_t::reverse_base_offsets[dir][2] * VEHICLE_STEPS_PER_TILE) / veh->get_desc()->get_length_in_steps();
-		// display_steps += env_t::reverse_base_offsets[dir][2];
+		display_steps += env_t::reverse_base_offsets[dir][2];
 	}
 	if(dx && dy) {
 		display_steps &= 0xFFFFFC00;
@@ -392,6 +392,11 @@ void vehicle_base_t::get_screen_offset( int &xoff, int &yoff, const sint16 raste
 	}
 	xoff += (display_steps*dx) >> 10;
 	yoff += ((display_steps*dy) >> 10) + (get_hoff(raster_width))/(4*16);
+	if (veh && veh->is_reversed())
+	{
+		xoff += tile_raster_scale_x(env_t::reverse_base_offsets[dir][0], raster_width);
+		yoff += tile_raster_scale_y(env_t::reverse_base_offsets[dir][1], raster_width);
+	}
 }
 
 

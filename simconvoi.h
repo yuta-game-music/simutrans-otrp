@@ -503,13 +503,13 @@ private:
 
 	bool reversed;// Whether this convoy's vehicles are currently arranged in reverse order.
 
-	bool reverse_p_c;// Reverse the order of the coupling/coupled convois 
+	bool reverse_parent_children;// Reverse the order of the coupling/coupled convois 
 public:
 	// Reorder the vehicle array
 	// Can be executed even with a vehicle array that does not belong to convoy for UI
 	static void execute_reverse_order(array_tpl<vehicle_t*> &vehicles, uint8 vehicle_count, bool rev);
 	// Reverse the order of the coupling/coupled convois
-	static void execute_reverse_p_c(convoihandle_t self);
+	static void execute_reverse_parent_children(convoihandle_t self);
 	/**
 	* Convoi haelt an Haltestelle und setzt quote fuer Fracht
 	*/

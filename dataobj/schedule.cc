@@ -30,7 +30,7 @@
 #include "../tpl/slist_tpl.h"
 
 
-schedule_entry_t schedule_t::dummy_entry(koord3d::invalid, 0, 0, 0, 0);
+schedule_entry_t schedule_t::dummy_entry(koord3d::invalid, 0, 0, 0);
 
 
 // copy all entries from schedule src to this and adjusts current_stop
@@ -127,9 +127,9 @@ bool schedule_t::insert(const grund_t* gr, uint8 minimum_loading, uint16 waiting
 		create_win( new news_img("Maximum 254 stops\nin a schedule!\n"), w_time_delete, magic_none);
 		return false;
 	}
-
+	uint16 temp_flag=coupling_point+(reverse_flag<<8);
 	if(  is_stop_allowed(gr)  ) {
-		entries.insert_at(current_stop, schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, coupling_point, reverse_flag));
+		entries.insert_at(current_stop, schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, temp_flag));
 		current_stop ++;
 		make_current_stop_valid();
 		return true;
@@ -150,9 +150,9 @@ bool schedule_t::append(const grund_t* gr, uint8 minimum_loading, uint16 waiting
 		create_win( new news_img("Maximum 254 stops\nin a schedule!\n"), w_time_delete, magic_none);
 		return false;
 	}
-
+	uint16 temp_flag=coupling_point+(reverse_flag<<8);
 	if(is_stop_allowed(gr)) {
-		entries.append(schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, coupling_point, reverse_flag ), 4);
+		entries.append(schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, temp_flag ), 4);
 		return true;
 	}
 	else {
@@ -253,7 +253,7 @@ void schedule_t::rdwr(loadsave_t *file)
 			uint32 dummy;
 			pos.rdwr(file);
 			file->rdwr_long(dummy);
-			entries.append(schedule_entry_t(pos, (uint8)dummy, 0, 0, 0));
+			entries.append(schedule_entry_t(pos, (uint8)dummy, 0, 0));
 		}
 	}
 	else {
@@ -490,7 +490,7 @@ void schedule_t::sprintf_schedule( cbuffer_t &buf ) const
 	uint32 s = current_stop + (flags<<8) + (max_speed<<16);
 	buf.printf("%u|%ld|%u|%d|", s, departure_slot_group_id, additional_base_waiting_time, (int)get_type());
 	FOR(minivec_tpl<schedule_entry_t>, const& i, entries) {
-		buf.printf("%s,%i,%i,%i,%i,%i,%i,%i|", i.pos.get_str(), (int)i.minimum_loading, (int)i.waiting_time_shift, i.get_stop_flags(), i.spacing, i.spacing_shift, i.delay_tolerance, i.get_stop_flag2());
+		buf.printf("%s,%i,%i,%i,%i,%i,%i|", i.pos.get_str(), (int)i.minimum_loading, (int)i.waiting_time_shift, i.get_stop_flags(), i.spacing, i.spacing_shift, i.delay_tolerance);
 	}
 }
 
@@ -556,24 +556,24 @@ bool schedule_t::sscanf_schedule( const char *ptr )
 	p++;
 	// now scan the entries
 	while(  *p>0  ) {
-		sint16 values[10];
-		for(  sint8 i=0;  i<10;  i++  ) {
+		sint16 values[9];
+		for(  sint8 i=0;  i<9;  i++  ) {
 			values[i] = atoi( p );
 			while(  *p  &&  (*p!=','  &&  *p!='|')  ) {
 				p++;
 			}
-			if(  i<9  &&  *p!=','  ) {
+			if(  i<8  &&  *p!=','  ) {
 				dbg->error( "schedule_t::sscanf_schedule()","incomplete string!" );
 				return false;
 			}
-			if(  i==9  &&  *p!='|'  ) {
+			if(  i==8  &&  *p!='|'  ) {
 				dbg->error( "schedule_t::sscanf_schedule()","incomplete entry termination!" );
 				return false;
 			}
 			p++;
 		}
 		// ok, now we have a complete entry
-		schedule_entry_t entry = schedule_entry_t(koord3d(values[0], values[1], values[2]), values[3], values[4], values[5], values[9]);
+		schedule_entry_t entry = schedule_entry_t(koord3d(values[0], values[1], values[2]), values[3], values[4], values[5]);
 		entry.set_spacing(values[6], values[7], values[8]);
 		entries.append(entry);
 	}
@@ -613,12 +613,11 @@ void construct_schedule_entry_attributes(cbuffer_t& buf, schedule_entry_t const&
 		str[cnt] = 'I';
 		cnt++;
 	}
-	const uint8 flag2 = entry.get_stop_flag2();
-	if(  flag2&schedule_entry_t::REVERSE_CONVOY  ) {
+	if(  entry.is_reverse_convoy()  ) {
 		str[cnt] = 'R';
 		cnt++;
 	}
-	if(  flag2&schedule_entry_t::REVERSE_p_c  ) {
+	if(  entry.is_reverse_parent_children()  ) {
 		str[cnt] = 'T';
 		cnt++;
 	}
