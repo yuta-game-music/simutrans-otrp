@@ -48,7 +48,7 @@ public:
 		LOAD_BEFORE_DEP   = 1U << 6, // The convoy loads just before the departure.
 		TRANSFER_INTERVAL = 1U << 7,
 		REVERSE_CONVOY	= 1U << 8,// The reverse order of vehicles in convoy
-		REVERSE_parent_children		= 1U << 9,// The reverse order of connected convoys
+		REVERSE_PARENT_CHILDREN		= 1U << 9,// The reverse order of connected convoys
 	}
 	;
 
@@ -142,8 +142,8 @@ public:
 	bool is_reverse_convoy() const { return (stop_flags&REVERSE_CONVOY)>0; }
 	void set_reverse_convoy(bool y) { y ? stop_flags |= REVERSE_CONVOY : stop_flags&= ~REVERSE_CONVOY; }
 	uint16 get_coupling_reverse() const { return (stop_flags&0x0200); }
-	bool is_reverse_parent_children() const { return (stop_flags&REVERSE_parent_children)>0; } 
-	void set_reverse_parent_children(bool y) { y ? stop_flags |= REVERSE_parent_children : stop_flags &= ~REVERSE_parent_children; }
+	bool is_reverse_parent_children() const { return (stop_flags&REVERSE_PARENT_CHILDREN)>0; } 
+	void set_reverse_parent_children(bool y) { y ? stop_flags |= REVERSE_PARENT_CHILDREN : stop_flags &= ~REVERSE_PARENT_CHILDREN; }
 	uint8 get_stop_flag2() const { return stop_flags>>8; }
 	void set_stop_flag2(uint8 f) { stop_flags = (f<<8)+(stop_flags&0x00FF); }
 	

@@ -1162,6 +1162,19 @@ koord3d calc_first_pos_of_route(convoi_t* cnv) {
 	// So we use get_direction() and give up the judge when the obtained direction is not single. This judgement only affects visual jupming of the convoy.
 	const ribi_t::ribi front_vehicle_dir = front_vehicle->get_direction();
 	grund_t* ngr;
+	// reversing convoi
+	// "reversed" flag is used here, and it is true only when the convoi is currently reversed. 
+	// reversed flag is 
+	if( front_vehicle->get_convoi()->reversed
+	//  && !front_vehicle->get_convoi()->is_coupled()
+	){
+		convoihandle_t c = cnv->self;
+		while ( c->get_coupling_convoi().is_bound()){
+			c = c->get_coupling_convoi();
+		}
+		return c->back()->get_pos();
+	}
+	// end reversing convoi
 	if(
 		!cnv->get_coupling_convoi().is_bound()
 		||  !gr
@@ -1345,6 +1358,7 @@ bool convoi_t::drive_to()
 			schedule->set_current_stop(current_stop);
 			if(  route_ok  ) {
 				vorfahren();
+				reversed = false; // after start, reversed flag must be set as "false".
 				return true;
 			}
 		}
@@ -2373,7 +2387,7 @@ bool convoi_t::can_go_alte_richtung()
 	}
 
 	// reverse convoi 
-	if((reversed != fahr[0]->is_reversed()) || (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_parent_children())){
+	if( reversed  || (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_parent_children())){
 		return false;
 	}
 
@@ -3742,8 +3756,7 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 		execute_reverse_parent_children(self);
 	}
 	// reverse convoi
-	reversed = self->get_schedule()->get_current_entry().is_reverse_convoy();
-	reverse_order(reversed);
+	reverse_order(self->get_schedule()->get_current_entry().is_reverse_convoy());
 
 	if(  scheduled_departure_time==0  ) {
 		bool need_coupling_at_this_stop = false;
@@ -4813,7 +4826,7 @@ const char* convoi_t::send_to_depot(bool local)
 		schedule->insert(welt->lookup(home));
 		schedule->set_current_stop( (schedule->get_current_stop()+schedule->get_count()-1)%schedule->get_count() );
 		reversed=false;
-		reverse_order(reversed);
+		reverse_order(false);
 		set_schedule(schedule);
 		txt = "Convoi has been sent\nto the nearest depot\nof appropriate type.\n";
 	}
@@ -5186,6 +5199,7 @@ void convoi_t::reverse_order(bool rev)
 	convoihandle_t c = self;
 	if(!c->is_waiting_for_coupling()){
 		execute_reverse_order(fahr, c->get_vehicle_count(), rev);
+		c->reversed = true;
 	}
 
 	welt->set_dirty();
