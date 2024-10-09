@@ -1910,11 +1910,28 @@ void convoi_t::ziel_erreicht()
 						}
 						// when the waiting couvoi is child of other convoi or the coupling convoi already has child convoi,
 						// to avoid duplication, the coupling convoi is set as a child of waiting convoi firstly.
-						if(v->get_convoi()->is_coupled()||get_coupling_convoi().is_bound()){
+						if(v->get_convoi()->is_coupled()){
 							v->get_convoi()->couple_convoi(self);
 							// if the direction is different, reverse the parents_children order.
 							if(ribi_t::backward(front()->get_direction())==v->get_convoi()->get_next_initial_direction()){
 								convoihandle_t temp_c=v->get_convoi()->self;
+								while (temp_c->is_coupled()){
+								FOR(vector_tpl<convoihandle_t>, const& c, world()->convoys()) {
+									if(  c->get_coupling_convoi()==temp_c  ) {
+										temp_c=c->self;
+									}
+								}
+								}
+								temp_c->execute_reverse_parent_children(temp_c);
+							}
+						}
+						// when both convoi has child, the waiting convois are set as children, firstly.
+						else if(self->get_coupling_convoi().is_bound()){
+							execute_reverse_parent_children(self);
+							couple_convoi(v->get_convoi()->self);
+							// if the direction is different, change order
+							if(  ribi_t::backward(front()->get_direction())!=v->get_convoi()->get_next_initial_direction()  ){
+								convoihandle_t temp_c=self;
 								while (temp_c->is_coupled()){
 								FOR(vector_tpl<convoihandle_t>, const& c, world()->convoys()) {
 									if(  c->get_coupling_convoi()==temp_c  ) {
@@ -3785,7 +3802,7 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 	}
 	// reverse order of coupling/coupled convois
 	reverse_parent_children = self->get_schedule()->get_current_entry().is_reverse_parent_children();
-	if (reverse_parent_children&&(coupling_convoi.is_bound()&&!is_coupled())&&is_waiting_for_coupling()) {
+	if (reverse_parent_children&&(coupling_convoi.is_bound()&&!is_coupled())&&!is_waiting_for_coupling()) {
 		execute_reverse_parent_children(self);
 	}
 
