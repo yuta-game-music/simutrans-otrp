@@ -141,7 +141,6 @@ public:
 
 	bool is_reverse_convoy() const { return (stop_flags&REVERSE_CONVOY)>0; }
 	void set_reverse_convoy(bool y) { y ? stop_flags |= REVERSE_CONVOY : stop_flags&= ~REVERSE_CONVOY; }
-	uint16 get_coupling_reverse() const { return (stop_flags&0x0200); }
 	bool is_reverse_parent_children() const { return (stop_flags&REVERSE_PARENT_CHILDREN)>0; } 
 	void set_reverse_parent_children(bool y) { y ? stop_flags |= REVERSE_PARENT_CHILDREN : stop_flags &= ~REVERSE_PARENT_CHILDREN; }
 	uint8 get_stop_flag2() const { return stop_flags>>8; }

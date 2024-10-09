@@ -680,9 +680,8 @@ void schedule_gui_t::update_selection()
 			bt_transfer_interval.pressed = schedule->entries[current_stop].is_transfer_interval();
 			bt_reverse_convoy.enable();
 			bt_reverse_convoy.pressed = schedule->entries[current_stop].is_reverse_convoy();
-			const uint16 c2 = schedule->entries[current_stop].get_coupling_reverse();
 			bt_reverse_parents_children_order.enable();
-			bt_reverse_parents_children_order.pressed = c2==0x0200;
+			bt_reverse_parents_children_order.pressed = schedule->entries[current_stop].is_reverse_parent_children();
 
 			
 			// wait_for_time releated things
@@ -842,6 +841,7 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 				schedule->entries[schedule->get_current_stop()].set_try_coupling();
 			}
 			bt_wait_for_child.pressed = false;
+			schedule->entries[schedule->get_current_stop()].set_reverse_parent_children(false);
 			update_selection();
 		}
 	}
@@ -853,7 +853,7 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 				schedule->entries[schedule->get_current_stop()].set_wait_for_coupling();
 			}
 			bt_find_parent.pressed = false;
-			bt_reverse_parents_children_order.pressed = false;
+			schedule->entries[schedule->get_current_stop()].set_reverse_parent_children(false);
 			update_selection();
 		}
 	}
@@ -866,7 +866,12 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 	else if(comp == &bt_reverse_parents_children_order) {
 		if(!schedule->empty()) {
 			schedule->entries[schedule->get_current_stop()].set_reverse_parent_children(!bt_reverse_parents_children_order.pressed);
-			bt_wait_for_child.pressed = false;
+			if(  bt_wait_for_child.pressed  ) {
+				schedule->entries[schedule->get_current_stop()].reset_coupling();
+			} 
+			if(  bt_find_parent.pressed  ) {
+				schedule->entries[schedule->get_current_stop()].reset_coupling();
+			} 
 			update_selection();
 		}
 	}
