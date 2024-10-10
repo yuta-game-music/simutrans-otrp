@@ -5245,10 +5245,25 @@ void convoi_t::calc_sum_friction_weight() {
 void convoi_t::reversing_immediately(bool rev)
 {
 	convoihandle_t c = self;
-	c->reverse_order(rev);
-	schedule_t *schedule = c->get_schedule()->copy();
-	c->set_schedule(schedule);
-
+	if (!c->get_schedule()->get_current_entry().get_coupling_point()==1){
+		execute_reverse_order(fahr, c->get_vehicle_count());
+		c->reversing = true;
+		convoihandle_t temp_parent=c;
+		while(temp_parent->is_coupled()){
+			FOR(vector_tpl<convoihandle_t>, const& temp_c, world()->convoys()) {
+				if(  temp_c->get_coupling_convoi()==temp_parent  ) {
+					temp_parent=temp_c->self;
+				}
+			}
+		}
+		schedule_t *schedule = temp_parent->get_schedule()->copy();
+		temp_parent->set_schedule(schedule);
+		c->reversing = false;
+		// if (!c->is_coupled()){
+		// 	schedule_t *schedule = c->get_schedule()->copy();
+		// 	c->set_schedule(schedule);
+		// }
+	}
 }
 
 void convoi_t::reverse_order(bool rev)
