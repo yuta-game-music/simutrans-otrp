@@ -617,7 +617,7 @@ void construct_schedule_entry_attributes(cbuffer_t& buf, schedule_entry_t const&
 		str[cnt] = 'R';
 		cnt++;
 	}
-	if(  entry.is_reverse_parent_children()  ) {
+	if(  entry.is_reverse_convoi_coupling()  ) {
 		str[cnt] = 'T';
 		cnt++;
 	}

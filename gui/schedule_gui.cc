@@ -681,7 +681,7 @@ void schedule_gui_t::update_selection()
 			bt_reverse_convoy.enable();
 			bt_reverse_convoy.pressed = schedule->entries[current_stop].is_reverse_convoy();
 			bt_reverse_parents_children_order.enable();
-			bt_reverse_parents_children_order.pressed = schedule->entries[current_stop].is_reverse_parent_children();
+			bt_reverse_parents_children_order.pressed = schedule->entries[current_stop].is_reverse_convoi_coupling();
 
 			
 			// wait_for_time releated things
@@ -841,7 +841,7 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 				schedule->entries[schedule->get_current_stop()].set_try_coupling();
 			}
 			bt_wait_for_child.pressed = false;
-			schedule->entries[schedule->get_current_stop()].set_reverse_parent_children(false);
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(false);
 			update_selection();
 		}
 	}
@@ -853,7 +853,7 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 				schedule->entries[schedule->get_current_stop()].set_wait_for_coupling();
 			}
 			bt_find_parent.pressed = false;
-			schedule->entries[schedule->get_current_stop()].set_reverse_parent_children(false);
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(false);
 			update_selection();
 		}
 	}
@@ -865,7 +865,7 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 	}
 	else if(comp == &bt_reverse_parents_children_order) {
 		if(!schedule->empty()) {
-			schedule->entries[schedule->get_current_stop()].set_reverse_parent_children(!bt_reverse_parents_children_order.pressed);
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(!bt_reverse_parents_children_order.pressed);
 			if(  bt_wait_for_child.pressed  ) {
 				schedule->entries[schedule->get_current_stop()].reset_coupling();
 			} 

@@ -90,7 +90,6 @@ static const char * state_names[convoi_t::MAX_STATES] =
 	"CAN_START_TWO_MONTHS",
 	"LEAVING_DEPOT",
 	"ENTERING_DEPOT",
-	"REVERSING",
 	"COUPLED",
 	"COUPLED_LOADING",
 	"WAITING_FOR_LEAVING_DEPOT"
@@ -1922,12 +1921,12 @@ void convoi_t::ziel_erreicht()
 									}
 								}
 								}
-								temp_c->execute_reverse_parent_children(temp_c);
+								temp_c->execute_reverse_convoy_coupling(temp_c);
 							}
 						}
 						// when both convoi has child, the waiting convois are set as children, firstly.
 						else if(self->get_coupling_convoi().is_bound()){
-							execute_reverse_parent_children(self);
+							execute_reverse_convoy_coupling(self);
 							couple_convoi(v->get_convoi()->self);
 							// if the direction is different, change order
 							if(  ribi_t::backward(front()->get_direction())!=v->get_convoi()->get_next_initial_direction()  ){
@@ -1939,7 +1938,7 @@ void convoi_t::ziel_erreicht()
 									}
 								}
 								}
-								temp_c->execute_reverse_parent_children(temp_c);
+								temp_c->execute_reverse_convoy_coupling(temp_c);
 							}
 						}
 						// the waiting convoi and coupling convoi are single convoi
@@ -2433,7 +2432,7 @@ bool convoi_t::can_go_alte_richtung()
 	}
 
 	// reverse convoi 
-	if( reversing  || (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_parent_children())){
+	if( reversing  || (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_convoi_coupling())){
 		return false;
 	}
 
@@ -3801,9 +3800,9 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 		reverse_order(true);
 	}
 	// reverse order of coupling/coupled convois
-	reverse_parent_children = self->get_schedule()->get_current_entry().is_reverse_parent_children();
-	if (reverse_parent_children&&(coupling_convoi.is_bound()&&!is_coupled())&&!is_waiting_for_coupling()) {
-		execute_reverse_parent_children(self);
+	bool reverse_convoy_coupling = self->get_schedule()->get_current_entry().is_reverse_convoi_coupling();
+	if (reverse_convoy_coupling&&(coupling_convoi.is_bound()&&!is_coupled())&&!is_waiting_for_coupling()) {
+		execute_reverse_convoy_coupling(self);
 	}
 
 	if(  scheduled_departure_time==0  ) {
@@ -5319,16 +5318,16 @@ void convoi_t::execute_reverse_order(array_tpl<vehicle_t*> &vehicles, uint8 vehi
 	
 
 }
-void convoi_t::execute_reverse_parent_children(convoihandle_t self)
+void convoi_t::execute_reverse_convoy_coupling(convoihandle_t self)
 {
-	convoihandle_t temp_parent_children = self;
+	convoihandle_t temp_convoi_coupling = self;
 	convoihandle_t temp_t_c = self->coupling_convoi; 
-	temp_parent_children->uncouple_convoi();
+	temp_convoi_coupling->uncouple_convoi();
 	if (temp_t_c->get_coupling_convoi().is_bound())
 	{
-		execute_reverse_parent_children(temp_t_c);
+		execute_reverse_convoy_coupling(temp_t_c);
 	}
 	
-	temp_t_c->couple_convoi(temp_parent_children);
+	temp_t_c->couple_convoi(temp_convoi_coupling);
 	
 }
