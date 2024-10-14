@@ -1010,6 +1010,7 @@ public:
 
 	void set_arrived_time(uint32 t) { arrived_time = t; }
 	uint32 get_departure_time() const { return scheduled_departure_time; } // in ticks.
+	void reset_departure_time() { scheduled_departure_time = 0; }
 	uint32 get_coupling_delay_tolerance() const { return scheduled_coupling_delay_tolerance; }
 
 	// register journey time to the current schedule entry
