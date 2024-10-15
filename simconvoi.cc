@@ -3797,11 +3797,11 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 
 	// reverse convoi
 	if (self->get_schedule()->get_current_entry().is_reverse_convoy()){
-		reverse_vehicles_while_driving();
+		reverse_vehicles_at_halt();
 	}
 	// reverse order of coupling/coupled convois
 	bool reverse_convoy_coupling = self->get_schedule()->get_current_entry().is_reverse_convoi_coupling();
-	if (reverse_convoy_coupling&&(coupling_convoi.is_bound()&&!is_coupled())&&!is_waiting_for_coupling()) {
+	if (reverse_convoy_coupling&&((coupling_convoi.is_bound()&&!is_coupled())&&!is_waiting_for_coupling())) {
 		execute_reverse_convoy_coupling(self);
 	}
 
