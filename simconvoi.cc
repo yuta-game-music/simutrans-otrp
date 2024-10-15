@@ -3797,7 +3797,7 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 
 	// reverse convoi
 	if (self->get_schedule()->get_current_entry().is_reverse_convoy()){
-		reverse_order(true);
+		reverse_vehicles_while_driving();
 	}
 	// reverse order of coupling/coupled convois
 	bool reverse_convoy_coupling = self->get_schedule()->get_current_entry().is_reverse_convoi_coupling();
@@ -4873,7 +4873,7 @@ const char* convoi_t::send_to_depot(bool local)
 		schedule->insert(welt->lookup(home));
 		schedule->set_current_stop( (schedule->get_current_stop()+schedule->get_count()-1)%schedule->get_count() );
 		reversing = false;
-		reverse_order(false);
+		reverse_vehicles_go_depot();
 		set_schedule(schedule);
 		txt = "Convoi has been sent\nto the nearest depot\nof appropriate type.\n";
 	}
@@ -5241,8 +5241,10 @@ void convoi_t::calc_sum_friction_weight() {
 	}
 }
 
-void convoi_t::reversing_immediately(bool rev)
+void convoi_t::reverse_vehicles_while_driving()
 {
+	// this function is called by convoi_info_t
+	// when the gui bottun is pressed, this function is called and call the reversing function.
 	convoihandle_t c = self;
 	if (!c->get_schedule()->get_current_entry().get_coupling_point()==1){
 		execute_reverse_order(fahr, c->get_vehicle_count());
@@ -5265,16 +5267,18 @@ void convoi_t::reversing_immediately(bool rev)
 	}
 }
 
-void convoi_t::reverse_order(bool rev)
+void convoi_t::reverse_vehicles_at_halt()
 {
+	// this function is the normal reversing function.
+	// this is called when the train approach the station if the station is a reversing point.
+	// "reversing" flag is checking the reversing is done or not.
+	// bug fix: the reversing vehicles cannot wait for couple.
+	// so, if the convoy will wait for coupling at the station,
+	// the reversing is not done until the coupling is done.
 	convoihandle_t c = self;
-	// If rev==true, the convoi is reversing.
-	// If rev==false, the convoi is reversing only if the convoi is already reversed,
-	// therefore, the convoi's ribi is set the normal direction.
-	// Don't call this function if you don't want to reverse the convoi's direction!
 	if (!c->is_waiting_for_coupling())
 	{
-		if(!reversing&&(rev||(!rev&&is_reversed()))){
+		if(!reversing){
 			execute_reverse_order(fahr, c->get_vehicle_count());
 			c->reversing = true;
 			welt->set_dirty();
@@ -5283,6 +5287,19 @@ void convoi_t::reverse_order(bool rev)
 		reversing=false;
 	}
 
+}
+
+void convoi_t::reverse_vehicles_go_depot()
+{
+	// this function is fix the direction of train when it go home (depot).
+	// if the vehicle reversed, this vehicle reversed again.
+	convoihandle_t c = self;
+	if (fahr[0]->is_reversed())
+	{
+		execute_reverse_order(fahr, c->get_vehicle_count());
+		c->reversing = true;
+		welt->set_dirty();
+	}
 }
 
 bool convoi_t::is_reversed() const {
