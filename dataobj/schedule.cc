@@ -48,7 +48,6 @@ void schedule_t::copy_from(const schedule_t *src)
 
 	editing_finished = src->is_editing_finished();
 	flags = src->get_flags();
-	flag2 = src->get_flag2();
 	max_speed = src->get_max_speed();
 	departure_slot_group_id = src->get_departure_slot_group_id();
 	additional_base_waiting_time = src->get_additional_base_waiting_time();
@@ -241,11 +240,7 @@ void schedule_t::rdwr(loadsave_t *file)
 		file->rdwr_long(additional_base_waiting_time);
 	}
 
-	if( file->get_OTRP_version()>=41) {
-		file->rdwr_byte(flag2);
-	} else {
-		flag2 = NONE;
-	}
+
 
 	if(file->is_version_less(99, 12)) {
 		for(  uint8 i=0; i<size; i++  ) {

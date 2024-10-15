@@ -133,7 +133,6 @@ public:
 	void start_editing() { editing_finished = false; }
 	
 	uint8 get_flags() const { return flags; }
-	uint8 get_flag2() const { return flag2; }
 	void set_flags(uint8 f) { flags = f; }
 	bool is_temporary() const { return (flags&TEMPORARY)>0; }
 	void set_temporary(bool y) { y ? flags |= TEMPORARY : flags &= ~TEMPORARY; }
