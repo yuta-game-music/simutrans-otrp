@@ -419,7 +419,7 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		env_t::highlighted_city = city;
 
 		welt->set_dirty();
-		welt->set_tool( tool_t::general_tool[TOOL_CHANGE_CITY_OF_CITYBUILDING], welt->get_public_player());
+		welt->set_tool( tool_t::general_tool[TOOL_CHANGE_CITY_OF_BUILDING], welt->get_public_player());
 
 		return true;
 	}

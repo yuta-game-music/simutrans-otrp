@@ -7151,7 +7151,7 @@ const char *tool_stop_mover_t::do_work( player_t *player, const koord3d &last_po
 }
 
 
-const char* tool_change_city_of_citybuilding_t::do_work(player_t*, koord3d const &start, koord3d const &end) {
+const char* TOOL_CHANGE_CITY_OF_BUILDING_t::do_work(player_t*, koord3d const &start, koord3d const &end) {
 	koord k1, k2;
 	k1.x = start.x < end.x ? start.x : end.x;
 	k1.y = start.y < end.y ? start.y : end.y;
@@ -7193,7 +7193,7 @@ const char* tool_change_city_of_citybuilding_t::do_work(player_t*, koord3d const
 }
 
 
-void tool_change_city_of_citybuilding_t::mark_tiles(player_t*, koord3d const &start, koord3d const &end) {
+void TOOL_CHANGE_CITY_OF_BUILDING_t::mark_tiles(player_t*, koord3d const &start, koord3d const &end) {
 	koord k1, k2;
 	k1.x = start.x < end.x ? start.x : end.x;
 	k1.y = start.y < end.y ? start.y : end.y;

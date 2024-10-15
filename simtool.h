@@ -702,9 +702,9 @@ private:
 	void read_start_position(player_t *player, const koord3d &pos);
 };
 
-class tool_change_city_of_citybuilding_t : public two_click_tool_t {
+class TOOL_CHANGE_CITY_OF_BUILDING_t : public two_click_tool_t {
 public:
-	tool_change_city_of_citybuilding_t() : two_click_tool_t(TOOL_CHANGE_CITY_OF_CITYBUILDING | GENERAL_TOOL) {}
+	TOOL_CHANGE_CITY_OF_BUILDING_t() : two_click_tool_t(TOOL_CHANGE_CITY_OF_BUILDING | GENERAL_TOOL) {}
 	char const *get_tooltip(player_t const *) const OVERRIDE { return translator::translate("change city of citybuilding"); }
 
 private:
