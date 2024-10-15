@@ -29,7 +29,6 @@ class schedule_t
 	uint8 current_stop;
 	
 	uint8 flags;
-	uint8 flag2;// uint flag for storing reversing information. which has the information of uint16 stop_flags&0xFF00. 
 	
 	// operational maximum speed of this schedule. 0 => no limit.
 	uint16 max_speed;
