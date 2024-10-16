@@ -3,15 +3,12 @@
  * (see LICENSE.txt)
  */
 
-#include <stdio.h>
-
 #include "../simdebug.h"
 #include "../simcity.h"
 #include "../simmenu.h"
 #include "../simworld.h"
 #include "../simcolor.h"
 #include "../dataobj/translator.h"
-#include "../dataobj/environment.h"
 #include "../display/viewport.h"
 #include "../utils/cbuffer_t.h"
 #include "../utils/simstring.h"
@@ -284,9 +281,6 @@ city_info_t::~city_info_t()
 		}
 	}
 	city->stadtinfo_options = flags;
-
-	env_t::highlight_city = false;
-	env_t::highlighted_city = NULL;
 
 	welt->set_dirty();
 	welt->set_tool( tool_t::general_tool[TOOL_QUERY], welt->get_public_player());
