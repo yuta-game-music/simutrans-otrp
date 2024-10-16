@@ -201,8 +201,12 @@ void city_info_t::init()
 		allow_growth.add_listener( this );
 		add_component(&allow_growth);
 
-		// add "change highlight button"
-		highlight.init( button_t::box_state_automatic | button_t::flexible, "Highlight");
+		// add "change highlight button" based on active player
+		if (welt->get_active_player_nr() == 1) {
+			highlight.init( button_t::box_state_automatic | button_t::flexible, "Make building belong to");
+		} else {
+			highlight.init( button_t::box_state_automatic | button_t::flexible, "Highlight");
+		}
 		highlight.pressed = false;
 		highlight.add_listener( this );
 		add_component(&highlight);
@@ -389,6 +393,12 @@ void city_info_t::update_labels()
 
 	lb_unemployed.buf().printf("%s: %d", translator::translate("Unemployed"), c->get_unemployed()); lb_unemployed.update();
 	lb_homeless.buf().printf("%s: %d", translator::translate("Homeless"), c->get_homeless());       lb_homeless.update();
+
+	if (welt->get_active_player_nr() == 1) {
+		highlight.set_text("Make building belong to");
+	} else {
+		highlight.set_text("Highlight");
+	}
 }
 
 
