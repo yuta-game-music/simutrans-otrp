@@ -7150,8 +7150,21 @@ const char *tool_stop_mover_t::do_work( player_t *player, const koord3d &last_po
 	return NULL;
 }
 
+bool tool_change_city_of_building_t::init(player_t* player) {
+	two_click_tool_t::init(player);
 
-const char* TOOL_CHANGE_CITY_OF_BUILDING_t::do_work(player_t*, koord3d const &start, koord3d const &end) {
+	// convert default_param to city and update highlight_city
+	highlight_city = welt->get_cities()[atoi(default_param)];
+	for( int i = 0; i < welt->get_cities().get_count(); i++) {
+		city_info_t* w = dynamic_cast<city_info_t*>(win_get_top());
+		if( w  &&  w->get_city() == welt->get_cities()[i] ) {
+			w->update(highlight_city);
+		}
+	}
+	return true;
+}
+
+const char* tool_change_city_of_building_t::do_work(player_t*, koord3d const &start, koord3d const &end) {
 	koord k1, k2;
 	k1.x = start.x < end.x ? start.x : end.x;
 	k1.y = start.y < end.y ? start.y : end.y;
@@ -7175,7 +7188,7 @@ const char* TOOL_CHANGE_CITY_OF_BUILDING_t::do_work(player_t*, koord3d const &st
 			}
 
 			stadt_t* old_city = gb->get_stadt();
-			stadt_t* new_city = env_t::highlighted_city;
+			stadt_t* new_city = highlight_city;
 
 			if (!(old_city && new_city)) {
 				return "Building doesn't have city or no city highlighted";
@@ -7193,7 +7206,7 @@ const char* TOOL_CHANGE_CITY_OF_BUILDING_t::do_work(player_t*, koord3d const &st
 }
 
 
-void TOOL_CHANGE_CITY_OF_BUILDING_t::mark_tiles(player_t*, koord3d const &start, koord3d const &end) {
+void tool_change_city_of_building_t::mark_tiles(player_t*, koord3d const &start, koord3d const &end) {
 	koord k1, k2;
 	k1.x = start.x < end.x ? start.x : end.x;
 	k1.y = start.y < end.y ? start.y : end.y;

@@ -22,6 +22,9 @@
 
 #include "display/viewport.h"
 
+#include "gui/simwin.h"
+#include "gui/city_info.h"
+
 #include "obj/baum.h"
 #include "obj/groundobj.h"
 
@@ -702,11 +705,13 @@ private:
 	void read_start_position(player_t *player, const koord3d &pos);
 };
 
-class TOOL_CHANGE_CITY_OF_BUILDING_t : public two_click_tool_t {
+class tool_change_city_of_building_t : public two_click_tool_t {
+private:
+	stadt_t* highlight_city = nullptr;
 public:
-	TOOL_CHANGE_CITY_OF_BUILDING_t() : two_click_tool_t(TOOL_CHANGE_CITY_OF_BUILDING | GENERAL_TOOL) {}
+	tool_change_city_of_building_t() : two_click_tool_t(TOOL_CHANGE_CITY_OF_BUILDING | GENERAL_TOOL) {}
 	char const *get_tooltip(player_t const *) const OVERRIDE { return translator::translate("change city of citybuilding"); }
-
+	bool init(player_t*) OVERRIDE;
 private:
 	char const *do_work(player_t*, koord3d const &, koord3d const &) OVERRIDE;
 	void mark_tiles(player_t*, koord3d const &, koord3d const &) OVERRIDE;
@@ -719,7 +724,8 @@ private:
 
 		return 2;
 	};
-	image_id get_marker_image() const OVERRIDE { return cursor; };
+	image_id get_marker_image() const OVERRIDE { return cursor; }
+	bool is_init_network_safe() const OVERRIDE { return true; }
 };
 
 /* make all tiles of this player a public stop

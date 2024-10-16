@@ -398,6 +398,11 @@ void city_info_t::draw(scr_coord pos, scr_size size)
 	chart.set_seed(welt->get_last_year());
 	update_labels();
 	gui_frame_t::draw(pos, size);
+
+	// update pressed and highlight based on if on top
+	city_info_t* w_city = dynamic_cast<city_info_t*>(win_get_top());
+	highlight.pressed = (highlighted && (w_city == this)) ? true : false;
+	highlighted = highlight.pressed;
 }
 
 
@@ -415,19 +420,27 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		rename_city();
 	}
 	if(  comp==&highlight && highlight.pressed  ) {
-		env_t::highlight_city = true;
-		env_t::highlighted_city = city;
 
+		// make sure highlighted is true and button is pressed
+		highlighted = true;
+		highlight.pressed = true;
+
+		// set display dirty and select tool
 		welt->set_dirty();
+		welt->set_background_dirty();
 		welt->set_tool( tool_t::general_tool[TOOL_CHANGE_CITY_OF_BUILDING], welt->get_public_player());
 
 		return true;
 	}
 	else if (	comp==&highlight && !highlight.pressed	) {
-		env_t::highlight_city = false;
-		env_t::highlighted_city = NULL;
 
+		// make sure highlighted is false and button is not pressed
+		highlighted = false;
+		highlight.pressed = false;
+
+		// set display dirty and deselect tool
 		welt->set_dirty();
+		welt->set_background_dirty();
 		welt->set_tool( tool_t::general_tool[TOOL_QUERY], welt->get_public_player());
 
 		return true;
