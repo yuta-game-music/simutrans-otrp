@@ -87,7 +87,7 @@ halt_list_stats_t::halt_list_stats_t(halthandle_t h)
 		img_enabled[2].set_rigid(true);
 
 		add_component(&label_cargo);
-		if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_transfer) {
+		if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_throughput) {
 			halt->get_transfers_info( label_cargo.buf() );
 			label_cargo.update();
 		} else if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_wartend_percent) {
@@ -121,7 +121,7 @@ void halt_list_stats_t::draw(scr_coord offset)
 	label_name.set_color(halt->get_status_farbe());
 	label_name.set_shadow(SYSCOL_TEXT,true);
 
-	if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_transfer) {
+	if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_throughput) {
 		halt->get_transfers_info( label_cargo.buf() );
 		label_cargo.update();
 	} else if (halt_list_frame_t::get_sortierung() == halt_list_frame_t::sort_mode_t::nach_wartend_percent) {
