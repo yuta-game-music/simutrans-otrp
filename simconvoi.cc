@@ -1860,6 +1860,11 @@ void convoi_t::ziel_erreicht()
 
 	// reset departure time in case the variable is not reset.
 	scheduled_departure_time = 0;
+	c = self;
+	while(  c.is_bound()  ) {
+		c->reset_departure_time();
+		c = c->get_coupling_convoi();
+	}
 
 	const vehicle_t* v = fahr[0];
 
@@ -3857,6 +3862,7 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 				c_cnv->get_schedule()->advance();
 				c_cnv->set_state(COUPLED);
 				c_cnv->set_coupling_done(false);
+				c_cnv->reset_departure_time();
 				c_cnv = c_cnv->get_coupling_convoi();
 			}
 		}
