@@ -379,7 +379,7 @@ void vehicle_base_t::get_screen_offset( int &xoff, int &yoff, const sint16 raste
 	sint32 display_steps = (uint32)steps*(uint16)raster_width;
 	const vehicle_t* veh= obj_cast<vehicle_t>(this);
 	const int dir = ribi_t::get_dir(get_direction());
-	if (veh && veh->is_reversed())
+	if (veh && veh->get_convoi()->is_reversed())
 	{
 		display_steps += (VEHICLE_STEPS_PER_TILE / 2 - veh->get_desc()->get_length_in_steps());
 	}
@@ -999,7 +999,6 @@ vehicle_t::vehicle_t(koord3d pos, const vehicle_desc_t* desc, player_t* player) 
 	purchase_time = welt->get_current_month();
 	cnv = NULL;
 	speed_limit = SPEED_UNLIMITED;
-	reversed = false;
 
 	route_index = 1;
 
@@ -1027,7 +1026,6 @@ vehicle_t::vehicle_t() :
 
 	desc = NULL;
 	cnv = NULL;
-	reversed = false;
 
 	route_index = 1;
 	current_friction = 4;
@@ -1752,13 +1750,6 @@ DBG_MESSAGE("vehicle_t::rdwr_from_convoi()","bought at %i/%i.",(purchase_time%12
 			has_driven = false;
 		}
 	}
-
-	// reverse or not
-	if(file->get_OTRP_version()>=41) {
-		file->rdwr_bool(reversed);
-	} else {
-		reversed = false;
-	}
 }
 
 
@@ -1816,7 +1807,7 @@ vehicle_t::~vehicle_t()
 ribi_t::ribi vehicle_t::get_direction_of_travel() const
 {
 	ribi_t::ribi dir = get_direction();
-	if(reversed)
+	if(  cnv!=NULL  &&  cnv!=(convoi_t*)1  &&  cnv->is_reversed()  )
 	{
 		switch(dir)
 		{
@@ -1854,13 +1845,6 @@ ribi_t::ribi vehicle_t::get_direction_of_travel() const
 		};
 	}
 	return dir;
-}
-
-void vehicle_t::set_reversed(bool value)
-{
-	
-	reversed = value;
-	
 }
 
 #ifdef MULTI_THREAD

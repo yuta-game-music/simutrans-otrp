@@ -186,6 +186,7 @@ void convoi_t::init(player_t *player)
 	acceleration_magnification = atoi(translator::translate("acceleration_magnification"))!=0 ? atoi(translator::translate("acceleration_magnification")) : 100;
 
 	in_delay_recovery = false;
+	reversed = false;
 }
 
 
@@ -550,6 +551,10 @@ DBG_MESSAGE("convoi_t::finish_rd()","next_stop_index=%d", next_stop_index );
 				state = WAITING_FOR_CLEARANCE;
 			}
 		}
+	}
+	for(uint8 i=0;  i<anz_vehikel;  i++) {
+		// Vehicles image may need to be recalculated according to the convoy's state.
+		fahr[i]->calc_image();
 	}
 	if(  state==LOADING  ) {
 		// the fully the shorter => register again as older convoi
@@ -3146,6 +3151,11 @@ void convoi_t::rdwr(loadsave_t *file)
 		file->rdwr_vector(fetched_fresh_goods, rdwr_goods);
 	}
 
+	if(  file->get_OTRP_version()>=41  ) {
+		file->rdwr_bool(reversed);
+		file->rdwr_bool(reversing);
+	}
+
 	if(  file->is_loading()  ) {
 		reserve_route();
 		recalc_catg_index();
@@ -5253,7 +5263,7 @@ void convoi_t::reverse_vehicles_while_driving()
 	// when the gui bottun is pressed, this function is called and call the reversing function.
 	convoihandle_t c = self;
 	if (!c->get_schedule()->get_current_entry().get_coupling_point()==1){
-		execute_reverse_order(fahr, c->get_vehicle_count());
+		execute_reverse_order();
 		c->reversing = true;
 		convoihandle_t temp_parent=c;
 		while(temp_parent->is_coupled()){
@@ -5281,7 +5291,7 @@ void convoi_t::reverse_vehicles_at_halt()
 	if (!c->is_waiting_for_coupling())
 	{
 		if(!reversing){
-			execute_reverse_order(fahr, c->get_vehicle_count());
+			execute_reverse_order();
 			c->reversing = true;
 			welt->set_dirty();
 		}
@@ -5296,46 +5306,35 @@ void convoi_t::reverse_vehicles_go_depot()
 	// this function is fix the direction of train when it go home (depot).
 	// if the vehicle reversed, this vehicle reversed again.
 	convoihandle_t c = self;
-	if (fahr[0]->is_reversed())
-	{
-		execute_reverse_order(fahr, c->get_vehicle_count());
-		c->reversing = true;
-		welt->set_dirty();
+	if(  !reversed  ) {
+		return;
 	}
+	execute_reverse_order();
+	c->reversing = true;
+	welt->set_dirty();
 }
 
-bool convoi_t::is_reversed() const {
-	return fahr[0]->is_reversed();
-}
-
-void convoi_t::execute_reverse_order(array_tpl<vehicle_t*> &vehicles, uint8 vehicle_count)
+void convoi_t::execute_reverse_order()
 {
 	uint8 a = 0;
 	vehicle_t* reverse;
-	uint8 b = vehicle_count;
-	convoihandle_t temp_coupling_convoi = vehicles[0]->get_convoi()->get_coupling_convoi();
-	bool temp_coupled = vehicles[0]->get_convoi()->is_coupled();
-	vehicles[0]->set_leading(false);
-	vehicles[vehicle_count-1]->set_last(false);
+	uint8 b = get_vehicle_count();
+	front()->set_leading(false);
+	back()->set_last(false);
 
 	for( ; a<--b; a++) //increment a and decrement b until they meet each other
 	{
-		reverse = vehicles[a]; //put what's in a into swap spacekarte_t::load(
-		vehicles[a] = vehicles[b]; //put what's in b into a
-		vehicles[b] = reverse; //put what's in the swap (a) into b
+		reverse = fahr[a]; //put what's in a into swap spacekarte_t::load(
+		fahr[a] = fahr[b]; //put what's in b into a
+		fahr[b] = reverse; //put what's in the swap (a) into b
 	}
-	if (!temp_coupled) {
-		vehicles[0]->set_leading(true);
+	if (!is_coupled()) {
+		fahr[0]->set_leading(true);
 	}
-	if (!temp_coupling_convoi.is_bound()) {
-		vehicles[vehicle_count-1]->set_last(true);
+	if (!coupling_convoi.is_bound()) {
+		back()->set_last(true);
 	}
-	int start = 0;
-	for (int i = start; i < vehicle_count; i++) {
-		vehicles[i]->set_reversed(!vehicles[i]->is_reversed());
-	}
-	
-
+	reversed = !reversed;
 }
 void convoi_t::execute_reverse_convoy_coupling(convoihandle_t self)
 {

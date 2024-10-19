@@ -372,6 +372,8 @@ private:
 	uint8 name_offset;
 	char name_and_id[128];
 
+	bool reversed; // true when the vehicles are in the reversed order.
+
 	/**
 	* Initialize all variables with default values.
 	* Each constructor must call this method first!
@@ -495,17 +497,18 @@ private:
 	/// Pushes the convoy stopping time at the current halt to the schedule
 	void push_convoy_stopping_time();
 
+	void execute_reverse_order(); // TODO: reconsider the function responsibility
+
 public:
 	// Reverses the order of the convoy.
 	// @author: jamespetts
 	bool reversing;// Whether this convoy's vehicles are currently arranged in reverse order. The flag for calculation of position.
-	bool is_reversed() const;
+	bool is_reversed() const { return reversed; }
 	// Reorder the vehicle array
 	// Can be executed even with a vehicle array that does not belong to convoy for UI
 	void reverse_vehicles_at_halt();
 	void reverse_vehicles_while_driving();
 	void reverse_vehicles_go_depot();
-	static void execute_reverse_order(array_tpl<vehicle_t*> &vehicles, uint8 vehicle_count);
 	// Reverse the order of the coupling/coupled convois
 	static void execute_reverse_convoy_coupling(convoihandle_t self);
 	/**
