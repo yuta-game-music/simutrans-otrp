@@ -276,7 +276,12 @@ void schedule_t::rdwr(loadsave_t *file)
 					}
 				}
 			}
-			if(file->get_OTRP_version()>=22) {
+			if(file->get_OTRP_version()>=41) {
+				uint16 flags = entries[i].get_stop_flags();
+				file->rdwr_short(flags);
+				entries[i].set_stop_flags(flags);
+			}
+			else if(file->get_OTRP_version()>=22) {
 				uint8 flags = entries[i].get_stop_flags();
 				file->rdwr_byte(flags);
 				entries[i].set_stop_flags(flags);
@@ -321,13 +326,6 @@ void schedule_t::rdwr(loadsave_t *file)
 				for(uint8 j=0; j<NUM_STOPPING_TIME_STORED; j++) {
 					file->rdwr_long(entries[i].convoy_stopping_time[j]);
 				}
-			}
-			if(file->get_OTRP_version()>=41) {
-				uint8 flag2 = entries[i].get_stop_flag2();
-				file->rdwr_byte(flag2);
-				entries[i].set_stop_flag2(flag2);
-			} else {
-				entries[i].set_stop_flag2(0);
 			}
 		}
 	}
@@ -577,7 +575,7 @@ void construct_schedule_entry_attributes(cbuffer_t& buf, schedule_entry_t const&
 	uint8 cnt = 1;
 	char str[10];
 	str[0] = '[';
-	const uint8 flag = entry.get_stop_flags();
+	const uint16 flag = entry.get_stop_flags();
 	if(  flag&schedule_entry_t::WAIT_FOR_COUPLING  ) {
 		str[cnt] = 'W';
 		cnt++;

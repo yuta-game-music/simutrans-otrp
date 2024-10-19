@@ -134,16 +134,12 @@ public:
 	void set_load_before_departure(bool y) { y ? stop_flags |= LOAD_BEFORE_DEP : stop_flags &= ~LOAD_BEFORE_DEP; }
 	bool is_transfer_interval() const { return (stop_flags&TRANSFER_INTERVAL)>0; }
 	void set_transfer_interval(bool y) { y ? stop_flags |= TRANSFER_INTERVAL : stop_flags &= ~TRANSFER_INTERVAL; }
-	uint16 get_stop_flags() const { return stop_flags; }
-	void set_stop_flags(uint8 f) { stop_flags = f+(stop_flags&0xFF00); }
-
-
 	bool is_reverse_convoy() const { return (stop_flags&REVERSE_CONVOY)>0; }
 	void set_reverse_convoy(bool y) { y ? stop_flags |= REVERSE_CONVOY : stop_flags&= ~REVERSE_CONVOY; }
 	bool is_reverse_convoi_coupling() const { return (stop_flags&REVERSE_COUPLING)>0; } 
 	void set_reverse_convoi_coupling(bool y) { y ? stop_flags |= REVERSE_COUPLING : stop_flags &= ~REVERSE_COUPLING; }
-	uint8 get_stop_flag2() const { return stop_flags>>8; }
-	void set_stop_flag2(uint8 f) { stop_flags = (f<<8)+(stop_flags&0x00FF); }
+	uint16 get_stop_flags() const { return stop_flags; }
+	void set_stop_flags(uint16 f) { stop_flags = f; }
 	
 	void set_spacing(uint16 a, uint16 b, uint16 c) {
 		spacing = a;
