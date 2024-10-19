@@ -240,8 +240,6 @@ void schedule_t::rdwr(loadsave_t *file)
 		file->rdwr_long(additional_base_waiting_time);
 	}
 
-
-
 	if(file->is_version_less(99, 12)) {
 		for(  uint8 i=0; i<size; i++  ) {
 			koord3d pos;

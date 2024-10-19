@@ -5266,10 +5266,6 @@ void convoi_t::reverse_vehicles_while_driving()
 		schedule_t *schedule = temp_parent->get_schedule()->copy();
 		temp_parent->set_schedule(schedule);
 		c->reversing = false;
-		// if (!c->is_coupled()){
-		// 	schedule_t *schedule = c->get_schedule()->copy();
-		// 	c->set_schedule(schedule);
-		// }
 	}
 }
 

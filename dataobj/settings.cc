@@ -1078,9 +1078,6 @@ void settings_t::parse_simuconf( tabfile_t& simuconf, sint16& disp_width, sint16
 
 	env_t::player_finance_display_account = contents.get_int( "player_finance_display_account", env_t::player_finance_display_account ) != 0;
 
-	
-
-
 	// network stuff
 	env_t::server_frames_ahead              = contents.get_int_clamped( "server_frames_ahead",             env_t::server_frames_ahead,              0, INT_MAX );
 	env_t::additional_client_frames_behind  = contents.get_int_clamped( "additional_client_frames_behind", env_t::additional_client_frames_behind,  0, INT_MAX );

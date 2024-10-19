@@ -495,10 +495,6 @@ private:
 	/// Pushes the convoy stopping time at the current halt to the schedule
 	void push_convoy_stopping_time();
 
-
-
-
-
 public:
 	// Reverses the order of the convoy.
 	// @author: jamespetts

@@ -391,7 +391,6 @@ void vehicle_base_t::get_screen_offset( int &xoff, int &yoff, const sint16 raste
 	}
 	xoff += (display_steps*dx) >> 10;
 	yoff += ((display_steps*dy) >> 10) + (get_hoff(raster_width))/(4*16);
-	
 }
 
 
