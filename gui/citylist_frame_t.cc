@@ -113,7 +113,7 @@ citylist_frame_t::citylist_frame_t() :
 
 	// add copy csv button
 	bt_copy_csv.init(button_t::roundbox | button_t::flexible, translator::translate("Copy csv format"));
-	bt_copy_csv.set_tooltip("Copy citylist data to clipboard in csv format.");
+	bt_copy_csv.set_tooltip("Copy the list of city name and population to clipboard in csv format.");
 	bt_copy_csv.add_listener(this);
 	list.add_component(&bt_copy_csv);
 	list.new_component<gui_fill_t>();
@@ -286,7 +286,7 @@ void citylist_frame_t::copy_csv_format() {
 		dr_copy( clipboard, clipboard.len() );
 		create_win( new news_img("Population data was copied to clipboard.\n"), w_time_delete, magic_none );
 	} else {
-		create_win( new news_img("There is nothing to copy.\n"), w_time_delete, magic_none );
+		dbg->error("citylist_frame_t::copy_csv_format()", "There is nothing to copy.\n");
 	}
 }
 
