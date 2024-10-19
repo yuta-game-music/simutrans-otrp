@@ -377,12 +377,6 @@ void vehicle_base_t::get_screen_offset( int &xoff, int &yoff, const sint16 raste
 {
 	// vehicles needs finer steps to appear smoother
 	sint32 display_steps = (uint32)steps*(uint16)raster_width;
-	const vehicle_t* veh= obj_cast<vehicle_t>(this);
-	const int dir = ribi_t::get_dir(get_direction());
-	if (veh && veh->get_convoi()->is_reversed())
-	{
-		display_steps += (VEHICLE_STEPS_PER_TILE / 2 - veh->get_desc()->get_length_in_steps());
-	}
 	if(dx && dy) {
 		display_steps &= 0xFFFFFC00;
 	}
@@ -1046,6 +1040,19 @@ bool vehicle_t::calc_route(koord3d start, koord3d ziel, sint32 max_speed, route_
 }
 
 
+void vehicle_t::get_screen_offset( int &xoff, int &yoff, const sint16 raster_width ) const
+{
+	vehicle_base_t::get_screen_offset(xoff, yoff, raster_width);
+	if(  !cnv->is_reversed()  ) {
+		return;
+	}
+	// Add offset when the vehicle is reversed.
+	const sint32 steps_delta = (VEHICLE_STEPS_PER_TILE / 2 - get_desc()->get_length_in_steps());
+	xoff += (steps_delta*dx) >> 10;
+	yoff += ((steps_delta*dy) >> 10);
+}
+
+
 grund_t* vehicle_t::hop_check()
 {
 	// the leading vehicle will do all the checks
@@ -1472,10 +1479,10 @@ void vehicle_t::calc_image()
 {
 	image_id old_image=get_image();
 	if (fracht.empty()) {
-		set_image(desc->get_image_id(ribi_t::get_dir(get_direction_of_travel()),NULL));
+		set_image(desc->get_image_id(ribi_t::get_dir(get_image_direction()),NULL));
 	}
 	else {
-		set_image(desc->get_image_id(ribi_t::get_dir(get_direction_of_travel()), fracht.front().get_desc()));
+		set_image(desc->get_image_id(ribi_t::get_dir(get_image_direction()), fracht.front().get_desc()));
 	}
 	if(old_image!=get_image()) {
 		set_flag(obj_t::dirty);
@@ -1804,47 +1811,14 @@ vehicle_t::~vehicle_t()
 }
 
 
-ribi_t::ribi vehicle_t::get_direction_of_travel() const
+ribi_t::ribi vehicle_t::get_image_direction() const
 {
-	ribi_t::ribi dir = get_direction();
-	if(  cnv!=NULL  &&  cnv!=(convoi_t*)1  &&  cnv->is_reversed()  )
-	{
-		switch(dir)
-		{
-		case ribi_t::north:
-			dir = ribi_t::south;
-			break;
-
-		case ribi_t::east:
-			dir = ribi_t::west;
-			break;
-
-		case ribi_t::northeast:
-			dir = ribi_t::southwest;
-			break;
-
-		case ribi_t::south:
-			dir = ribi_t::north;
-			break;
-
-		case ribi_t::southeast:
-			dir = ribi_t::northwest;
-			break;
-
-		case ribi_t::west:
-			dir = ribi_t::east;
-			break;
-
-		case ribi_t::northwest:
-			dir = ribi_t::southeast;
-			break;
-
-		case ribi_t::southwest:
-			dir = ribi_t::northeast;
-			break;
-		};
+	if(  cnv!=NULL  &&  cnv!=(convoi_t*)1  &&  cnv->is_reversed()  ) {
+		return ribi_t::backward(get_direction());
 	}
-	return dir;
+	else {
+		return get_direction();
+	}
 }
 
 #ifdef MULTI_THREAD
