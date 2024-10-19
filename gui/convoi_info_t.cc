@@ -172,7 +172,12 @@ void convoi_info_t::init(convoihandle_t cnv)
 		next_stop_button.init(button_t::roundbox | button_t::flexible, "next stop");
 		next_stop_button.set_tooltip("Go to the next station.");
 		next_stop_button.add_listener(this);
-		add_component(&next_stop_button);
+		add_component(&next_stop_button);		
+		
+		reversed_button.init(button_t::roundbox | button_t::flexible, "Reverse");
+		reversed_button.set_tooltip("reverse the convoy's direction.");
+		reversed_button.add_listener(this);
+		add_component(&reversed_button);
 
 		new_component<gui_fill_t>();
 		new_component<gui_fill_t>();
@@ -381,6 +386,8 @@ void convoi_info_t::draw(scr_coord pos, scr_size size)
 		set_recovery_button.pressed = cnv->is_in_delay_recovery();
 		set_recovery_button.enable();
 		next_stop_button.enable();
+		reversed_button.pressed = cnv->is_reversed();
+		reversed_button.enable();
 	}
 	else {
 		if(  line_bound  ) {
@@ -394,6 +401,7 @@ void convoi_info_t::draw(scr_coord pos, scr_size size)
 		no_load_button.disable();
 		set_recovery_button.disable();
 		next_stop_button.disable();
+		reversed_button.disable();
 	}
 
 	// update button & labels
@@ -518,6 +526,11 @@ bool convoi_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 
 		if(  comp == &next_stop_button  ) {
 			cnv->call_convoi_tool( 't', NULL );
+			return true;
+		}
+
+		if(  comp == &reversed_button  ) {
+			cnv->reverse_vehicles_while_driving();
 			return true;
 		}
 	}

@@ -455,7 +455,26 @@ void schedule_gui_t::init(schedule_t* schedule_, player_t* player, convoihandle_
 		add_component(&bt_find_parent);
 	}	
 	end_table();
-	
+
+	// reverse setting
+	add_table(2,1);
+	{
+		bt_reverse_convoy.init(button_t::square_state, "reverse convoy");
+		bt_reverse_convoy.set_tooltip("Reverses the direction of convoy.");
+		bt_reverse_convoy.add_listener(this);
+		bt_reverse_convoy.disable();
+		add_component(&bt_reverse_convoy);
+
+		bt_reverse_parents_children_order.init(button_t::square_state, "reverse parents-children order");
+		bt_reverse_parents_children_order.set_tooltip("Reverses the order of connected convoys.");
+		bt_reverse_parents_children_order.add_listener(this);
+		bt_reverse_parents_children_order.disable();
+		add_component(&bt_reverse_parents_children_order);
+
+	}
+	end_table();
+
+
 	// for departure time settings
 	add_table(3,3);
 	{
@@ -637,6 +656,8 @@ void schedule_gui_t::update_selection()
 	numimp_delay_tolerance.disable();
 	bt_load_before_departure.disable();
 	bt_transfer_interval.disable();
+	bt_reverse_convoy.disable();
+	bt_reverse_parents_children_order.disable();
 
 	if(  !schedule->empty()  ) {
 		schedule->set_current_stop( min(schedule->get_count()-1,schedule->get_current_stop()) );
@@ -657,6 +678,11 @@ void schedule_gui_t::update_selection()
 			bt_load_before_departure.pressed = schedule->entries[current_stop].is_load_before_departure();
 			bt_transfer_interval.enable();
 			bt_transfer_interval.pressed = schedule->entries[current_stop].is_transfer_interval();
+			bt_reverse_convoy.enable();
+			bt_reverse_convoy.pressed = schedule->entries[current_stop].is_reverse_convoy();
+			bt_reverse_parents_children_order.enable();
+			bt_reverse_parents_children_order.pressed = schedule->entries[current_stop].is_reverse_convoi_coupling();
+
 			
 			// wait_for_time releated things
 			const bool wft = schedule->entries[current_stop].get_wait_for_time();
@@ -815,6 +841,7 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 				schedule->entries[schedule->get_current_stop()].set_try_coupling();
 			}
 			bt_wait_for_child.pressed = false;
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(false);
 			update_selection();
 		}
 	}
@@ -826,6 +853,25 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 				schedule->entries[schedule->get_current_stop()].set_wait_for_coupling();
 			}
 			bt_find_parent.pressed = false;
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(false);
+			update_selection();
+		}
+	}
+	else if(comp == &bt_reverse_convoy) {
+		if(!schedule->empty()) {
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoy(!bt_reverse_convoy.pressed);
+			update_selection();
+		}
+	}
+	else if(comp == &bt_reverse_parents_children_order) {
+		if(!schedule->empty()) {
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(!bt_reverse_parents_children_order.pressed);
+			if(  bt_wait_for_child.pressed  ) {
+				schedule->entries[schedule->get_current_stop()].reset_coupling();
+			} 
+			if(  bt_find_parent.pressed  ) {
+				schedule->entries[schedule->get_current_stop()].reset_coupling();
+			} 
 			update_selection();
 		}
 	}
@@ -1230,6 +1276,8 @@ void schedule_gui_t::extract_advanced_settings(bool yesno) {
 	const bool coupling_waytype = schedule->get_waytype()!=road_wt  &&  schedule->get_waytype()!=air_wt  &&  schedule->get_waytype()!=water_wt;
 	bt_wait_for_child.set_visible(coupling_waytype  &&  yesno);
 	bt_find_parent.set_visible(coupling_waytype  &&  yesno);
+	bt_reverse_convoy.set_visible(coupling_waytype  &&  yesno);
+	bt_reverse_parents_children_order.set_visible(coupling_waytype  &&  yesno);
 
 	const bool is_tbgr_enabled = world()->get_settings().get_goods_routing_policy() == goods_routing_policy_t::GRP_FIFO_ET;
 	lb_tbgr_waiting_time.set_visible(is_tbgr_enabled  &&  yesno);

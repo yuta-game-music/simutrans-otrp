@@ -505,6 +505,9 @@ public:
 	/// put a newly created toolbar below other toolbars.
 	static bool put_new_toolbar_below_others;
 
+	
+
+
 	/// initialize with default values
 	static void init();
 

@@ -119,16 +119,16 @@ halthandle_t schedule_t::get_prev_halt( player_t *player ) const
 }
 
 
-bool schedule_t::insert(const grund_t* gr, uint8 minimum_loading, uint16 waiting_time_shift, uint8 coupling_point )
+bool schedule_t::insert(const grund_t* gr, uint8 minimum_loading, uint16 waiting_time_shift, uint8 coupling_point, uint8 reverse_flag )
 {
 	// stored in minivec, so we have to avoid adding too many
 	if(  entries.get_count()>=254  ) {
 		create_win( new news_img("Maximum 254 stops\nin a schedule!\n"), w_time_delete, magic_none);
 		return false;
 	}
-
+	uint16 temp_flag=coupling_point+(reverse_flag<<8);
 	if(  is_stop_allowed(gr)  ) {
-		entries.insert_at(current_stop, schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, coupling_point));
+		entries.insert_at(current_stop, schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, temp_flag));
 		current_stop ++;
 		make_current_stop_valid();
 		return true;
@@ -142,16 +142,16 @@ bool schedule_t::insert(const grund_t* gr, uint8 minimum_loading, uint16 waiting
 
 
 
-bool schedule_t::append(const grund_t* gr, uint8 minimum_loading, uint16 waiting_time_shift, uint8 coupling_point)
+bool schedule_t::append(const grund_t* gr, uint8 minimum_loading, uint16 waiting_time_shift, uint8 coupling_point, uint8 reverse_flag)
 {
 	// stored in minivec, so we have to avoid adding too many
 	if(entries.get_count()>=254) {
 		create_win( new news_img("Maximum 254 stops\nin a schedule!\n"), w_time_delete, magic_none);
 		return false;
 	}
-
+	uint16 temp_flag=coupling_point+(reverse_flag<<8);
 	if(is_stop_allowed(gr)) {
-		entries.append(schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, coupling_point), 4);
+		entries.append(schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, temp_flag ), 4);
 		return true;
 	}
 	else {
@@ -240,6 +240,8 @@ void schedule_t::rdwr(loadsave_t *file)
 		file->rdwr_long(additional_base_waiting_time);
 	}
 
+
+
 	if(file->is_version_less(99, 12)) {
 		for(  uint8 i=0; i<size; i++  ) {
 			koord3d pos;
@@ -321,6 +323,13 @@ void schedule_t::rdwr(loadsave_t *file)
 				for(uint8 j=0; j<NUM_STOPPING_TIME_STORED; j++) {
 					file->rdwr_long(entries[i].convoy_stopping_time[j]);
 				}
+			}
+			if(file->get_OTRP_version()>=41) {
+				uint8 flag2 = entries[i].get_stop_flag2();
+				file->rdwr_byte(flag2);
+				entries[i].set_stop_flag2(flag2);
+			} else {
+				entries[i].set_stop_flag2(0);
 			}
 		}
 	}
@@ -597,6 +606,14 @@ void construct_schedule_entry_attributes(cbuffer_t& buf, schedule_entry_t const&
 	}
 	if(  flag&schedule_entry_t::TRANSFER_INTERVAL  ) {
 		str[cnt] = 'I';
+		cnt++;
+	}
+	if(  entry.is_reverse_convoy()  ) {
+		str[cnt] = 'R';
+		cnt++;
+	}
+	if(  entry.is_reverse_convoi_coupling()  ) {
+		str[cnt] = 'T';
 		cnt++;
 	}
 	// there are at least one attributes.

@@ -377,6 +377,12 @@ void vehicle_base_t::get_screen_offset( int &xoff, int &yoff, const sint16 raste
 {
 	// vehicles needs finer steps to appear smoother
 	sint32 display_steps = (uint32)steps*(uint16)raster_width;
+	const vehicle_t* veh= obj_cast<vehicle_t>(this);
+	const int dir = ribi_t::get_dir(get_direction());
+	if (veh && veh->is_reversed())
+	{
+		display_steps += (VEHICLE_STEPS_PER_TILE / 2 - veh->get_desc()->get_length_in_steps());
+	}
 	if(dx && dy) {
 		display_steps &= 0xFFFFFC00;
 	}
@@ -385,6 +391,7 @@ void vehicle_base_t::get_screen_offset( int &xoff, int &yoff, const sint16 raste
 	}
 	xoff += (display_steps*dx) >> 10;
 	yoff += ((display_steps*dy) >> 10) + (get_hoff(raster_width))/(4*16);
+	
 }
 
 
@@ -993,6 +1000,7 @@ vehicle_t::vehicle_t(koord3d pos, const vehicle_desc_t* desc, player_t* player) 
 	purchase_time = welt->get_current_month();
 	cnv = NULL;
 	speed_limit = SPEED_UNLIMITED;
+	reversed = false;
 
 	route_index = 1;
 
@@ -1020,6 +1028,7 @@ vehicle_t::vehicle_t() :
 
 	desc = NULL;
 	cnv = NULL;
+	reversed = false;
 
 	route_index = 1;
 	current_friction = 4;
@@ -1466,10 +1475,10 @@ void vehicle_t::calc_image()
 {
 	image_id old_image=get_image();
 	if (fracht.empty()) {
-		set_image(desc->get_image_id(ribi_t::get_dir(get_direction()),NULL));
+		set_image(desc->get_image_id(ribi_t::get_dir(get_direction_of_travel()),NULL));
 	}
 	else {
-		set_image(desc->get_image_id(ribi_t::get_dir(get_direction()), fracht.front().get_desc()));
+		set_image(desc->get_image_id(ribi_t::get_dir(get_direction_of_travel()), fracht.front().get_desc()));
 	}
 	if(old_image!=get_image()) {
 		set_flag(obj_t::dirty);
@@ -1744,6 +1753,13 @@ DBG_MESSAGE("vehicle_t::rdwr_from_convoi()","bought at %i/%i.",(purchase_time%12
 			has_driven = false;
 		}
 	}
+
+	// reverse or not
+	if(file->get_OTRP_version()>=41) {
+		file->rdwr_bool(reversed);
+	} else {
+		reversed = false;
+	}
 }
 
 
@@ -1797,6 +1813,56 @@ vehicle_t::~vehicle_t()
 	minimap_t::get_instance()->calc_map_pixel(get_pos().get_2d());
 }
 
+
+ribi_t::ribi vehicle_t::get_direction_of_travel() const
+{
+	ribi_t::ribi dir = get_direction();
+	if(reversed)
+	{
+		switch(dir)
+		{
+		case ribi_t::north:
+			dir = ribi_t::south;
+			break;
+
+		case ribi_t::east:
+			dir = ribi_t::west;
+			break;
+
+		case ribi_t::northeast:
+			dir = ribi_t::southwest;
+			break;
+
+		case ribi_t::south:
+			dir = ribi_t::north;
+			break;
+
+		case ribi_t::southeast:
+			dir = ribi_t::northwest;
+			break;
+
+		case ribi_t::west:
+			dir = ribi_t::east;
+			break;
+
+		case ribi_t::northwest:
+			dir = ribi_t::southeast;
+			break;
+
+		case ribi_t::southwest:
+			dir = ribi_t::northeast;
+			break;
+		};
+	}
+	return dir;
+}
+
+void vehicle_t::set_reversed(bool value)
+{
+	
+	reversed = value;
+	
+}
 
 #ifdef MULTI_THREAD
 void vehicle_t::display_overlay(int xpos, int ypos) const

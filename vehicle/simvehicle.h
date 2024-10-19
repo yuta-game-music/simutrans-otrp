@@ -222,6 +222,9 @@ private:
 
 	grund_t* hop_check() OVERRIDE;
 
+	// Whether this individual vehicle is reversed.
+	bool reversed;
+
 	static ptrhashtable_tpl<const vehicle_desc_t*, uint32> full_load_weights; // key: name of vehicle desc
 
 	/**
@@ -392,6 +395,10 @@ public:
 	* Get the maximum capacity
 	*/
 	uint16 get_cargo_max() const {return desc->get_capacity(); }
+
+	bool is_reversed() const { return reversed; }
+	void set_reversed(bool value);
+	ribi_t::ribi get_direction_of_travel() const;
 
 	ribi_t::ribi get_next_90direction() const;
 
