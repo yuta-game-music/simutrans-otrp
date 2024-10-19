@@ -141,10 +141,10 @@ bool halt_list_frame_t::compare_halts(halthandle_t const halt1, halthandle_t con
 			for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
 				const goods_desc_t *wtyp = goods_manager_t::get_info(i);
 				if(halt1->gibt_ab(wtyp)) {
-					sum1 += halt1->get_capacity( max(i, 2) );
+					sum1 += halt1->get_capacity( min(i, 2) );
 				}
 				if(halt2->gibt_ab(wtyp)) {
-					sum2 += halt2->get_capacity( max(i, 2) );
+					sum2 += halt2->get_capacity( min(i, 2) );
 				}
 			}
 
@@ -153,8 +153,8 @@ bool halt_list_frame_t::compare_halts(halthandle_t const halt1, halthandle_t con
 			} else if (sum1 != 0 && sum2 == 0) {
 				order = 1; // Halt1 has non-zero sum, so it comes first
 			} else if (sum1 != 0 && sum2 != 0) {
-				double per1 = (double) halt1->get_finance_history( 0, HALT_WAITING )/sum1 * 100;
-				double per2 = (double) halt2->get_finance_history( 0, HALT_WAITING )/sum2 * 100;
+				double per1 = (double) halt1->get_finance_history( 0, HALT_WAITING ) * sum2;
+				double per2 = (double) halt2->get_finance_history( 0, HALT_WAITING ) * sum1;
 				order = per1 > per2 ? 1 : (per1 < per2 ? -1 : 0);
 			} else {
 				order = 0;
