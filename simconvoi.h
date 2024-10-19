@@ -373,6 +373,7 @@ private:
 	char name_and_id[128];
 
 	bool reversed; // true when the vehicles are in the reversed order.
+	bool reversed_at_current_halt;// Whether this convoy's vehicles are currently arranged in reverse order. The flag for calculation of position.
 
 	/**
 	* Initialize all variables with default values.
@@ -497,20 +498,23 @@ private:
 	/// Pushes the convoy stopping time at the current halt to the schedule
 	void push_convoy_stopping_time();
 
-	void execute_reverse_order(); // TODO: reconsider the function responsibility
+	void reverse_vehicles_at_halt_if_needed();
+	void reverse_vehicles_to_go_to_depot();
+	void reverse_vehicles();
+
+	// Reverse the order of the coupling/coupled convois
+	void reverse_convoy_coupling();
+
+	// a helper function for convoi_t::drive_to()
+	koord3d calc_first_pos_of_route() const;
 
 public:
-	// Reverses the order of the convoy.
-	// @author: jamespetts
-	bool reversing;// Whether this convoy's vehicles are currently arranged in reverse order. The flag for calculation of position.
 	bool is_reversed() const { return reversed; }
 	// Reorder the vehicle array
 	// Can be executed even with a vehicle array that does not belong to convoy for UI
-	void reverse_vehicles_at_halt();
-	void reverse_vehicles_while_driving();
-	void reverse_vehicles_go_depot();
-	// Reverse the order of the coupling/coupled convois
-	static void execute_reverse_convoy_coupling(convoihandle_t self);
+	
+	void reverse_vehicles_on_user_request();
+
 	/**
 	* Convoi haelt an Haltestelle und setzt quote fuer Fracht
 	*/
@@ -1048,6 +1052,10 @@ public:
 	// The returned steps includes the entire tile length on which the front vehicle is.
 	static uint32 calc_available_halt_length_in_vehicle_steps(koord3d front_vehicle_pos, ribi_t::ribi front_vehicle_dir, const waytype_t waytype);
 	uint32 calc_available_halt_length_in_vehicle_steps(koord3d front_vehicle_pos, ribi_t::ribi front_vehicle_dir) const;
+
+	// Returns the root parent convoi of this convoy. Returns this convoy if not coupled.
+	// Warning: The calculation cost is O(n) where n is the number of convoys in the world.
+	convoihandle_t find_most_parent_convoi() const;
 };
 
 #endif

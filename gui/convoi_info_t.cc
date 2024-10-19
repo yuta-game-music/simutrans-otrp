@@ -530,7 +530,7 @@ bool convoi_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		}
 
 		if(  comp == &reversed_button  ) {
-			cnv->reverse_vehicles_while_driving();
+			cnv->reverse_vehicles_on_user_request();
 			return true;
 		}
 	}
