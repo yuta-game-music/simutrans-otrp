@@ -136,26 +136,49 @@ bool halt_list_frame_t::compare_halts(halthandle_t const halt1, halthandle_t con
 		}
 		case nach_wartend_percent: // sort by waiting goods percentage
 		{
+			// int categ_index1 = halt1->get_pax_enabled() ?
+			// 	goods_manager_t::INDEX_PAS : (halt1->get_mail_enabled() ?
+			// 	goods_manager_t::INDEX_MAIL : goods_manager_t::INDEX_NONE);
+			// int categ_index2 = halt2->get_pax_enabled() ?
+			// 	goods_manager_t::INDEX_PAS : (halt2->get_mail_enabled() ?
+			// 	goods_manager_t::INDEX_MAIL : goods_manager_t::INDEX_NONE);
+
 			sint64 sum1 = 0;
 			sint64 sum2 = 0;
-			for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
-				const goods_desc_t *wtyp = goods_manager_t::get_info(i);
-				if(halt1->gibt_ab(wtyp)) {
-					sum1 += halt1->get_capacity( min(i, 2) );
+
+			for (uint8 i = 0; i < 3; i++) {
+				if (halt1->get_capacity(i)) {
+					sum1 += halt1->get_capacity(i);
 				}
-				if(halt2->gibt_ab(wtyp)) {
-					sum2 += halt2->get_capacity( min(i, 2) );
+				if (halt2->get_capacity(i)) {
+					sum2 += halt2->get_capacity(i);
 				}
 			}
+
+			// sum1 = halt1->get_capacity(categ_index1);
+			// sum2 = halt2->get_capacity(categ_index2);
+
+			// double val1 = (double) (halt1->get_finance_history( 0, HALT_WAITING )/sum1);
+			// double val2 = (double) (halt2->get_finance_history( 0, HALT_WAITING )/sum2);
+			double val1 = (double) halt1->get_finance_history( 0, HALT_WAITING ) * sum2;
+			double val2 = (double) halt2->get_finance_history( 0, HALT_WAITING ) * sum1;
+
+			// for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
+			// 	const goods_desc_t *wtyp = goods_manager_t::get_info(i);
+			// 	if(halt1->gibt_ab(wtyp)) {
+			// 		sum1 += halt1->get_capacity( min(i, 2) );
+			// 	}
+			// 	if(halt2->gibt_ab(wtyp)) {
+			// 		sum2 += halt2->get_capacity( min(i, 2) );
+			// 	}
+			// }
 
 			if (sum1 == 0 && sum2 != 0) {
     			order = -1; // Halt2 has non-zero sum, so it comes first
 			} else if (sum1 != 0 && sum2 == 0) {
 				order = 1; // Halt1 has non-zero sum, so it comes first
 			} else if (sum1 != 0 && sum2 != 0) {
-				double per1 = (double) halt1->get_finance_history( 0, HALT_WAITING ) * sum2;
-				double per2 = (double) halt2->get_finance_history( 0, HALT_WAITING ) * sum1;
-				order = per1 > per2 ? 1 : (per1 < per2 ? -1 : 0);
+				order = val1 > val2 ? 1 : (val1 < val2 ? -1 : 0);
 			} else {
 				order = 0;
 			}

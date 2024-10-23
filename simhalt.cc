@@ -2632,12 +2632,17 @@ void haltestelle_t::get_waiting_occupancy_info(cbuffer_t& buf) const
 {
 	bool got_one = false;
 	sint64 sum = 0;
-	for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
-		const goods_desc_t *wtyp = goods_manager_t::get_info(i);
-		if(gibt_ab(wtyp)) {
-			sum += get_capacity( min(i, 2) );
+	for (uint8 i = 0; i < 3; i++) {
+		if (get_capacity(i)) {
+			sum += get_capacity(i);
 		}
 	}
+	// for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
+	// 	const goods_desc_t *wtyp = goods_manager_t::get_info(i);
+	// 	if(gibt_ab(wtyp)) {
+	// 		sum += get_capacity(i);
+	// 	}
+	// }
 	if (sum > 0) {
 		got_one = true;
 	}
@@ -2647,6 +2652,7 @@ void haltestelle_t::get_waiting_occupancy_info(cbuffer_t& buf) const
 		buf.printf("%.2f%%", per);
 		buf.append(" ");
 		buf.append(translator::translate("waiting"));
+		buf.printf(" %d - %d %d %d - %d", get_finance_history( 0, HALT_WAITING ), get_capacity(0), get_capacity(1), get_capacity(2), sum);
 		buf.append("\n");
 	}
 	else {
