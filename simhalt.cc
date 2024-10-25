@@ -2617,13 +2617,13 @@ void haltestelle_t::get_throughput_info(cbuffer_t& buf) const
 		get_finance_history( 1, HALT_DEPARTED) == 0 ? 0 : 1;
 	
 	// get throughput of this month (either this or previous month)
-	auto transfers = get_finance_history( month, HALT_ARRIVED) <
+	auto throughput = get_finance_history( month, HALT_ARRIVED) <
 		get_finance_history( month, HALT_DEPARTED) ?
 		get_finance_history( month, HALT_ARRIVED) :
 		get_finance_history( month, HALT_DEPARTED);
 
 	// add info to buffer
-	buf.printf("%d ", transfers);
+	buf.printf("%d ", throughput);
 	buf.append(translator::translate("transfers"));
 	buf.append("\n");
 }
