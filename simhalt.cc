@@ -2630,29 +2630,58 @@ void haltestelle_t::get_throughput_info(cbuffer_t& buf) const
 
 void haltestelle_t::get_waiting_occupancy_info(cbuffer_t& buf) const
 {
+	// set the waiting values to 0
 	bool got_one = false;
-	sint64 sum = 0;
-	for (uint8 i = 0; i < 3; i++) {
-		if (get_capacity(i)) {
-			sum += get_capacity(i);
+	int waiting[3] = {0, 0, 0};
+
+	// find the waiting values and add all wares together
+	for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
+		const goods_desc_t *wtyp = goods_manager_t::get_info(i);
+		if(gibt_ab(wtyp)) {
+
+			// ignore goods with sum=zero
+			const int sum=get_ware_summe(wtyp);
+			
+			switch (i) {
+				case goods_manager_t::INDEX_PAS:
+					waiting[0] = sum;
+					break;
+				case goods_manager_t::INDEX_MAIL:
+					waiting[1] = sum;
+					break;
+				default:
+					waiting[2] += sum;
+			}
 		}
 	}
-	// for(unsigned int i=0; i<goods_manager_t::get_count(); i++) {
-	// 	const goods_desc_t *wtyp = goods_manager_t::get_info(i);
-	// 	if(gibt_ab(wtyp)) {
-	// 		sum += get_capacity(i);
-	// 	}
-	// }
-	if (sum > 0) {
-		got_one = true;
+
+	// prepare the label
+	for (uint8 i = 0; i < 3; i++) {
+		if (get_capacity(i)) {
+
+			// ignore goods with sum=zero
+			const int sum=get_capacity(i);
+			if(sum>0) {
+
+				if(got_one) {
+					buf.append(", ");
+				}
+
+				auto typ = i == 2 ? "ware" : goods_manager_t::get_info(i)->get_name();
+				
+
+				auto per = (double) waiting[i]/sum * 100;
+				buf.printf("%.2f%% %s", per, translator::translate(typ));
+
+				got_one = true;
+			}
+		}
 	}
 
+	// add label suffix
 	if(got_one) {
-		auto per = (double) get_finance_history( 0, HALT_WAITING )/sum * 100;
-		buf.printf("%.2f%%", per);
 		buf.append(" ");
 		buf.append(translator::translate("waiting"));
-		buf.printf(" %d - %d %d %d - %d", get_finance_history( 0, HALT_WAITING ), get_capacity(0), get_capacity(1), get_capacity(2), sum);
 		buf.append("\n");
 	}
 	else {
