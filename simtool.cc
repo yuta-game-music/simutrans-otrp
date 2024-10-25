@@ -7183,7 +7183,7 @@ const char* tool_change_city_of_building_t::do_work(player_t*, koord3d const &st
 
 			gebaeude_t* gb = gr->find<gebaeude_t>();
 
-			if (!gb || !gb->is_city_building()) {
+			if (!gb || !gb->is_building_of_city()) {
 				continue;
 			}
 

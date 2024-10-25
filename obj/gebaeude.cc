@@ -374,7 +374,7 @@ image_id gebaeude_t::get_image() const
 {
 	if(env_t::hide_buildings!=0  &&  tile->has_image()) {
 		// opaque houses
-		if(is_city_building()) {
+		if(is_building_of_city()) {
 			return env_t::hide_with_transparency ? skinverwaltung_t::fussweg->get_image_id(0) : skinverwaltung_t::construction_site->get_image_id(0);
 		}
 		else if(  (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING  &&  tile->get_desc()->get_type() < building_desc_t::others)) {
@@ -430,7 +430,7 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 	stadt_t* city = w_city ? w_city->get_city() : nullptr;
 
 	if(env_t::hide_buildings!=env_t::NOT_HIDE) {
-		if(is_city_building()) {
+		if(is_building_of_city()) {
 			disp_colour = color_idx_to_rgb(colours[0]) | TRANSPARENT50_FLAG | OUTLINE_FLAG;
 		}
 		else if (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING && tile->get_desc()->get_type() < building_desc_t::others) {
@@ -439,7 +439,7 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 		}
 	}
 	else if(city_highlight) {
-		if(is_city_building() && this->get_stadt() == city) {
+		if(is_building_of_city() && this->get_stadt() == city) {
 			disp_colour = color_idx_to_rgb(colours[0]) | TRANSPARENT75_FLAG | OUTLINE_FLAG;
 		}
 	}
@@ -473,9 +473,9 @@ image_id gebaeude_t::get_front_image() const
 	if(zeige_baugrube) {
 		return IMG_EMPTY;
 	}
-	if (env_t::hide_buildings != 0   &&  (is_city_building()  ||  (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING  &&  tile->get_desc()->get_type() < building_desc_t::others))) {
+	if (env_t::hide_buildings != 0   &&  (is_building_of_city()  ||  (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING  &&  tile->get_desc()->get_type() < building_desc_t::others))) {
 		return IMG_EMPTY;
-	} else if (city_highlight && is_city_building()) {
+	} else if (city_highlight && is_building_of_city()) {
 		return IMG_EMPTY;
 	}
 	else {
@@ -1079,7 +1079,7 @@ void gebaeude_t::mark_images_dirty() const
 	image_id img;
 	if(  zeige_baugrube  ||
 			(!env_t::hide_with_transparency  &&
-				env_t::hide_buildings>(is_city_building() ? env_t::NOT_HIDE : env_t::SOME_HIDDEN_BUILDING))) {
+				env_t::hide_buildings>(is_building_of_city() ? env_t::NOT_HIDE : env_t::SOME_HIDDEN_BUILDING))) {
 		img = skinverwaltung_t::construction_site->get_image_id(0);
 	}
 	else {
