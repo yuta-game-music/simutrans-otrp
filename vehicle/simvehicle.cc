@@ -1833,7 +1833,8 @@ void vehicle_t::display_after(int xpos, int ypos, bool is_global) const
 		return;
 	}
 	PIXVAL color = 0; // not used, but stop compiler warning about uninitialized
-	char tooltip_text[1024];
+	constexpr uint16 tooltip_text_size = 1024;
+	char tooltip_text[tooltip_text_size];
 	tooltip_text[0] = 0;
 	uint8 state = env_t::show_vehicle_states;
 
@@ -1899,10 +1900,10 @@ void vehicle_t::display_after(int xpos, int ypos, bool is_global) const
 						const sint32 time_remain_delay_coupling = (cnv->get_departure_time() + cnv->get_coupling_delay_tolerance() - world()->get_ticks())*conversion_ratio;
 
 						if( cnv->is_waiting_for_coupling() && time_remain>time_remain_delay_coupling ){
-							sprintf( tooltip_text, translator::translate("Waiting for coupling. %i left!"), time_remain_delay_coupling);
+							snprintf( tooltip_text, tooltip_text_size, translator::translate("Waiting for coupling. %i left!"), time_remain_delay_coupling);
 						}
 						else{
-							sprintf( tooltip_text, translator::translate("Waiting for schedule. %i left!"), time_remain);
+							snprintf( tooltip_text, tooltip_text_size, translator::translate("Waiting for schedule. %i left!"), time_remain);
 						}
 					}
 					else if(  cnv->is_waiting_for_coupling()  ) {
@@ -1910,7 +1911,7 @@ void vehicle_t::display_after(int xpos, int ypos, bool is_global) const
 						tstrncpy( tooltip_text, translator::translate("Waiting for coupling!"), lengthof(tooltip_text) );
 					} else {
 						// the convoy is waiting for minimum loading.
-						sprintf( tooltip_text, translator::translate("Loading (%i->%i%%)!"), cnv->get_loading_level(), cnv->get_loading_limit() );
+						snprintf( tooltip_text, tooltip_text_size, translator::translate("Loading (%i->%i%%)!"), cnv->get_loading_level(), cnv->get_loading_limit() );
 					}
 					color = color_idx_to_rgb(COL_YELLOW);
 				}
@@ -3467,7 +3468,7 @@ bool rail_vehicle_t::is_coupling_target(const grund_t *gr, const grund_t *prev_g
 		const sint32 available_halt_length = 
 		cnv->calc_available_halt_length_in_vehicle_steps(gr->get_pos(), ribi)
 		- tile_length + v->get_steps();
-		return available_halt_length >= cnv->get_entire_convoy_length() * VEHICLE_STEPS_PER_CARUNIT;
+		return available_halt_length >= (sint32)cnv->get_entire_convoy_length() * VEHICLE_STEPS_PER_CARUNIT;
 	}
 
 	return false;
