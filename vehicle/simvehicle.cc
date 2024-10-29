@@ -1043,7 +1043,7 @@ bool vehicle_t::calc_route(koord3d start, koord3d ziel, sint32 max_speed, route_
 void vehicle_t::get_screen_offset( int &xoff, int &yoff, const sint16 raster_width ) const
 {
 	vehicle_base_t::get_screen_offset(xoff, yoff, raster_width);
-	if(  !cnv->is_reversed()  ) {
+	if(  cnv==NULL  ||  cnv==(convoi_t *)1  ||  !cnv->is_reversed()  ) {
 		return;
 	}
 	// Add offset when the vehicle is reversed.
