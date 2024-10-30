@@ -436,7 +436,7 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 
 		return true;
 	}
-	else if (	comp==&highlight && !highlight.pressed	) {
+	else if (  comp==&highlight && !highlight.pressed  ) {
 
 		// make sure highlighted is false and button is not pressed
 		highlighted = false;
