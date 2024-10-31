@@ -429,6 +429,10 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		highlighted = true;
 		highlight.pressed = true;
 
+		cbuffer_t param;
+		param.printf("%d", welt->get_cities().index_of(city));
+		tool_t::general_tool[TOOL_CHANGE_CITY_OF_BUILDING]->set_default_param(param);
+
 		// set display dirty and select tool
 		welt->set_dirty();
 		welt->set_background_dirty();

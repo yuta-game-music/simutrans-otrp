@@ -7161,7 +7161,12 @@ bool tool_change_city_of_building_t::init(player_t* player) {
 			w->update(highlight_city);
 		}
 	}
-	return true;
+
+	if (highlight_city) {
+		return true;
+	}
+
+	return false;
 }
 
 const char* tool_change_city_of_building_t::do_work(player_t*, koord3d const &start, koord3d const &end) {
