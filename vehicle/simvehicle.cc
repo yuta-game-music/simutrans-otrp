@@ -1040,6 +1040,19 @@ bool vehicle_t::calc_route(koord3d start, koord3d ziel, sint32 max_speed, route_
 }
 
 
+void vehicle_t::get_screen_offset( int &xoff, int &yoff, const sint16 raster_width ) const
+{
+	vehicle_base_t::get_screen_offset(xoff, yoff, raster_width);
+	if(  cnv==NULL  ||  cnv==(convoi_t *)1  ||  !cnv->is_reversed()  ) {
+		return;
+	}
+	// Add offset when the vehicle is reversed.
+	const sint32 steps_delta = (VEHICLE_STEPS_PER_TILE / 2 - get_desc()->get_length_in_steps());
+	xoff += (steps_delta*dx) >> 10;
+	yoff += ((steps_delta*dy) >> 10);
+}
+
+
 grund_t* vehicle_t::hop_check()
 {
 	// the leading vehicle will do all the checks
@@ -1466,10 +1479,10 @@ void vehicle_t::calc_image()
 {
 	image_id old_image=get_image();
 	if (fracht.empty()) {
-		set_image(desc->get_image_id(ribi_t::get_dir(get_direction()),NULL));
+		set_image(desc->get_image_id(ribi_t::get_dir(get_image_direction()),NULL));
 	}
 	else {
-		set_image(desc->get_image_id(ribi_t::get_dir(get_direction()), fracht.front().get_desc()));
+		set_image(desc->get_image_id(ribi_t::get_dir(get_image_direction()), fracht.front().get_desc()));
 	}
 	if(old_image!=get_image()) {
 		set_flag(obj_t::dirty);
@@ -1798,6 +1811,16 @@ vehicle_t::~vehicle_t()
 }
 
 
+ribi_t::ribi vehicle_t::get_image_direction() const
+{
+	if(  cnv!=NULL  &&  cnv!=(convoi_t*)1  &&  cnv->is_reversed()  ) {
+		return ribi_t::backward(get_direction());
+	}
+	else {
+		return get_direction();
+	}
+}
+
 #ifdef MULTI_THREAD
 void vehicle_t::display_overlay(int xpos, int ypos) const
 {
@@ -1810,7 +1833,8 @@ void vehicle_t::display_after(int xpos, int ypos, bool is_global) const
 		return;
 	}
 	PIXVAL color = 0; // not used, but stop compiler warning about uninitialized
-	char tooltip_text[1024];
+	constexpr uint16 tooltip_text_size = 1024;
+	char tooltip_text[tooltip_text_size];
 	tooltip_text[0] = 0;
 	uint8 state = env_t::show_vehicle_states;
 
@@ -1876,10 +1900,10 @@ void vehicle_t::display_after(int xpos, int ypos, bool is_global) const
 						const sint32 time_remain_delay_coupling = (cnv->get_departure_time() + cnv->get_coupling_delay_tolerance() - world()->get_ticks())*conversion_ratio;
 
 						if( cnv->is_waiting_for_coupling() && time_remain>time_remain_delay_coupling ){
-							sprintf( tooltip_text, translator::translate("Waiting for coupling. %i left!"), time_remain_delay_coupling);
+							snprintf( tooltip_text, tooltip_text_size, translator::translate("Waiting for coupling. %i left!"), time_remain_delay_coupling);
 						}
 						else{
-							sprintf( tooltip_text, translator::translate("Waiting for schedule. %i left!"), time_remain);
+							snprintf( tooltip_text, tooltip_text_size, translator::translate("Waiting for schedule. %i left!"), time_remain);
 						}
 					}
 					else if(  cnv->is_waiting_for_coupling()  ) {
@@ -1887,7 +1911,7 @@ void vehicle_t::display_after(int xpos, int ypos, bool is_global) const
 						tstrncpy( tooltip_text, translator::translate("Waiting for coupling!"), lengthof(tooltip_text) );
 					} else {
 						// the convoy is waiting for minimum loading.
-						sprintf( tooltip_text, translator::translate("Loading (%i->%i%%)!"), cnv->get_loading_level(), cnv->get_loading_limit() );
+						snprintf( tooltip_text, tooltip_text_size, translator::translate("Loading (%i->%i%%)!"), cnv->get_loading_level(), cnv->get_loading_limit() );
 					}
 					color = color_idx_to_rgb(COL_YELLOW);
 				}
@@ -3444,7 +3468,7 @@ bool rail_vehicle_t::is_coupling_target(const grund_t *gr, const grund_t *prev_g
 		const sint32 available_halt_length = 
 		cnv->calc_available_halt_length_in_vehicle_steps(gr->get_pos(), ribi)
 		- tile_length + v->get_steps();
-		return available_halt_length >= cnv->get_entire_convoy_length() * VEHICLE_STEPS_PER_CARUNIT;
+		return available_halt_length >= (sint32)cnv->get_entire_convoy_length() * VEHICLE_STEPS_PER_CARUNIT;
 	}
 
 	return false;

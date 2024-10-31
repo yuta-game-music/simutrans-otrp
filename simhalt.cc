@@ -1352,7 +1352,7 @@ sint32 haltestelle_t::rebuild_connections()
 				if(  is_tbgr_enabled  ) {
 					aggregate_weight = estimated_waiting_ticks(schedule, current_entry_index) - current_entry.get_median_convoy_stopping_time();
 				} else {
-					aggregate_weight = WEIGHT_HALT;
+					aggregate_weight = WEIGHT_WAIT;
 				}
 			 	force_transfer_search |= (current_entry.is_unload_all()  ||  current_entry.is_no_load()  ||  current_entry.is_no_unload());
 				no_load_section = current_entry.is_no_load();
@@ -3189,11 +3189,13 @@ void haltestelle_t::rdwr(loadsave_t *file)
 					if(  file->get_OTRP_version()>=36  ) {
 						file->rdwr_long(arrived_time);
 					}
+					sint64 archived_address;
+					if(  file->get_OTRP_version()>=40  ) {
+						file->rdwr_longlong(archived_address);
+					}
 					if(  ware.get_desc()  &&  ware.menge>0  &&  welt->is_within_limits(ware.get_zielpos())  ) {
 						cargo_item_t goods_ref = add_goods_to_halt(halt_waiting_goods_t(ware, arrived_time));
 						if(  file->get_OTRP_version()>=40  ) {
-							sint64 archived_address;
-							file->rdwr_longlong(archived_address);
 							archived_cargo_address_table.put(archived_address, goods_ref);
 						}
 						// restore in-transit information
@@ -3467,8 +3469,8 @@ void haltestelle_t::recalc_status()
 
 	// update waiting_amount_exceeds_FIFO_limit
 	const uint32 fifo_limit = world()->get_settings().get_waiting_limit_for_first_come_first_serve();
-	for(  uint32 i = 0;  i<goods_manager_t::get_count();  i++  ) {
-		if(  slist_tpl<cargo_item_t> * warray = cargo[i]  ) {
+	for(  uint32 i = 0;  i<goods_manager_t::get_max_catg_index();  i++  ) {
+		if(  cargo[i] != NULL  ) {
 			const uint32 ware_sum = get_ware_summe(goods_manager_t::get_info(i));
 			waiting_amount_exceeds_FIFO_limit.set(i, ware_sum > fifo_limit);
 		}
