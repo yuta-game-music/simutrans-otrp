@@ -3,6 +3,8 @@
  * (see LICENSE.txt)
  */
 
+#include <iostream>
+
 #include "../simdebug.h"
 #include "../simcity.h"
 #include "../simmenu.h"
@@ -430,7 +432,8 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		highlight.pressed = true;
 
 		cbuffer_t param;
-		param.printf("%d", welt->get_cities().index_of(city));
+		param.printf("%hi,%hi", city->get_pos().x, city->get_pos().y);
+		std::cout << "param city_info " << param << std::endl;
 		tool_t::general_tool[TOOL_CHANGE_CITY_OF_BUILDING]->set_default_param(param);
 
 		// set display dirty and select tool
