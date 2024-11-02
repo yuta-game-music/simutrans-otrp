@@ -3934,8 +3934,11 @@ void convoi_t::push_convoy_stopping_time() {
 	}
 	const uint32 stopping_time = subtract_ticks( current_ticks, time_last_arrived );
 	const linehandle_t line = get_line();
-	schedule_t* schedule_to_push = line.is_bound() ? line->get_schedule() : schedule;
-	schedule_to_push->entries[schedule->get_current_stop()].push_convoy_stopping_time(stopping_time);
+	schedule_t* line_schedule = line.is_bound() ? line->get_schedule() : schedule;
+	const sint16 current_index_on_line_schedule = line_schedule->get_corresponding_entry_index(schedule, schedule->get_current_stop());
+	if(  current_index_on_line_schedule>=0  ) {
+		line_schedule->entries[current_index_on_line_schedule].push_convoy_stopping_time(stopping_time);
+	}
 }
 
 
