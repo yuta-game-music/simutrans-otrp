@@ -8012,6 +8012,9 @@ bool scenario_check_convoy(karte_t *welt, player_t *player, convoihandle_t cnv, 
  * 'r' : release the child convoy
  * 'a' : set convoy trading acceptance
  * 'o' : change convoy owner by trading
+ * 'e' : toggle delay recovery
+ * 't' : go to next stop
+ * 'v' : reversing convoi direction
  */
 bool tool_change_convoi_t::init( player_t *player )
 {
@@ -8203,6 +8206,12 @@ bool tool_change_convoi_t::init( player_t *player )
 		case 'o':
 		{
 			cnv->trade_convoi();
+		}
+		break;
+
+		case 'v':
+		{
+			cnv->reverse_vehicles_on_user_request();
 		}
 		break;
 	}
