@@ -235,6 +235,38 @@ halthandle_t haltestelle_t::get_halt(const koord3d pos, const player_t *player )
 }
 
 
+halthandle_t haltestelle_t::get_stoppable_halt(const koord3d pos, const player_t *player )
+{
+	const grund_t *gr = welt->lookup(pos);
+	if(  !gr  ) { return halthandle_t(); }
+	const halthandle_t halt = gr->get_halt();
+	if(  halt.is_bound()  ) {
+		return halt; // Stopping on other players's halt is allowed.
+	}
+	if(  !gr->is_water()  ) { return halthandle_t(); }
+	// no halt? => we do the water check
+	// may catch bus stops close to water ...
+	const planquadrat_t *plan = welt->access(pos.get_2d());
+	const uint8 cnt = plan->get_haltlist_count();
+	// first check for own stop
+	for(  uint8 i=0;  i<cnt;  i++  ) {
+		halthandle_t halt = plan->get_haltlist()[i];
+		if(  halt->get_owner()==player  &&  halt->get_station_type()&dock  ) {
+			return halt;
+		}
+	}
+	// then for public stop 
+	for(  uint8 i=0;  i<cnt;  i++  ) {
+		halthandle_t halt = plan->get_haltlist()[i];
+		if(  halt->get_owner()==welt->get_public_player()  &&  halt->get_station_type()&dock  ) {
+			return halt;
+		}
+	}
+	// so: nothing found
+	return halthandle_t();
+}
+
+
 koord haltestelle_t::get_basis_pos() const
 {
 	return get_basis_pos3d().get_2d();
@@ -4110,7 +4142,7 @@ bool unregistered_journey_time_exists(const schedule_t* schedule, player_t* play
 		if(  
 			this_entry.get_median_journey_time()>0  || // valid record exists
 			this_entry.pos==prev_entry.pos  ||
-			haltestelle_t::get_halt(this_entry.pos, player)==haltestelle_t::get_halt(prev_entry.pos, player)
+			haltestelle_t::get_stoppable_halt(this_entry.pos, player)==haltestelle_t::get_stoppable_halt(prev_entry.pos, player)
 		) {
 			// valid record exists.
 			continue;
