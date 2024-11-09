@@ -374,7 +374,7 @@ image_id gebaeude_t::get_image() const
 {
 	if(env_t::hide_buildings!=0  &&  tile->has_image()) {
 		// opaque houses
-		if(is_building_of_city()) {
+		if(is_city_building()) {
 			return env_t::hide_with_transparency ? skinverwaltung_t::fussweg->get_image_id(0) : skinverwaltung_t::construction_site->get_image_id(0);
 		}
 		else if(  (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING  &&  tile->get_desc()->get_type() < building_desc_t::others)) {
@@ -430,7 +430,7 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 	stadt_t* city = w_city ? w_city->get_city() : nullptr;
 
 	if(env_t::hide_buildings!=env_t::NOT_HIDE) {
-		if(is_building_of_city()) {
+		if(is_city_building()) {
 			disp_colour = color_idx_to_rgb(colours[0]) | TRANSPARENT50_FLAG | OUTLINE_FLAG;
 		}
 		else if (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING && tile->get_desc()->get_type() < building_desc_t::others) {
