@@ -8960,6 +8960,21 @@ bool tool_change_city_t::init( player_t *player )
 }
 
 
+bool tool_change_halt_t::init(player_t *player) {
+	uint16 halt_id;
+	// Read the halt id and flags from the default param. Then update the flags of the halt.
+	if(  sscanf( default_param, "%hu", &halt_id )!=1  ) {
+		return false;
+	}
+	halthandle_t halt;
+	halt.set_id(halt_id);
+	if(  !halt.is_bound()  ||  !player_t::check_owner(halt->get_owner(), player)  ) {
+		return false;
+	}
+	halt->toggle_other_player_connection_allowed();
+	return false;
+}
+
 
 /* Handles renaming of ingame entities. Needs a default param:
  * [object='c|h|l|m|t|p|f'][id|pos],[name]

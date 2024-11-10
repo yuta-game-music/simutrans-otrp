@@ -241,7 +241,10 @@ halthandle_t haltestelle_t::get_stoppable_halt(const koord3d pos, const player_t
 	if(  !gr  ) { return halthandle_t(); }
 	const halthandle_t halt = gr->get_halt();
 	if(  halt.is_bound()  ) {
-		return halt; // Stopping on other players's halt is allowed.
+		const bool accepts_other_player = halt->is_other_player_connection_allowed();
+		if(  player_t::check_owner(player, halt->get_owner())  ||  accepts_other_player  ) {
+			return halt;
+		}
 	}
 	if(  !gr->is_water()  ) { return halthandle_t(); }
 	// no halt? => we do the water check
@@ -258,7 +261,8 @@ halthandle_t haltestelle_t::get_stoppable_halt(const koord3d pos, const player_t
 	// then for public stop 
 	for(  uint8 i=0;  i<cnt;  i++  ) {
 		halthandle_t halt = plan->get_haltlist()[i];
-		if(  halt->get_owner()==welt->get_public_player()  &&  halt->get_station_type()&dock  ) {
+		const bool accepts_other_player = halt->is_other_player_connection_allowed();
+		if(  (halt->get_owner()==welt->get_public_player()  ||  accepts_other_player)  &&  halt->get_station_type()&dock  ) {
 			return halt;
 		}
 	}
@@ -476,6 +480,7 @@ haltestelle_t::haltestelle_t(loadsave_t* file)
 	reconnect_counter = welt->get_schedule_counter()-1;
 
 	enables = NOT_ENABLED;
+	flags = 0;
 
 	sortierung = freight_list_sorter_t::by_name;
 	resort_freight_info = true;
@@ -502,6 +507,7 @@ haltestelle_t::haltestelle_t(koord k, player_t* player)
 	owner = player;
 
 	enables = NOT_ENABLED;
+	flags = 0;
 	// force total re-routing
 	reconnect_counter = welt->get_schedule_counter()-1;
 	last_catg_index = 255;
@@ -3344,6 +3350,10 @@ void haltestelle_t::rdwr(loadsave_t *file)
 			}
 		}
 	}
+
+	if(  file->get_OTRP_version()>=42  ) {
+		file->rdwr_byte(flags);
+	}
 }
 
 
@@ -4279,5 +4289,25 @@ void haltestelle_t::fetch_loadable_fresh_goods(vector_tpl<loadable_fresh_goods_t
 		}
 		to_array.append(loadable_fresh_goods_t(item->goods.menge, item->arrived_time));
 		iterator = fresh_cargo[goods_category_index].erase(iterator);
+	}
+}
+
+
+void haltestelle_t::toggle_other_player_connection_allowed() {
+	flags ^= HS_ALLOW_OTHER_PLAYER_CONNECTION;
+	if(  (flags&HS_ALLOW_OTHER_PLAYER_CONNECTION)==0  ) {
+		// We have to exclude the other player's connections.
+		for(uint32 i=registered_lines.get_count(); i-->0;) {
+			if(  registered_lines[i]->get_owner()!=get_owner()  ) {
+				stale_lines.append_unique(registered_lines[i]);
+				registered_lines.remove_at(i);
+			}
+		}
+		for(uint32 i=registered_convoys.get_count(); i-->0;) {
+			if(  registered_convoys[i]->get_owner()!=get_owner()  ) {
+				stale_convois.append_unique(registered_convoys[i]);
+				registered_convoys.remove_at(i);
+			}
+		}
 	}
 }

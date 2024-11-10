@@ -77,7 +77,7 @@ template<class T> class bucket_heap_tpl;
 class haltestelle_t
 {
 public:
-	enum station_flags {
+	enum station_goods_type {
 		NOT_ENABLED = 0,
 		PAX         = 1 << 0,
 		POST        = 1 << 1,
@@ -96,6 +96,10 @@ public:
 		tramstop        = 1 << 6,
 		maglevstop      = 1 << 7,
 		narrowgaugestop = 1 << 8
+	};
+
+	enum station_flag {
+		HS_ALLOW_OTHER_PLAYER_CONNECTION = 1 << 0 // Allows other players to stop and connect to this station
 	};
 
 private:
@@ -359,8 +363,11 @@ private:
 	// since we do partial routing, we remember the last offset
 	uint8 last_catg_index;
 
-	/* station flags (most what enabled) */
+	/* The flags of what kind of packets are accepted. See station_goods_type enum for the definition. */
 	uint8 enables;
+
+	/* station flags. See station_flag enum for the definition. */
+	uint8 flags;
 
 	/**
 	 * versucht die ware mit beriets wartender ware zusammenzufassen
@@ -623,6 +630,9 @@ public:
 		}
 		return enables&WARE;
 	}
+
+	bool is_other_player_connection_allowed() const { return flags & HS_ALLOW_OTHER_PLAYER_CONNECTION; }
+	void toggle_other_player_connection_allowed();
 
 	/**
 	 * Found route and station uncrowded

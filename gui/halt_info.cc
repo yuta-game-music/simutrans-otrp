@@ -354,6 +354,9 @@ void halt_info_t::init(halthandle_t halt)
 				}
 			}
 			end_table();
+			other_players_connection_button.init(button_t::square, "Allow other players to connect");
+			other_players_connection_button.add_listener(this);
+			add_component(&other_players_connection_button);
 		}
 		end_table();
 
@@ -506,6 +509,10 @@ void halt_info_t::update_components()
 	if (switch_mode.get_aktives_tab() == &scrolly_details) {
 		halt_detail->update_connections(halt);
 	}
+
+	other_players_connection_button.set_visible(!halt->get_owner()->is_public_service());
+	other_players_connection_button.enable(player_t::check_owner(halt->get_owner(), welt->get_active_player()));
+	other_players_connection_button.pressed = halt->is_other_player_connection_allowed();
 	set_dirty();
 }
 
@@ -955,7 +962,12 @@ bool halt_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 	else if (comp == &switch_mode) {
 		departure_board->next_refresh = -1;
 	}
-
+	else if(comp == &other_players_connection_button) {
+		cbuffer_t buf;
+		buf.printf("%hu", halt.get_id());
+		tool_t::simple_tool[TOOL_CHANGE_HALT]->set_default_param(buf);
+		welt->set_tool( tool_t::simple_tool[TOOL_CHANGE_HALT], welt->get_active_player() );
+	}
 	return true;
 }
 
