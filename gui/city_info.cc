@@ -25,6 +25,7 @@
 #define PAX_DEST_MIN_SIZE (16)      ///< minimum width/height of the minimap
 #define PAX_DEST_VERTICAL (4.0/3.0) ///< aspect factor where minimaps change to over/under instead of left/right
 
+#define PUBLIC_PLAYER_NR (1)
 
 /**
  * Component to show both passenger destination minimaps
@@ -390,7 +391,7 @@ void city_info_t::update_labels()
 	lb_unemployed.buf().printf("%s: %d", translator::translate("Unemployed"), c->get_unemployed()); lb_unemployed.update();
 	lb_homeless.buf().printf("%s: %d", translator::translate("Homeless"), c->get_homeless());       lb_homeless.update();
 
-	if (welt->get_active_player_nr() == 1) {
+	if (welt->get_active_player_nr() == PUBLIC_PLAYER_NR) {
 		highlight.set_text("Make building belong to");
 	} else {
 		highlight.set_text("Highlight");
