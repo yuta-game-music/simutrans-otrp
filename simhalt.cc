@@ -1321,7 +1321,7 @@ sint32 haltestelle_t::rebuild_connections()
 
 		// find the index from which to start processing
 		uint8 start_index = 0;
-		while(  start_index < schedule->get_count()  &&  get_halt( schedule->entries[start_index].pos, owner ) != self  ) {
+		while(  start_index < schedule->get_count()  &&  get_stoppable_halt( schedule->entries[start_index].pos, owner ) != self  ) {
 			++start_index;
 		}
 		if(  start_index==schedule->get_count()  ) {
@@ -1368,7 +1368,7 @@ sint32 haltestelle_t::rebuild_connections()
 		for(  uint8 j=0;  j<schedule->get_count();  ++j  ) {
 			const uint8 current_entry_index = (start_index+j)%schedule->get_count();
 			const schedule_entry_t current_entry = schedule->entries[current_entry_index];
-			halthandle_t current_halt = get_halt(current_entry.pos, owner );
+			halthandle_t current_halt = get_stoppable_halt(current_entry.pos, owner );
 			if(  !current_halt.is_bound()  ) {
 				// ignore way points.
 				// just count the journey time
@@ -3747,7 +3747,7 @@ bool haltestelle_t::add_grund(grund_t *gr, bool relink_factories)
 	vector_tpl<linehandle_t> check_line(0);
 
 	// public halt: must iterate over all players lines / convoys
-	bool public_halt = get_owner() == welt->get_public_player();
+	bool public_halt = get_owner() == welt->get_public_player()  ||  is_other_player_connection_allowed();
 
 	uint8 const pl_min = public_halt ? 0                : get_owner()->get_player_nr();
 	uint8 const pl_max = public_halt ? MAX_PLAYER_COUNT : get_owner()->get_player_nr()+1;
@@ -3759,7 +3759,7 @@ bool haltestelle_t::add_grund(grund_t *gr, bool relink_factories)
 				// only add unknown lines
 				if(  !registered_lines.is_contained(j)  &&  j->count_convoys() > 0  ) {
 					FOR(  minivec_tpl<schedule_entry_t>, const& k, j->get_schedule()->entries  ) {
-						if(  get_halt(k.pos, player) == self  ) {
+						if(  get_stoppable_halt(k.pos, player) == self  ) {
 							registered_lines.append(j);
 							break;
 						}
@@ -3774,7 +3774,7 @@ bool haltestelle_t::add_grund(grund_t *gr, bool relink_factories)
 		if(  !cnv->get_line().is_bound()  &&  (public_halt  ||  cnv->get_owner()==get_owner())  &&  !registered_convoys.is_contained(cnv)  ) {
 			if(  const schedule_t *const schedule = cnv->get_schedule()  ) {
 				FOR(minivec_tpl<schedule_entry_t>, const& k, schedule->entries) {
-					if (get_halt(k.pos, cnv->get_owner()) == self) {
+					if (get_stoppable_halt(k.pos, cnv->get_owner()) == self) {
 						registered_convoys.append(cnv);
 						break;
 					}
@@ -3883,7 +3883,7 @@ bool haltestelle_t::rem_grund(grund_t *gr)
 	for(  size_t j = registered_lines.get_count();  j-- != 0;  ) {
 		bool ok = false;
 		FOR(  minivec_tpl<schedule_entry_t>, const& k, registered_lines[j]->get_schedule()->entries  ) {
-			if(  get_halt(k.pos, registered_lines[j]->get_owner()) == self  ) {
+			if(  get_stoppable_halt(k.pos, registered_lines[j]->get_owner()) == self  ) {
 				ok = true;
 				break;
 			}
@@ -3899,7 +3899,7 @@ bool haltestelle_t::rem_grund(grund_t *gr)
 	for(  size_t j = registered_convoys.get_count();  j-- != 0;  ) {
 		bool ok = false;
 		FOR(  minivec_tpl<schedule_entry_t>, const& k, registered_convoys[j]->get_schedule()->entries  ) {
-			if(  get_halt(k.pos, registered_convoys[j]->get_owner()) == self  ) {
+			if(  get_stoppable_halt(k.pos, registered_convoys[j]->get_owner()) == self  ) {
 				ok = true;
 				break;
 			}
