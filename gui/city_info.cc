@@ -10,6 +10,7 @@
 #include "../simmenu.h"
 #include "../simworld.h"
 #include "../simcolor.h"
+#include "../simtool.h"
 #include "../dataobj/translator.h"
 #include "../display/viewport.h"
 #include "../utils/cbuffer_t.h"
@@ -26,6 +27,10 @@
 #define PAX_DEST_VERTICAL (4.0/3.0) ///< aspect factor where minimaps change to over/under instead of left/right
 
 #define PUBLIC_PLAYER_NR (1)
+
+
+tool_change_city_of_building_t* city_info_t::citybuilding_tool=new tool_change_city_of_building_t();
+cbuffer_t city_info_t::param_str;
 
 /**
  * Component to show both passenger destination minimaps
@@ -432,15 +437,16 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		highlighted = true;
 		highlight.pressed = true;
 
-		cbuffer_t param;
-		param.printf("%hi,%hi", city->get_pos().x, city->get_pos().y);
-		std::cout << "param city_info " << param << std::endl;
-		tool_t::general_tool[TOOL_CHANGE_CITY_OF_BUILDING]->set_default_param(param);
+		param_str.clear();
+		param_str.printf("%hi,%hi", city->get_pos().x, city->get_pos().y);
+		citybuilding_tool->set_default_param(param_str);
 
 		// set display dirty and select tool
 		welt->set_dirty();
 		welt->set_background_dirty();
-		welt->set_tool( tool_t::general_tool[TOOL_CHANGE_CITY_OF_BUILDING], welt->get_public_player());
+		if ( welt->get_active_player() == welt->get_public_player() ) {
+			welt->set_tool( citybuilding_tool, welt->get_public_player());
+		}
 
 		return true;
 	}

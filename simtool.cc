@@ -7152,44 +7152,35 @@ const char *tool_stop_mover_t::do_work( player_t *player, const koord3d &last_po
 }
 
 bool tool_change_city_of_building_t::init(player_t* player) {
-	two_click_tool_t::init(player);
 
 	// convert default_param to city and update highlight_city
-	sint16 p1, p2;
+	sint16 p1(-100), p2(-100);
 
 	if ( !default_param || sscanf(default_param, "%hi,%hi", &p1, &p2) != 2 ) {
-		std::cout << default_param << std::endl;
-		std::cout << p1 << " - " << p2 << std::endl;
+		return false;
+	}
+
+	if ( p1 < 0 || p2 < 0 ) {
 		return false;
 	}
 
 	koord default_koord(p1, p2);
 	bool coord_check = false;
 
-	// highlight_city = welt->get_cities()[atoi(default_param)];
-
 	for( int i = 0; i < welt->get_cities().get_count(); i++) {
 		city_info_t* w = dynamic_cast<city_info_t*>(win_get_top());
+		if ( !w ) {
+			continue;
+		}
 		coord_check = (w->get_city()->get_pos() == default_koord) && \
 			(w->get_city()->get_pos() == welt->get_cities()[i]->get_pos());
-		std::cout << "--------------------" << std::endl;
-		std::cout << "WINDOW " << w->get_city()->get_pos().get_str() << " - DEFAULT " << default_param << std::endl;
-		std::cout << "WINDOW " << w->get_city()->get_pos().get_str() << " - CUR " << welt->get_cities()[i]->get_pos().get_str() << std::endl;
-		// std::cout <<  << " - ";
-		std::cout << coord_check << std::endl;
 		if( w  &&  coord_check ) {
-			// std::cout << i << std::endl;
 			w->update(highlight_city);
 		}
 	}
 
 	if (!highlight_city) {
-		std::cout << "HELP I DON'T WORK!!!" << std::endl;
-	}
-
-	if (highlight_city) {
-		std::cout << "HIGHLIGHT " << highlight_city->get_pos().get_str() << std::endl;
-		return two_click_tool_t::init(player);
+		return false;
 	}
 
 	return two_click_tool_t::init(player);
@@ -7204,7 +7195,6 @@ const char* tool_change_city_of_building_t::do_work(player_t*, koord3d const &st
 	koord k;
 	
 	stadt_t* new_city = highlight_city;
-	std::cout << "DO_WORK HIGHLIGHT " << highlight_city->get_pos().get_str() << std::endl;
 
 	for(  k.x = k1.x;  k.x <= k2.x;  k.x++  ) {
 		for(  k.y = k1.y;  k.y <= k2.y;  k.y++  ) {
@@ -7247,7 +7237,6 @@ void tool_change_city_of_building_t::mark_tiles(player_t*, koord3d const &start,
 	k2.x = start.x + end.x - k1.x;
 	k2.y = start.y + end.y - k1.y;
 	koord k;
-	std::cout << "MARK_TILES HIGHLIGHT " << highlight_city->get_pos().get_str() << std::endl;
 	for(  k.x = k1.x;  k.x <= k2.x;  k.x++  ) {
 		for(  k.y = k1.y;  k.y <= k2.y;  k.y++  ) {
 			grund_t *gr = welt->lookup_kartenboden( k );
@@ -7271,6 +7260,33 @@ void tool_change_city_of_building_t::mark_tiles(player_t*, koord3d const &start,
 	}
 }
 
+
+void tool_change_city_of_building_t::rdwr_custom_data(memory_rw_t *packet)
+{
+	two_click_tool_t::rdwr_custom_data(packet);
+
+	sint16 p1(-100), p2(-100);
+	if(  packet->is_loading()  ) {
+		packet->rdwr_short(p1);
+		packet->rdwr_short(p2);
+		if ( p1 >= 0 || p2 >= 0 ) {
+			koord city_koord(p1, p2);
+
+			for( int i = 0; i < welt->get_cities().get_count(); i++) {
+				if ( city_koord == welt->get_cities()[i]->get_pos() ) {
+					highlight_city = welt->get_cities()[i];
+				}
+			}
+		}
+	} else {
+		p1 = highlight_city->get_pos().x;
+		p2 = highlight_city->get_pos().y;
+		if ( p1 >= 0 || p2 >= 0 ) {
+			packet->rdwr_short(p1);
+			packet->rdwr_short(p2);
+		}
+	}
+}
 
 char const* tool_daynight_level_t::get_tooltip(player_t const*) const
 {

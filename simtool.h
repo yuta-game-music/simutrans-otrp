@@ -712,6 +712,8 @@ public:
 	tool_change_city_of_building_t() : two_click_kartenboden_tool_t(TOOL_CHANGE_CITY_OF_BUILDING | GENERAL_TOOL) {}
 	char const *get_tooltip(player_t const *) const OVERRIDE { return translator::translate("change city of citybuilding"); }
 	bool init(player_t*) OVERRIDE;
+	bool is_init_network_safe() const OVERRIDE { return true; }
+	void rdwr_custom_data(memory_rw_t*) OVERRIDE;
 private:
 	char const *do_work(player_t*, koord3d const &, koord3d const &) OVERRIDE;
 	void mark_tiles(player_t*, koord3d const &, koord3d const &) OVERRIDE;
@@ -721,11 +723,11 @@ private:
 			error = "";
 			return 0;
 		}
+		error = NULL;
 
 		return 2;
 	};
 	image_id get_marker_image() const OVERRIDE { return cursor; }
-	bool is_init_network_safe() const OVERRIDE { return true; }
 };
 
 /* make all tiles of this player a public stop

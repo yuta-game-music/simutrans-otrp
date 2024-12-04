@@ -22,6 +22,7 @@
 class stadt_t;
 template <class T> class sparse_tpl;
 class gui_city_minimap_t;
+class tool_change_city_of_building_t;
 
 /**
  * Window containing information about a city.
@@ -46,6 +47,10 @@ private:
 	gui_city_minimap_t *pax_map;
 
 	gui_button_to_chart_array_t button_to_chart;
+
+	
+	static tool_change_city_of_building_t* citybuilding_tool;
+	static cbuffer_t param_str;
 
 	/// Renames the city to the name given in the text input field
 	void rename_city();
