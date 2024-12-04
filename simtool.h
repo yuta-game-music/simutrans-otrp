@@ -714,6 +714,7 @@ public:
 	bool init(player_t*) OVERRIDE;
 	bool is_init_network_safe() const OVERRIDE { return true; }
 	void rdwr_custom_data(memory_rw_t*) OVERRIDE;
+	const char* work_on_ground(player_t*, koord, stadt_t*);
 private:
 	char const *do_work(player_t*, koord3d const &, koord3d const &) OVERRIDE;
 	void mark_tiles(player_t*, koord3d const &, koord3d const &) OVERRIDE;

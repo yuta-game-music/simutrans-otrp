@@ -438,15 +438,13 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		highlight.pressed = true;
 
 		param_str.clear();
-		param_str.printf("%hi,%hi", city->get_pos().x, city->get_pos().y);
+		param_str.printf("c%hi,%hi", city->get_pos().x, city->get_pos().y);
 		citybuilding_tool->set_default_param(param_str);
 
 		// set display dirty and select tool
 		welt->set_dirty();
 		welt->set_background_dirty();
-		if ( welt->get_active_player() == welt->get_public_player() ) {
-			welt->set_tool( citybuilding_tool, welt->get_public_player());
-		}
+		welt->set_tool( citybuilding_tool, welt->get_public_player());
 
 		return true;
 	}

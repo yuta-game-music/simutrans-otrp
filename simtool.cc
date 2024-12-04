@@ -7156,7 +7156,7 @@ bool tool_change_city_of_building_t::init(player_t* player) {
 	// convert default_param to city and update highlight_city
 	sint16 p1(-100), p2(-100);
 
-	if ( !default_param || sscanf(default_param, "%hi,%hi", &p1, &p2) != 2 ) {
+	if ( !default_param || sscanf(default_param, "c%hi,%hi", &p1, &p2) != 2 ) {
 		return false;
 	}
 
@@ -7178,6 +7178,8 @@ bool tool_change_city_of_building_t::init(player_t* player) {
 			w->update(highlight_city);
 		}
 	}
+	
+	one_click = true;
 
 	if (!highlight_city) {
 		return false;
@@ -7186,45 +7188,69 @@ bool tool_change_city_of_building_t::init(player_t* player) {
 	return two_click_tool_t::init(player);
 }
 
-const char* tool_change_city_of_building_t::do_work(player_t*, koord3d const &start, koord3d const &end) {
-	koord k1, k2;
-	k1.x = start.x < end.x ? start.x : end.x;
-	k1.y = start.y < end.y ? start.y : end.y;
-	k2.x = start.x + end.x - k1.x;
-	k2.y = start.y + end.y - k1.y;
-	koord k;
+const char* tool_change_city_of_building_t::work_on_ground( player_t* player, koord k, stadt_t* new_city ) {
+	grund_t* gr = welt->lookup_kartenboden( k );
+
+	if (!gr) {
+		return "";
+	} else if (gr->hat_wege() || gr->ist_natur() || gr->is_water() || gr->ist_bruecke()) {
+		return "";
+	}
+
+	gebaeude_t* gb = gr->find<gebaeude_t>();
+
+	if (!gb || !gb->is_building_of_city()) {
+		return "";
+	}
+
+	stadt_t* old_city = gb->get_stadt();
+
+	if (!(old_city && new_city)) {
+		return "Building doesn't have city or no city highlighted";
+	} else if (old_city == new_city) {
+		return "";
+	}
+
+	old_city->remove_gebaeude_from_stadt(gb);
+	new_city->add_gebaeude_to_stadt(gb);
+
+	welt->set_dirty();
 	
-	stadt_t* new_city = highlight_city;
+	return NULL;
+}
 
-	for(  k.x = k1.x;  k.x <= k2.x;  k.x++  ) {
-		for(  k.y = k1.y;  k.y <= k2.y;  k.y++  ) {
-			grund_t* gr = welt->lookup_kartenboden( k );
+const char* tool_change_city_of_building_t::do_work(player_t* player, koord3d const &start, koord3d const &end) {
+	if ( is_first_click() ) {
+		one_click = false;
+		koord3d newstart = start;
+		start_at( newstart );
+		return NULL;
+	}
+	one_click = true;
 
-			if (!gr) {
-				return "";
-			} else if (gr->hat_wege() || gr->ist_natur() || gr->is_water() || gr->ist_bruecke()) {
-				continue;
+	koord k;
+
+	if ( end == koord3d::invalid) {
+		k.x = start.x;
+		k.y = start.y;
+		return work_on_ground(player, k, highlight_city);
+	} else {
+		koord k1, k2;
+		k1.x = start.x < end.x ? start.x : end.x;
+		k1.y = start.y < end.y ? start.y : end.y;
+		k2.x = start.x + end.x - k1.x;
+		k2.y = start.y + end.y - k1.y;
+		const char* msg = NULL;
+
+		for(  k.x = k1.x;  k.x <= k2.x;  k.x++  ) {
+			for(  k.y = k1.y;  k.y <= k2.y;  k.y++  ) {
+				const char* err = work_on_ground(player, k, highlight_city);
+				if (  msg == NULL || strcmp(msg,"") == 0) {
+					msg = err;
+				}
 			}
-
-			gebaeude_t* gb = gr->find<gebaeude_t>();
-
-			if (!gb || !gb->is_building_of_city()) {
-				continue;
-			}
-
-			stadt_t* old_city = gb->get_stadt();
-
-			if (!(old_city && new_city)) {
-				return "Building doesn't have city or no city highlighted";
-			} else if (old_city == new_city) {
-				continue;
-			}
-
-			old_city->remove_gebaeude_from_stadt(gb);
-			new_city->add_gebaeude_to_stadt(gb);
-
-			welt->set_dirty();
 		}
+		return msg;
 	}
 	return NULL;
 }
