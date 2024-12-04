@@ -3,8 +3,6 @@
  * (see LICENSE.txt)
  */
 
-#include <iostream>
-
 #include "../simdebug.h"
 #include "../simcity.h"
 #include "../simmenu.h"
