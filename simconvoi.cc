@@ -1166,29 +1166,6 @@ koord3d convoi_t::calc_first_pos_of_route() const {
 	// So we use get_direction() and give up the judge when the obtained direction is not single. This judgement only affects visual jupming of the convoy.
 	const ribi_t::ribi front_vehicle_dir = front_vehicle->get_direction();
 	grund_t* ngr;
-	// reversing convoi
-	// reversed_at_current_halt does not mean the convoi's direction is opposite or not.
-	// if(  reversed_at_current_halt  ){
-	// 	route_t r;
-	// 	route_t::route_result_t res = r.calc_route(world(), front()->get_pos(), get_schedule()->get_current_entry().pos, front(), speed_to_kmh(get_min_top_speed()), 8888);
-	// 	ribi_t::ribi temp_next_initial_direction;
-	// 	if(  res==route_t::no_route  ||  r.get_count()<2  ) {
-	// 		// assume we do not turn here
-	// 		temp_next_initial_direction = front()->get_direction();
-	// 	} else {
-	// 		temp_next_initial_direction = ribi_type(r.at(0), r.at(1));
-	// 	}
-	// 	if (temp_next_initial_direction==front_vehicle_dir) {
-	// 		return front_vehicle->get_pos();
-	// 	} else {
-	// 		convoihandle_t c = self;
-	// 		while ( c->get_coupling_convoi().is_bound()){
-	// 			c = c->get_coupling_convoi();
-	// 		}
-	// 		return c->back()->get_pos();
-	// 	}
-	// }
-	// end reversing convoi
 	if(
 		!get_coupling_convoi().is_bound()
 		||  !gr
