@@ -1168,26 +1168,26 @@ koord3d convoi_t::calc_first_pos_of_route() const {
 	grund_t* ngr;
 	// reversing convoi
 	// reversed_at_current_halt does not mean the convoi's direction is opposite or not.
-	if(  reversed_at_current_halt  ){
-		route_t r;
-		route_t::route_result_t res = r.calc_route(world(), front()->get_pos(), get_schedule()->get_current_entry().pos, front(), speed_to_kmh(get_min_top_speed()), 8888);
-		ribi_t::ribi temp_next_initial_direction;
-		if(  res==route_t::no_route  ||  r.get_count()<2  ) {
-			// assume we do not turn here
-			temp_next_initial_direction = front()->get_direction();
-		} else {
-			temp_next_initial_direction = ribi_type(r.at(0), r.at(1));
-		}
-		if (temp_next_initial_direction==front_vehicle_dir) {
-			return front_vehicle->get_pos();
-		} else {
-			convoihandle_t c = self;
-			while ( c->get_coupling_convoi().is_bound()){
-				c = c->get_coupling_convoi();
-			}
-			return c->back()->get_pos();
-		}
-	}
+	// if(  reversed_at_current_halt  ){
+	// 	route_t r;
+	// 	route_t::route_result_t res = r.calc_route(world(), front()->get_pos(), get_schedule()->get_current_entry().pos, front(), speed_to_kmh(get_min_top_speed()), 8888);
+	// 	ribi_t::ribi temp_next_initial_direction;
+	// 	if(  res==route_t::no_route  ||  r.get_count()<2  ) {
+	// 		// assume we do not turn here
+	// 		temp_next_initial_direction = front()->get_direction();
+	// 	} else {
+	// 		temp_next_initial_direction = ribi_type(r.at(0), r.at(1));
+	// 	}
+	// 	if (temp_next_initial_direction==front_vehicle_dir) {
+	// 		return front_vehicle->get_pos();
+	// 	} else {
+	// 		convoihandle_t c = self;
+	// 		while ( c->get_coupling_convoi().is_bound()){
+	// 			c = c->get_coupling_convoi();
+	// 		}
+	// 		return c->back()->get_pos();
+	// 	}
+	// }
 	// end reversing convoi
 	if(
 		!get_coupling_convoi().is_bound()
@@ -1370,6 +1370,13 @@ bool convoi_t::drive_to()
 			}
 
 			schedule->set_current_stop(current_stop);
+			convoihandle_t c = self;
+			while(  c.is_bound()  ) {
+				if (c->reversed_at_current_halt){
+					c->reverse_vehicles_at_halt_if_needed();
+				}
+				c = c->get_coupling_convoi();
+			}
 			if(  route_ok  ) {
 				vorfahren();
 				reversed_at_current_halt = false;
@@ -2425,7 +2432,8 @@ bool convoi_t::can_go_alte_richtung()
 	}
 
 	// reverse convoi 
-	if( reversed_at_current_halt  || (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_convoi_coupling())){
+	// if( reversed_at_current_halt  || (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_convoi_coupling())){
+	if(  (coupling_convoi.is_bound() && self->get_schedule()->get_current_entry().is_reverse_convoi_coupling())){
 		return false;
 	}
 
@@ -3795,7 +3803,8 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 
 	// reverse convoi
 	if (  get_schedule()->get_current_entry().is_reverse_convoy()  ){
-		reverse_vehicles_at_halt_if_needed();
+		reversed_at_current_halt=true;
+		// reverse image direction after departire, in drive_to()
 	}
 	// reverse order of coupling/coupled convois
 	if (  get_schedule()->get_current_entry().is_reverse_convoi_coupling()  &&
@@ -5247,7 +5256,7 @@ void convoi_t::calc_sum_friction_weight() {
 void convoi_t::reverse_vehicles_on_user_request()
 {
 	if(  is_loading()  ) {
-		reverse_vehicles_at_halt_if_needed();
+		reversed_at_current_halt = true;
 		return;
 	}
 	if (get_schedule()->get_current_entry().get_coupling_point()==schedule_entry_t::WAIT_FOR_COUPLING){
@@ -5266,15 +5275,8 @@ void convoi_t::reverse_vehicles_at_halt_if_needed()
 	// bug fix: the reversing vehicles cannot wait for couple.
 	// so, if the convoy will wait for coupling at the station,
 	// the reversing is not done until the coupling is done.
-	if(  is_waiting_for_coupling()  ) {
-		reversed_at_current_halt=false;
-	}
-	// reverse only when the reversing has not been done on the current halt.
-	if(  !reversed_at_current_halt  ){
-		reverse_vehicles();
-		reversed_at_current_halt = true;
-		welt->set_dirty();
-	}
+	reverse_vehicles();
+	reversed_at_current_halt = false;
 }
 
 void convoi_t::reverse_vehicles_to_go_to_depot()
