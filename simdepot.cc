@@ -351,7 +351,9 @@ convoihandle_t depot_t::copy_convoi(convoihandle_t old_cnv, bool local_execution
 		new_cnv->set_name(old_cnv->get_internal_name());
 		int vehicle_count = old_cnv->get_vehicle_count();
 		for (int i = 0; i<vehicle_count; i++) {
-			const vehicle_desc_t * info = old_cnv->get_vehikel(i)->get_desc();
+			int i_cor = i;
+			if (old_cnv->is_reversed()){i_cor=vehicle_count-i-1;}
+			const vehicle_desc_t * info = old_cnv->get_vehikel(i_cor)->get_desc();
 			if (info != NULL) {
 				// search in depot for an existing vehicle of correct type
 				vehicle_t* oldest_vehicle = get_oldest_vehicle(info);
