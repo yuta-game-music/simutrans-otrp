@@ -373,8 +373,7 @@ private:
 	char name_and_id[128];
 
 	bool reversed; // true when the vehicles are in the reversed order.
-	bool reversed_at_current_halt;// Whether this convoy's vehicles are currently arranged in reverse order. The flag for calculation of position.
-
+	bool is_reversing_needed;// Whether this convoy's vehicles will be arranged in reverse order.
 	/**
 	* Initialize all variables with default values.
 	* Each constructor must call this method first!
@@ -1056,6 +1055,7 @@ public:
 	// Returns the root parent convoi of this convoy. Returns this convoy if not coupled.
 	// Warning: The calculation cost is O(n) where n is the number of convoys in the world.
 	convoihandle_t find_most_parent_convoi() const;
+	convoihandle_t copy_convoi_if_reversed() const;
 };
 
 #endif
