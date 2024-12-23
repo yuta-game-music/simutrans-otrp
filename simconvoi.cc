@@ -3786,13 +3786,13 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 	if (  get_schedule()->get_current_entry().is_reverse_convoi_coupling()  &&
 		coupling_convoi.is_bound()  &&  !is_coupled()  &&  !is_waiting_for_coupling()
 	) {
-		// Do not loop. if the last child convoy's schedule is also is_reverse_convoi_coupling(), Don't do this function.
-		convoihandle_t child_convoi = self->get_coupling_convoi();
-		while (child_convoi->get_coupling_convoi().is_bound()){
-			child_convoi=child_convoi->get_coupling_convoi();
+		convoihandle_t last_child_convoi = self->get_coupling_convoi();
+		while (  last_child_convoi->get_coupling_convoi().is_bound()  ){
+			last_child_convoi = last_child_convoi->get_coupling_convoi();
 		}
-		if(!child_convoi->get_schedule()->get_current_entry().is_reverse_convoi_coupling()){
-		reverse_convoy_coupling();
+		// Avoid infinite loop for the case that the last child convoy also requests reversing the coupling.
+		if(  !child_convoi->get_schedule()->get_current_entry().is_reverse_convoi_coupling()  ){
+			reverse_convoy_coupling();
 		}
 	}
 
