@@ -7294,7 +7294,7 @@ void tool_change_city_of_building_t::rdwr_custom_data(memory_rw_t *packet)
 	if(  packet->is_loading()  ) {
 		packet->rdwr_short(p1);
 		packet->rdwr_short(p2);
-		if ( p1 >= 0 || p2 >= 0 ) {
+		if ( p1 >= 0 && p2 >= 0 ) {
 			koord city_koord(p1, p2);
 
 			for( int i = 0; i < welt->get_cities().get_count(); i++) {

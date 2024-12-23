@@ -91,7 +91,7 @@ public:
 	stadt_t* get_city() { return city; };
 	
 	// is highlighted?
-	bool get_highlight() { return highlighted; };
+	bool is_highlighted() { return highlight.pressed; };
 
 	/**
 	 * Does this window need a min size button in the title bar?

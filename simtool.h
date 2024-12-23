@@ -22,9 +22,6 @@
 
 #include "display/viewport.h"
 
-#include "gui/simwin.h"
-#include "gui/city_info.h"
-
 #include "obj/baum.h"
 #include "obj/groundobj.h"
 
