@@ -405,7 +405,7 @@ image_id gebaeude_t::get_image() const
 image_id gebaeude_t::get_outline_image() const
 {
 	// get city highlight & city highlighted
-	city_info_t* w_city = dynamic_cast<city_info_t*>(win_get_top());
+	city_info_t *w_city = dynamic_cast<city_info_t*>(win_get_magic((ptrdiff_t)this->get_stadt()));
 	bool city_highlight = w_city ? w_city->is_highlighted() : false;
 	stadt_t* city = w_city ? w_city->get_city() : nullptr;
 
@@ -425,7 +425,7 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 	FLAGGED_PIXVAL disp_colour = 0;
 	
 	// get city highlight & city highlighted
-	city_info_t* w_city = dynamic_cast<city_info_t*>(win_get_top());
+	city_info_t *w_city = dynamic_cast<city_info_t*>(win_get_magic((ptrdiff_t)this->get_stadt()));
 	bool city_highlight = w_city ? w_city->is_highlighted() : false;
 	stadt_t* city = w_city ? w_city->get_city() : nullptr;
 
@@ -451,7 +451,7 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 image_id gebaeude_t::get_image(int nr) const
 {
 	// get city highlight & city highlighted
-	city_info_t* w_city = dynamic_cast<city_info_t*>(win_get_top());
+	city_info_t *w_city = dynamic_cast<city_info_t*>(win_get_magic((ptrdiff_t)this->get_stadt()));
 	bool city_highlight = w_city ? w_city->is_highlighted() : false;
 	stadt_t* city = w_city ? w_city->get_city() : nullptr;
 
@@ -468,7 +468,7 @@ image_id gebaeude_t::get_front_image() const
 {
 	
 	// get city highlight
-	city_info_t* w_city = dynamic_cast<city_info_t*>(win_get_top());
+	city_info_t *w_city = dynamic_cast<city_info_t*>(win_get_magic((ptrdiff_t)this->get_stadt()));
 	bool city_highlight = w_city ? w_city->is_highlighted() : false;
 	if(zeige_baugrube) {
 		return IMG_EMPTY;
