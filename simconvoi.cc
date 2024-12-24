@@ -1347,13 +1347,6 @@ bool convoi_t::drive_to()
 			}
 
 			schedule->set_current_stop(current_stop);
-			convoihandle_t c = self;
-			while(  c.is_bound()  ) {
-				if (c->is_reversing_needed){
-					c->reverse_vehicles_at_halt_if_needed();
-				}
-				c = c->get_coupling_convoi();
-			}
 			if(  route_ok  ) {
 				vorfahren();
 				is_reversing_needed = false;
@@ -2428,6 +2421,13 @@ void convoi_t::vorfahren()
 	recalc_data_front = true;
 	recalc_data = true;
 	recalc_speed_limit = true;
+	convoihandle_t c = self;
+	while(  c.is_bound()  ) {
+		if (c->is_reversing_needed){
+			c->reverse_vehicles_at_halt_if_needed();
+		}
+		c = c->get_coupling_convoi();
+	}
 
 	koord3d k0 = route.front();
 	grund_t *gr = welt->lookup(k0);
@@ -3791,7 +3791,7 @@ void convoi_t::hat_gehalten(halthandle_t halt, uint32 halt_length_in_vehicle_ste
 			last_child_convoi = last_child_convoi->get_coupling_convoi();
 		}
 		// Avoid infinite loop for the case that the last child convoy also requests reversing the coupling.
-		if(  !child_convoi->get_schedule()->get_current_entry().is_reverse_convoi_coupling()  ){
+		if(  !last_child_convoi->get_schedule()->get_current_entry().is_reverse_convoi_coupling()  ){
 			reverse_convoy_coupling();
 		}
 	}
