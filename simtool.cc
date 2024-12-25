@@ -7304,7 +7304,7 @@ void tool_change_city_of_building_t::rdwr_custom_data(memory_rw_t *packet)
 	} else {
 		p1 = highlight_city->get_pos().x;
 		p2 = highlight_city->get_pos().y;
-		if ( p1 >= 0 || p2 >= 0 ) {
+		if ( p1 >= 0 && p2 >= 0 ) {
 			packet->rdwr_short(p1);
 			packet->rdwr_short(p2);
 		}

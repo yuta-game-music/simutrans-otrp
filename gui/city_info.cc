@@ -408,7 +408,7 @@ void city_info_t::draw(scr_coord pos, scr_size size)
 	gui_frame_t::draw(pos, size);
 
 	// update pressed if hightlighted city is this->city
-	highlight.pressed = (env_t::highlighted_city && (env_t::highlighted_city == city)) ? true : false;
+	highlight.pressed = env_t::highlighted_city  &&  (env_t::highlighted_city == city);
 }
 
 
