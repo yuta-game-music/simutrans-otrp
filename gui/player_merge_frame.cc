@@ -21,14 +21,9 @@ player_merge_frame_t::player_merge_frame_t() :
   add_component(&lb_merged);
   lb_merge_to.set_text("merge to");
   add_component(&lb_merge_to);
-  uint8 max_player_count_integer=MAX_PLAYER_COUNT;
-  for(  uint8 i=0;  i<min(max_player_count_integer,16);  i++  ) {
+  for(  uint8 i=0;  i<MAX_PLAYER_COUNT;  i++  ) {
     player_t* player = world()->get_player(i);
-    if(  player==NULL  ) {
-      max_player_count_integer++;
-	  continue;
-    }
-    if(  player->is_public_service()  ) {
+    if(  player==NULL || player->is_public_service()  ) {
       // public player. skip.
       continue;
     }
