@@ -22,7 +22,7 @@ player_merge_frame_t::player_merge_frame_t() :
   lb_merge_to.set_text("merge to");
   add_component(&lb_merge_to);
   uint8 max_player_count_integer=MAX_PLAYER_COUNT;
-  for(  uint8 i=0;  i<MAX_PLAYER_COUNT;  i++  ) {
+  for(  uint8 i=0;  i<min(max_player_count_integer,16);  i++  ) {
     player_t* player = world()->get_player(i);
     if(  player==NULL  ) {
       max_player_count_integer++;
