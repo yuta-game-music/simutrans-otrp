@@ -24,7 +24,7 @@ player_merge_frame_t::player_merge_frame_t() :
   for(  uint8 i=0;  i<MAX_PLAYER_COUNT;  i++  ) {
     player_t* player = world()->get_player(i);
     if(  player==NULL || player->is_public_service()  ) {
-      // public player. skip.
+      // empty player or public player, skip.
       continue;
     }
     
