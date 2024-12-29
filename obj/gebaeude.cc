@@ -22,7 +22,6 @@ static pthread_mutex_t add_to_city_mutex = PTHREAD_MUTEX_INITIALIZER;
 #include "../display/simgraph.h"
 #include "../simhalt.h"
 #include "../gui/simwin.h"
-#include "../simcity.h"
 #include "../player/simplay.h"
 #include "../simdebug.h"
 #include "../simintr.h"
