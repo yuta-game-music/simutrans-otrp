@@ -315,7 +315,7 @@ public:
 	static uint16 cursor_hide_range;
 
 	/// Which city is highlighted
-	static stadt_t* highlighted_city;
+	static koord highlighted_city;
 
 	/// color used for cursor overlay blending
 	static uint32 cursor_overlay_color_rgb;
