@@ -403,7 +403,7 @@ image_id gebaeude_t::get_image() const
 
 image_id gebaeude_t::get_outline_image() const
 {
-	if (((env_t::hide_buildings != 0 && env_t::hide_with_transparency) || (this->get_stadt()->get_pos() == env_t::highlighted_city)) && !zeige_baugrube)
+	if (((env_t::hide_buildings != 0 && env_t::hide_with_transparency) || (this->get_stadt() == env_t::highlighted_city)) && !zeige_baugrube)
 	{
 		// opaque houses
 		return tile->get_background( anim_frame, 0, season );
@@ -427,8 +427,8 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 			disp_colour = color_idx_to_rgb(colours[tile->get_desc()->get_type()]) | TRANSPARENT50_FLAG | OUTLINE_FLAG;
 		}
 	}
-	else if(env_t::highlighted_city != koord::invalid) {
-		if(is_building_of_city() && (this->get_stadt()->get_pos() == env_t::highlighted_city)) {
+	else if(env_t::highlighted_city) {
+		if(is_building_of_city() && this->get_stadt() == env_t::highlighted_city) {
 			disp_colour = color_idx_to_rgb(colours[0]) | TRANSPARENT75_FLAG | OUTLINE_FLAG;
 		}
 	}
@@ -439,7 +439,7 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 
 image_id gebaeude_t::get_image(int nr) const
 {
-	if(zeige_baugrube || env_t::hide_buildings || ((this->get_stadt()->get_pos() == env_t::highlighted_city) && (env_t::highlighted_city != koord::invalid))) {
+	if(zeige_baugrube || env_t::hide_buildings || (this->get_stadt() == env_t::highlighted_city && env_t::highlighted_city)) {
 		return IMG_EMPTY;
 	}
 	else {
@@ -455,7 +455,7 @@ image_id gebaeude_t::get_front_image() const
 	}
 	if (env_t::hide_buildings != 0   &&  (is_building_of_city()  ||  (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING  &&  tile->get_desc()->get_type() < building_desc_t::others))) {
 		return IMG_EMPTY;
-	} else if ((env_t::highlighted_city != koord::invalid) && is_building_of_city()) {
+	} else if (env_t::highlighted_city && is_building_of_city()) {
 		return IMG_EMPTY;
 	}
 	else {
