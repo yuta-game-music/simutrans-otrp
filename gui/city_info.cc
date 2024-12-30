@@ -27,6 +27,7 @@
 
 tool_change_city_of_building_t* city_info_t::citybuilding_tool=new tool_change_city_of_building_t();
 cbuffer_t city_info_t::param_str;
+stadt_t* city_info_t::highlighted_city = nullptr;
 
 /**
  * Component to show both passenger destination minimaps
@@ -408,7 +409,7 @@ void city_info_t::draw(scr_coord pos, scr_size size)
 	gui_frame_t::draw(pos, size);
 
 	// update pressed if hightlighted city is this->city
-	highlight.pressed = env_t::highlighted_city  &&  (env_t::highlighted_city == city);
+	highlight.pressed = highlighted_city == city;
 }
 
 
@@ -428,7 +429,7 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 	if(  comp==&highlight && highlight.pressed  ) {
 
 		// make sure highlighted is true and button is pressed
-		env_t::highlighted_city = city;
+		highlighted_city = city;
 
 		param_str.clear();
 		param_str.printf("c%hi,%hi", city->get_pos().x, city->get_pos().y);
@@ -444,7 +445,7 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 	else if (  comp==&highlight && !highlight.pressed  ) {
 
 		// make sure highlighted is false and button is not pressed
-		env_t::highlighted_city = nullptr;
+		highlighted_city = nullptr;
 
 		// set display dirty and deselect tool
 		welt->set_dirty();
