@@ -511,7 +511,7 @@ void city_info_t::rdwr(loadsave_t *file)
 	button_to_chart.rdwr(file);
 
 	year_month_tabs.rdwr(file);
-	
+
 	bool highlighted = false;
 	if (file->is_saving()) {
 		highlighted = is_highlighted();
@@ -521,7 +521,12 @@ void city_info_t::rdwr(loadsave_t *file)
 	highlight.pressed = highlighted;
 	highlighted_city = highlighted ? city : nullptr;
 
-	if (  highlighted  ) {
+	if (  file->is_loading() && city && highlighted  ) {
+		init();
+		win_set_magic( this, (ptrdiff_t)city );
+		reset_min_windowsize();
+		set_windowsize(size);
+
 		param_str.clear();
 		param_str.printf("c%hi,%hi", city->get_pos().x, city->get_pos().y);
 		citybuilding_tool->set_default_param(param_str);
