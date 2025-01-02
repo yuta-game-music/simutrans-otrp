@@ -511,6 +511,26 @@ void city_info_t::rdwr(loadsave_t *file)
 	button_to_chart.rdwr(file);
 
 	year_month_tabs.rdwr(file);
+	
+	bool highlighted = false;
+	if (file->is_saving()) {
+		highlighted = is_highlighted();
+	}
+	file->rdwr_bool( highlighted );
+
+	highlight.pressed = highlighted;
+	highlighted_city = highlighted ? city : nullptr;
+
+	if (  highlighted  ) {
+		param_str.clear();
+		param_str.printf("c%hi,%hi", city->get_pos().x, city->get_pos().y);
+		citybuilding_tool->set_default_param(param_str);
+
+		// set display dirty and select tool
+		welt->set_dirty();
+		welt->set_background_dirty();
+		welt->set_tool( citybuilding_tool, welt->get_public_player());
+	}
 
 	if (city == NULL) {
 		destroy_win(this);
