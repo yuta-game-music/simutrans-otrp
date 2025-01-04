@@ -204,7 +204,7 @@ void city_info_t::init()
 		add_component(&allow_growth);
 
 		// add "change highlight button" based on active player
-		if (welt->get_active_player_nr() == PUBLIC_PLAYER_NR) {
+		if (  welt->get_active_player()->is_public_service()  ) {
 			highlight.init( button_t::box_state_automatic | button_t::flexible, "Make building belong to");
 		} else {
 			highlight.init( button_t::box_state_automatic | button_t::flexible, "Highlight");
@@ -393,7 +393,7 @@ void city_info_t::update_labels()
 	lb_unemployed.buf().printf("%s: %d", translator::translate("Unemployed"), c->get_unemployed()); lb_unemployed.update();
 	lb_homeless.buf().printf("%s: %d", translator::translate("Homeless"), c->get_homeless());       lb_homeless.update();
 
-	if (welt->get_active_player_nr() == PUBLIC_PLAYER_NR) {
+	if (  welt->get_active_player()->is_public_service()  ) {
 		highlight.set_text("Make building belong to");
 	} else {
 		highlight.set_text("Highlight");
@@ -512,14 +512,13 @@ void city_info_t::rdwr(loadsave_t *file)
 
 	year_month_tabs.rdwr(file);
 
-	bool highlighted = false;
-	if (file->is_saving()) {
-		highlighted = is_highlighted();
-	}
+	bool highlighted = is_highlighted();
 	file->rdwr_bool( highlighted );
 
 	highlight.pressed = highlighted;
-	highlighted_city = highlighted ? city : nullptr;
+	if(  highlighted  ) {
+		highlighted_city = city;
+	}
 
 	if (  city && highlighted  ) {
 		param_str.clear();
