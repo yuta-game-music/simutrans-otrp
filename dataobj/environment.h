@@ -11,6 +11,7 @@
 #include "../simtypes.h"
 #include "../simconst.h"
 #include "../simcolor.h"
+#include "../simcity.h"
 #include "settings.h"
 #include "../display/scr_coord.h"
 
