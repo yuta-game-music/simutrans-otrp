@@ -26,7 +26,6 @@
 #define PAX_DEST_VERTICAL (4.0/3.0) ///< aspect factor where minimaps change to over/under instead of left/right
 
 tool_change_city_of_building_t* city_info_t::citybuilding_tool=new tool_change_city_of_building_t();
-cbuffer_t city_info_t::param_str;
 stadt_t* city_info_t::highlighted_city = nullptr;
 
 /**
@@ -431,9 +430,9 @@ bool city_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 		// make sure highlighted is true and button is pressed
 		highlighted_city = city;
 
-		param_str.clear();
-		param_str.printf("c%hi,%hi", city->get_pos().x, city->get_pos().y);
-		citybuilding_tool->set_default_param(param_str);
+		citybuilding_tool->default_param_buffer.clear();
+		citybuilding_tool->default_param_buffer.printf("c%hi,%hi", city->get_pos().x, city->get_pos().y);
+		citybuilding_tool->set_default_param(citybuilding_tool->default_param_buffer);
 
 		// set display dirty and select tool
 		welt->set_dirty();
@@ -521,14 +520,9 @@ void city_info_t::rdwr(loadsave_t *file)
 	}
 
 	if (  city && highlighted  ) {
-		param_str.clear();
-		param_str.printf("c%hi,%hi", city->get_pos().x, city->get_pos().y);
-		citybuilding_tool->set_default_param(param_str);
-
-		// set display dirty and select tool
+		// set display dirty
 		welt->set_dirty();
 		welt->set_background_dirty();
-		welt->set_tool( citybuilding_tool, welt->get_public_player());
 	}
 
 	if (city == NULL) {

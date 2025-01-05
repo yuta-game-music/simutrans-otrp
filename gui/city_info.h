@@ -50,7 +50,6 @@ private:
 
 	
 	static tool_change_city_of_building_t* citybuilding_tool;
-	static cbuffer_t param_str;
 
 	/// Renames the city to the name given in the text input field
 	void rename_city();
