@@ -165,9 +165,12 @@ private:
 public:
 	uint8 destination_counter; // last destination counter of the halt; if mismatch to current, then redraw destinations
 
+	uint8 last_connection_update_counter; // last connection_update_counter when drawn; if mismatch to current, then redraw destinations
+
 	gui_halt_detail_t(halthandle_t h) : gui_aligned_container_t()
 	{
 		destination_counter = 0xFF;
+		last_connection_update_counter = 0xFF;
 		cached_line_count = 0xFFFFFFFFul;
 		cached_convoy_count = 0xFFFFFFFFul;
 		update_connections(h);
@@ -351,6 +354,9 @@ void halt_info_t::init(halthandle_t halt)
 				}
 			}
 			end_table();
+			other_players_connection_button.init(button_t::square, "Allow other players to connect");
+			other_players_connection_button.add_listener(this);
+			add_component(&other_players_connection_button);
 		}
 		end_table();
 
@@ -503,6 +509,10 @@ void halt_info_t::update_components()
 	if (switch_mode.get_aktives_tab() == &scrolly_details) {
 		halt_detail->update_connections(halt);
 	}
+
+	other_players_connection_button.set_visible(!halt->get_owner()->is_public_service());
+	other_players_connection_button.enable(player_t::check_owner(halt->get_owner(), welt->get_active_player()));
+	other_players_connection_button.pressed = halt->is_other_player_connection_allowed();
 	set_dirty();
 }
 
@@ -530,7 +540,8 @@ void gui_halt_detail_t::update_connections( halthandle_t halt )
 		return;
 	}
 
-	if(  halt->get_reconnect_counter()==destination_counter  &&
+	if(  halt->get_reconnect_counter()==destination_counter  &&  
+		 halt->get_connection_update_counter()==last_connection_update_counter  &&
 		 halt->registered_lines.get_count()==cached_line_count  &&  halt->registered_convoys.get_count()==cached_convoy_count  ) {
 		// all current, so do nothing
 		return;
@@ -671,6 +682,7 @@ void gui_halt_detail_t::update_connections( halthandle_t halt )
 					sorted.insert_unique_ordered(conn, gui_halt_detail_t::compare_connection);
 				}
 			}
+			const bool is_tgbr_enabled = world()->get_settings().get_time_based_routing_enabled(i);
 			FOR(vector_tpl<haltestelle_t::connection_t>, const& conn, sorted) {
 
 				has_stops = true;
@@ -680,7 +692,15 @@ void gui_halt_detail_t::update_connections( halthandle_t halt )
 				pb->set_targetpos3d( conn.halt->get_basis_pos3d() );
 
 				gui_label_buf_t *lb = new_component<gui_label_buf_t>();
-				lb->buf().printf("%s <%u>", conn.halt->get_name(), conn.weight);
+				if(  is_tgbr_enabled  ) {
+					// Show the estimated journey time in the divided time units
+    				const uint16 weight = world()->tick_to_divided_time(conn.weight);
+					std::visit([&](const auto& t) {
+						lb->buf().printf("%s <%u> - %s", conn.halt->get_name(), weight, t.is_bound() ? t->get_name() : "Unavailable");
+					}, conn.best_weight_traveler);
+				} else {
+					lb->buf().printf("%s <%u>", conn.halt->get_name(), conn.weight);
+				}
 				lb->update();
 			}
 		}
@@ -692,6 +712,7 @@ void gui_halt_detail_t::update_connections( halthandle_t halt )
 
 	// ok, we have now this counter for pending updates
 	destination_counter = halt->get_reconnect_counter();
+	last_connection_update_counter = halt->get_connection_update_counter();
 	cached_line_count = halt->registered_lines.get_count();
 	cached_convoy_count = halt->registered_convoys.get_count();
 
@@ -781,8 +802,8 @@ void gui_departure_board_t::update_departures(halthandle_t halt)
 	FOR(  vector_tpl<linehandle_t>, line, halt->registered_lines ) {
 		for(  uint j = 0;  j < line->count_convoys();  j++  ) {
 			convoihandle_t cnv = line->get_convoy(j);
-			if(  cnv.is_bound()  &&  ( cnv->get_state() == convoi_t::DRIVING  ||  cnv->is_waiting() )  &&  haltestelle_t::get_halt( cnv->get_schedule()->get_current_entry().pos, cnv->get_owner() ) == halt  ) {
-				halthandle_t prev_halt = haltestelle_t::get_halt( cnv->front()->last_stop_pos, cnv->get_owner() );
+			if(  cnv.is_bound()  &&  ( cnv->get_state() == convoi_t::DRIVING  ||  cnv->is_waiting() )  &&  haltestelle_t::get_stoppable_halt( cnv->get_schedule()->get_current_entry().pos, cnv->get_owner() ) == halt  ) {
+				halthandle_t prev_halt = haltestelle_t::get_stoppable_halt( cnv->front()->last_stop_pos, cnv->get_owner() );
 				sint32 delta_t = calc_ticks_until_arrival( cnv );
 				if(  prev_halt.is_bound()  ) {
 					dest_info_t prev( prev_halt, delta_t, cnv );
@@ -806,8 +827,8 @@ void gui_departure_board_t::update_departures(halthandle_t halt)
 	}
 
 	FOR( vector_tpl<convoihandle_t>, cnv, halt->registered_convoys ) {
-		if(  cnv.is_bound()  &&  ( cnv->get_state() == convoi_t::DRIVING  ||  cnv->is_waiting() )  &&  haltestelle_t::get_halt( cnv->get_schedule()->get_current_entry().pos, cnv->get_owner() ) == halt  ) {
-			halthandle_t prev_halt = haltestelle_t::get_halt( cnv->front()->last_stop_pos, cnv->get_owner() );
+		if(  cnv.is_bound()  &&  ( cnv->get_state() == convoi_t::DRIVING  ||  cnv->is_waiting() )  &&  haltestelle_t::get_stoppable_halt( cnv->get_schedule()->get_current_entry().pos, cnv->get_owner() ) == halt  ) {
+			halthandle_t prev_halt = haltestelle_t::get_stoppable_halt( cnv->front()->last_stop_pos, cnv->get_owner() );
 			sint32 delta_t = cur_ticks + calc_ticks_until_arrival( cnv );
 			if(  prev_halt.is_bound()  ) {
 				dest_info_t prev( prev_halt, delta_t, cnv );
@@ -941,7 +962,12 @@ bool halt_info_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 	else if (comp == &switch_mode) {
 		departure_board->next_refresh = -1;
 	}
-
+	else if(comp == &other_players_connection_button) {
+		cbuffer_t buf;
+		buf.printf("%hu", halt.get_id());
+		tool_t::simple_tool[TOOL_CHANGE_HALT]->set_default_param(buf);
+		welt->set_tool( tool_t::simple_tool[TOOL_CHANGE_HALT], welt->get_active_player() );
+	}
 	return true;
 }
 

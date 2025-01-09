@@ -32,7 +32,6 @@ struct citycar_routing_param_t
 	sint16 weight_speed;
 };
 
-
 /**
  * Game settings
  */
@@ -326,11 +325,15 @@ private:
 	
 	// only for trains. If true, trains advance to the end of the platform.
 	bool advance_to_end;
-	
+
 	bool first_come_first_serve;
+
+	// The flag whether the time based goods routing is enabled for the goods.
+	// The array index is the goods category index.
+	bool is_time_based_routing_enabled[256];
 	
 	// When the amount of waiting goods/passengers exceeds this value,
-	// first_come_first_serve is no longer applied to reduce the calculation load.
+	// goods are loaded with "nearest first" policy to reduce the calculation load.
 	uint32 waiting_limit_for_first_come_first_serve;
 	
 	// paramters for haltestelle_t::rebuild_connections()
@@ -339,6 +342,13 @@ private:
 	
 	// divide a month for departure spacing
 	uint16 spacing_shift_divisor;
+
+	// time based goods routing stuff
+	// These values are added to the connection weight for each ride.
+	uint32 base_waiting_ticks_for_rail_convoi;
+	uint32 base_waiting_ticks_for_road_convoi;
+	uint32 base_waiting_ticks_for_ship_convoi;
+	uint32 base_waiting_ticks_for_air_convoi;
 
 public:
 	/* the big cost section */
@@ -687,7 +697,7 @@ public:
 	
 	bool get_advance_to_end() const { return advance_to_end; }
 	void set_advance_to_end(bool b) { advance_to_end = b; }
-	
+
 	bool get_first_come_first_serve() const { return first_come_first_serve; }
 	uint32 get_waiting_limit_for_first_come_first_serve() const 
 		{ return waiting_limit_for_first_come_first_serve; }
@@ -696,6 +706,12 @@ public:
 	uint8 get_routecost_wait() const { return routecost_wait; }
 	
 	uint16 get_spacing_shift_divisor() const { return spacing_shift_divisor; }
+
+	uint32 get_base_waiting_ticks(waytype_t waytype) const;
+	bool get_time_based_routing_enabled(uint8 goods_catg_index) const { return is_time_based_routing_enabled[goods_catg_index]; }
+	void set_time_based_routing_enabled(uint8 goods_catg_index, bool is_on) {
+		is_time_based_routing_enabled[goods_catg_index] = is_on; 
+	}
 };
 
 #endif

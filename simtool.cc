@@ -2532,7 +2532,13 @@ static const char *tool_schedule_insert_aux(karte_t *welt, player_t *player, koo
 			return schedule->get_error_msg();
 		}
 		// and check for ownership
-		if(  !bd->is_halt()  ) {
+		if(  bd->is_halt()  ) {
+			if(  !haltestelle_t::get_stoppable_halt(pos, player).is_bound()  ) {
+				// A halt exists, but the player check failed.
+				return "Das Feld gehoert\neinem anderen Spieler\n";
+			}
+		}
+		else {
 			weg_t *w = bd->get_weg( schedule->get_waytype() );
 			if(  w==NULL  &&  schedule->get_waytype()==tram_wt  ) {
 				w = bd->get_weg( track_wt );
@@ -2543,9 +2549,6 @@ static const char *tool_schedule_insert_aux(karte_t *welt, player_t *player, koo
 			if(  bd->get_depot()  &&  !player_t::check_owner( bd->get_depot()->get_owner(), player )  ) {
 				return "Das Feld gehoert\neinem anderen Spieler\n";
 			}
-		}
-		if(  bd->is_halt()  &&  !player_t::check_owner( player, bd->get_halt()->get_owner()) ) {
-			return "Das Feld gehoert\neinem anderen Spieler\n";
 		}
 		// ok, now we have a valid ground
 		if(append) {
@@ -6967,7 +6970,7 @@ void tool_stop_mover_t::read_start_position(player_t *player, const koord3d &pos
 		}
 	}
 	// .. and halt
-	last_halt = haltestelle_t::get_halt(pos,player);
+	last_halt = haltestelle_t::get_stoppable_halt(pos,player);
 }
 
 
@@ -6979,7 +6982,7 @@ uint8 tool_stop_mover_t::is_valid_pos(  player_t *player, const koord3d &pos, co
 		return 0;
 	}
 	// check halt ownership
-	halthandle_t h = haltestelle_t::get_halt(pos,player);
+	halthandle_t h = haltestelle_t::get_stoppable_halt(pos,player);
 	if(  h.is_bound()  &&  !player_t::check_owner( player, h->get_owner() )  ) {
 		error = "Das Feld gehoert\neinem anderen Spieler\n";
 		return 0;
@@ -7027,7 +7030,7 @@ const char *tool_stop_mover_t::do_work( player_t *player, const koord3d &last_po
 
 	// second click
 	grund_t *bd = welt->lookup(pos);
-	halthandle_t h = haltestelle_t::get_halt(pos,player);
+	halthandle_t h = haltestelle_t::get_stoppable_halt(pos,player);
 
 	if (bd) {
 		const halthandle_t new_halt = h;
@@ -7090,7 +7093,7 @@ const char *tool_stop_mover_t::do_work( player_t *player, const koord3d &last_po
 					if(schedule  &&  schedule->is_stop_allowed(bd)) {
 						bool updated = false;
 						FOR(minivec_tpl<schedule_entry_t>, & k, schedule->entries) {
-							if ((catch_all_halt && haltestelle_t::get_halt( k.pos, cnv->get_owner()) == last_halt) ||
+							if ((catch_all_halt && haltestelle_t::get_stoppable_halt( k.pos, cnv->get_owner()) == last_halt) ||
 									old_platform.is_contained(k.pos)) {
 								k.pos   = pos;
 								updated = true;
@@ -7126,7 +7129,7 @@ const char *tool_stop_mover_t::do_work( player_t *player, const koord3d &last_po
 					bool updated = false;
 					FOR(minivec_tpl<schedule_entry_t>, & k, schedule->entries) {
 						// ok!
-						if ((catch_all_halt && haltestelle_t::get_halt( k.pos, line->get_owner()) == last_halt) ||
+						if ((catch_all_halt && haltestelle_t::get_stoppable_halt( k.pos, line->get_owner()) == last_halt) ||
 								old_platform.is_contained(k.pos)) {
 							k.pos   = pos;
 							updated = true;
@@ -7148,6 +7151,127 @@ const char *tool_stop_mover_t::do_work( player_t *player, const koord3d &last_po
 		welt->set_schedule_counter();
 	}
 	return NULL;
+}
+
+const char* tool_change_city_of_building_t::work_on_ground( player_t* player, koord k, stadt_t* new_city ) {
+	grund_t* gr = welt->lookup_kartenboden( k );
+
+	if (!gr) {
+		return "";
+	} else if (gr->hat_wege() || gr->ist_natur() || gr->is_water() || gr->ist_bruecke()) {
+		return "";
+	}
+
+	gebaeude_t* gb = gr->find<gebaeude_t>();
+
+	if (!gb || !gb->is_building_of_city()) {
+		return "";
+	}
+
+	stadt_t* old_city = gb->get_stadt();
+
+	if (!(old_city && new_city)) {
+		return "Building doesn't have city or no city highlighted";
+	} else if (old_city == new_city) {
+		return "";
+	}
+
+	old_city->remove_gebaeude_from_stadt(gb);
+	new_city->add_gebaeude_to_stadt(gb);
+
+	welt->set_dirty();
+	
+	return NULL;
+}
+
+const char* tool_change_city_of_building_t::do_work(player_t* player, koord3d const &start, koord3d const &end) {
+	if ( is_first_click() ) {
+		one_click = false;
+		koord3d newstart = start;
+		start_at( newstart );
+		return NULL;
+	}
+	one_click = true;
+
+	stadt_t* const new_city = get_highlighted_city();
+	if(  !new_city  ) {
+		return "No new city found!";
+	}
+	koord k;
+
+	if ( end == koord3d::invalid) {
+		k.x = start.x;
+		k.y = start.y;
+		return work_on_ground(player, k, new_city);
+	} else {
+		koord k1, k2;
+		k1.x = start.x < end.x ? start.x : end.x;
+		k1.y = start.y < end.y ? start.y : end.y;
+		k2.x = start.x + end.x - k1.x;
+		k2.y = start.y + end.y - k1.y;
+		const char* msg = NULL;
+
+		for(  k.x = k1.x;  k.x <= k2.x;  k.x++  ) {
+			for(  k.y = k1.y;  k.y <= k2.y;  k.y++  ) {
+				const char* err = work_on_ground(player, k, new_city);
+				if (  msg == NULL || strcmp(msg,"") == 0) {
+					msg = err;
+				}
+			}
+		}
+		return msg;
+	}
+	return NULL;
+}
+
+
+void tool_change_city_of_building_t::mark_tiles(player_t*, koord3d const &start, koord3d const &end) {
+	koord k1, k2;
+	k1.x = start.x < end.x ? start.x : end.x;
+	k1.y = start.y < end.y ? start.y : end.y;
+	k2.x = start.x + end.x - k1.x;
+	k2.y = start.y + end.y - k1.y;
+	koord k;
+	for(  k.x = k1.x;  k.x <= k2.x;  k.x++  ) {
+		for(  k.y = k1.y;  k.y <= k2.y;  k.y++  ) {
+			grund_t *gr = welt->lookup_kartenboden( k );
+
+			zeiger_t *marker = new zeiger_t(gr->get_pos(), NULL );
+
+			const uint8 grund_hang = gr->get_grund_hang();
+			const uint8 weg_hang = gr->get_weg_hang();
+			const uint8 hang = max( corner_sw(grund_hang), corner_sw(weg_hang)) +
+					3 * max( corner_se(grund_hang), corner_se(weg_hang)) +
+					9 * max( corner_ne(grund_hang), corner_ne(weg_hang)) +
+					27 * max( corner_nw(grund_hang), corner_nw(weg_hang));
+			uint8 back_hang = (hang % 3) + 3 * ((uint8)(hang / 9)) + 27;
+			marker->set_foreground_image( ground_desc_t::marker->get_image( grund_hang % 27 ) );
+			marker->set_image( ground_desc_t::marker->get_image( back_hang ) );
+
+			marker->mark_image_dirty( marker->get_image(), 0 );
+			gr->obj_add( marker );
+			marked.insert( marker );
+		}
+	}
+}
+
+stadt_t* tool_change_city_of_building_t::get_highlighted_city() const {
+	// convert default_param to city and update highlighted_city
+	sint16 p1(-100), p2(-100);
+
+	if (  !default_param  ||  sscanf(default_param, "c%hi,%hi", &p1, &p2) != 2  ||  p1 < 0  ||  p2 < 0  ) {
+		return nullptr;
+	}
+
+	const koord default_koord(p1, p2);
+
+	for( int i = 0; i < welt->get_cities().get_count(); i++) {
+		stadt_t* const city = welt->get_cities()[i];
+		if(  city->get_pos()==default_koord  ) {
+			return city;
+		}
+	}
+	return nullptr;
 }
 
 
@@ -7641,6 +7765,16 @@ bool tool_remove_halt_t::remove_halt(player_t* player, koord3d const &pos)
 }
 
 
+const char* tool_extinguish_waiting_goods_t::work(player_t* player, koord3d pos) {
+	const halthandle_t halt = haltestelle_t::get_halt(pos, player);
+	if(  !halt.is_bound()  ) {
+		return "No stop found, or different player!";
+	}
+	halt->extinguish_all_waiting_goods();
+	return NULL;
+}
+
+
 bool tool_show_trees_t::init( player_t * )
 {
 	env_t::hide_trees = !env_t::hide_trees;
@@ -8002,6 +8136,9 @@ bool scenario_check_convoy(karte_t *welt, player_t *player, convoihandle_t cnv, 
  * 'r' : release the child convoy
  * 'a' : set convoy trading acceptance
  * 'o' : change convoy owner by trading
+ * 'e' : toggle delay recovery
+ * 't' : go to next stop
+ * 'v' : reversing convoi direction
  */
 bool tool_change_convoi_t::init( player_t *player )
 {
@@ -8068,6 +8205,17 @@ bool tool_change_convoi_t::init( player_t *player )
 
 		case 'g': // change schedule
 			{
+				if(  cnv->get_schedule()!=NULL  ) {
+					cbuffer_t schedule_cmp_buf;
+					schedule_t* const cnv_schedule = cnv->get_schedule();
+					cnv_schedule->sprintf_schedule( schedule_cmp_buf );
+					if(  strncmp(schedule_cmp_buf, p, schedule_cmp_buf.len() + 1)==0  ) {
+						// No need to update the schedule.  Avoid discarding the time history.
+						cnv_schedule->finish_editing();
+						cnv->set_schedule(cnv_schedule);
+						break;
+					}
+				}
 				schedule_t *schedule = cnv->create_schedule()->copy();
 				schedule->finish_editing();
 				if (schedule->sscanf_schedule( p )  &&  (no_check()  ||  scenario_check_schedule(welt, player, schedule, can_use_gui())) ) {
@@ -8184,6 +8332,12 @@ bool tool_change_convoi_t::init( player_t *player )
 			cnv->trade_convoi();
 		}
 		break;
+
+		case 'v':
+		{
+			cnv->reverse_vehicles_on_user_request();
+		}
+		break;
 	}
 
 	if(  cnv->in_depot()  &&  (tool=='g'  ||  tool=='l')  ) {
@@ -8297,6 +8451,13 @@ bool tool_change_line_t::init( player_t *player )
 		case 'g': // change schedule
 			{
 				if (line.is_bound()) {
+					cbuffer_t schedule_cmp_buf;
+					line->get_schedule()->sprintf_schedule( schedule_cmp_buf );
+					if(  strncmp(schedule_cmp_buf, p, schedule_cmp_buf.len() + 1)==0  ) {
+						// No need to update the schedule. Avoid discarding the time history.
+						line->get_schedule()->finish_editing();
+						break;
+					}
 					schedule_t *schedule = line->get_schedule()->copy();
 					if (schedule->sscanf_schedule( p )  &&  (no_check()  ||  scenario_check_schedule(welt, player, schedule, can_use_gui())) ) {
 						schedule->finish_editing();
@@ -8919,6 +9080,21 @@ bool tool_change_city_t::init( player_t *player )
 	return false;
 }
 
+
+bool tool_change_halt_t::init(player_t *player) {
+	uint16 halt_id;
+	// Read the halt id and flags from the default param. Then update the flags of the halt.
+	if(  sscanf( default_param, "%hu", &halt_id )!=1  ) {
+		return false;
+	}
+	halthandle_t halt;
+	halt.set_id(halt_id);
+	if(  !halt.is_bound()  ||  !player_t::check_owner(halt->get_owner(), player)  ) {
+		return false;
+	}
+	halt->toggle_other_player_connection_allowed();
+	return false;
+}
 
 
 /* Handles renaming of ingame entities. Needs a default param:

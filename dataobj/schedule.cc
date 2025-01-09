@@ -50,6 +50,7 @@ void schedule_t::copy_from(const schedule_t *src)
 	flags = src->get_flags();
 	max_speed = src->get_max_speed();
 	departure_slot_group_id = src->get_departure_slot_group_id();
+	additional_base_waiting_time = src->get_additional_base_waiting_time();
 }
 
 
@@ -91,7 +92,7 @@ halthandle_t schedule_t::get_next_halt( player_t *player, halthandle_t halt ) co
 {
 	if(  entries.get_count()>1  ) {
 		for(  uint i=1;  i < entries.get_count();  i++  ) {
-			halthandle_t h = haltestelle_t::get_halt( entries[ (current_stop+i) % entries.get_count() ].pos, player );
+			halthandle_t h = haltestelle_t::get_stoppable_halt( entries[ (current_stop+i) % entries.get_count() ].pos, player );
 			if(  h.is_bound()  &&  h != halt  ) {
 				return h;
 			}
@@ -108,7 +109,7 @@ halthandle_t schedule_t::get_prev_halt( player_t *player ) const
 {
 	if(  entries.get_count()>1  ) {
 		for(  uint i=1;  i < entries.get_count()-1u;  i++  ) {
-			halthandle_t h = haltestelle_t::get_halt( entries[ (current_stop+entries.get_count()-i) % entries.get_count() ].pos, player );
+			halthandle_t h = haltestelle_t::get_stoppable_halt( entries[ (current_stop+entries.get_count()-i) % entries.get_count() ].pos, player );
 			if(  h.is_bound()  ) {
 				return h;
 			}
@@ -118,16 +119,15 @@ halthandle_t schedule_t::get_prev_halt( player_t *player ) const
 }
 
 
-bool schedule_t::insert(const grund_t* gr, uint8 minimum_loading, uint16 waiting_time_shift, uint8 coupling_point )
+bool schedule_t::insert(const grund_t* gr, uint8 minimum_loading, uint16 waiting_time_shift, uint16 stop_flags)
 {
 	// stored in minivec, so we have to avoid adding too many
 	if(  entries.get_count()>=254  ) {
 		create_win( new news_img("Maximum 254 stops\nin a schedule!\n"), w_time_delete, magic_none);
 		return false;
 	}
-
 	if(  is_stop_allowed(gr)  ) {
-		entries.insert_at(current_stop, schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, coupling_point));
+		entries.insert_at(current_stop, schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, stop_flags));
 		current_stop ++;
 		make_current_stop_valid();
 		return true;
@@ -141,16 +141,15 @@ bool schedule_t::insert(const grund_t* gr, uint8 minimum_loading, uint16 waiting
 
 
 
-bool schedule_t::append(const grund_t* gr, uint8 minimum_loading, uint16 waiting_time_shift, uint8 coupling_point)
+bool schedule_t::append(const grund_t* gr, uint8 minimum_loading, uint16 waiting_time_shift, uint16 stop_flags)
 {
 	// stored in minivec, so we have to avoid adding too many
 	if(entries.get_count()>=254) {
 		create_win( new news_img("Maximum 254 stops\nin a schedule!\n"), w_time_delete, magic_none);
 		return false;
 	}
-
 	if(is_stop_allowed(gr)) {
-		entries.append(schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, coupling_point), 4);
+		entries.append(schedule_entry_t(gr->get_pos(), minimum_loading, waiting_time_shift, stop_flags), 4);
 		return true;
 	}
 	else {
@@ -235,6 +234,10 @@ void schedule_t::rdwr(loadsave_t *file)
 		departure_slot_group_id = issue_new_departure_slot_group_id();
 	}
 
+	if(  file->get_OTRP_version()>=40  ) {
+		file->rdwr_long(additional_base_waiting_time);
+	}
+
 	if(file->is_version_less(99, 12)) {
 		for(  uint8 i=0; i<size; i++  ) {
 			koord3d pos;
@@ -271,7 +274,12 @@ void schedule_t::rdwr(loadsave_t *file)
 					}
 				}
 			}
-			if(file->get_OTRP_version()>=22) {
+			if(file->get_OTRP_version()>=41) {
+				uint16 flags = entries[i].get_stop_flags();
+				file->rdwr_short(flags);
+				entries[i].set_stop_flags(flags);
+			}
+			else if(file->get_OTRP_version()>=22) {
 				uint8 flags = entries[i].get_stop_flags();
 				file->rdwr_byte(flags);
 				entries[i].set_stop_flags(flags);
@@ -297,6 +305,25 @@ void schedule_t::rdwr(loadsave_t *file)
 			} else {
 				entries[i].spacing = 1;
 				entries[i].spacing_shift = entries[i].delay_tolerance = 0;
+			}
+			if(file->get_OTRP_version()>=36) {
+				// read and write journey times
+				file->rdwr_byte(entries[i].jt_at_index);
+				for(uint8 j=0; j<NUM_ARRIVAL_TIME_STORED; j++) {
+					file->rdwr_long(entries[i].journey_time[j]);
+				}
+				// read and write waiting times
+				file->rdwr_byte(entries[i].wt_at_index);
+				for(uint8 j=0; j<NUM_WAITING_TIME_STORED; j++) {
+					file->rdwr_long(entries[i].waiting_time[j]);
+				}
+			}
+			if(file->get_OTRP_version()>=37) {
+				// read and write convoy stopping times
+				file->rdwr_byte(entries[i].cs_at_index);
+				for(uint8 j=0; j<NUM_STOPPING_TIME_STORED; j++) {
+					file->rdwr_long(entries[i].convoy_stopping_time[j]);
+				}
 			}
 		}
 	}
@@ -408,7 +435,7 @@ bool schedule_t::similar( const schedule_t *schedule, const player_t *player )
 	vector_tpl<halthandle_t> halts;
 	for(  uint8 idx = 0;  idx < this->entries.get_count();  idx++  ) {
 		koord3d p = this->entries[idx].pos;
-		halthandle_t halt = haltestelle_t::get_halt( p, player );
+		halthandle_t halt = haltestelle_t::get_stoppable_halt( p, player );
 		if(  halt.is_bound()  ) {
 			halts.insert_unique_ordered( halt, HaltIdOrdering() );
 		}
@@ -416,7 +443,7 @@ bool schedule_t::similar( const schedule_t *schedule, const player_t *player )
 	vector_tpl<halthandle_t> other_halts;
 	for(  uint8 idx = 0;  idx < schedule->entries.get_count();  idx++  ) {
 		koord3d p = schedule->entries[idx].pos;
-		halthandle_t halt = haltestelle_t::get_halt( p, player );
+		halthandle_t halt = haltestelle_t::get_stoppable_halt( p, player );
 		if(  halt.is_bound()  ) {
 			other_halts.insert_unique_ordered( halt, HaltIdOrdering() );
 		}
@@ -450,7 +477,7 @@ void schedule_t::add_return_way()
 void schedule_t::sprintf_schedule( cbuffer_t &buf ) const
 {
 	uint32 s = current_stop + (flags<<8) + (max_speed<<16);
-	buf.printf("%u|%ld|%d|", s, departure_slot_group_id, (int)get_type());
+	buf.printf("%u|%ld|%u|%d|", s, departure_slot_group_id, additional_base_waiting_time, (int)get_type());
 	FOR(minivec_tpl<schedule_entry_t>, const& i, entries) {
 		buf.printf("%s,%i,%i,%i,%i,%i,%i|", i.pos.get_str(), (int)i.minimum_loading, (int)i.waiting_time_shift, i.get_stop_flags(), i.spacing, i.spacing_shift, i.delay_tolerance);
 	}
@@ -488,6 +515,16 @@ bool schedule_t::sscanf_schedule( const char *ptr )
 	}
 	if(  *p!='|'  ) {
 		dbg->error( "schedule_t::sscanf_schedule()","incomplete entry termination for departure_slot_group_id!" );
+		return false;
+	}
+	p++;
+	// then additional_base_waiting_time
+	additional_base_waiting_time = atoi( p );
+	while(  *p  &&  *p!='|'  ) {
+		p++;
+	}
+	if(  *p!='|'  ) {
+		dbg->error( "schedule_t::sscanf_schedule()","incomplete entry termination for additional_base_waiting_time!" );
 		return false;
 	}
 	p++;
@@ -536,7 +573,7 @@ void construct_schedule_entry_attributes(cbuffer_t& buf, schedule_entry_t const&
 	uint8 cnt = 1;
 	char str[10];
 	str[0] = '[';
-	const uint8 flag = entry.get_stop_flags();
+	const uint16 flag = entry.get_stop_flags();
 	if(  flag&schedule_entry_t::WAIT_FOR_COUPLING  ) {
 		str[cnt] = 'W';
 		cnt++;
@@ -565,6 +602,14 @@ void construct_schedule_entry_attributes(cbuffer_t& buf, schedule_entry_t const&
 		str[cnt] = 'I';
 		cnt++;
 	}
+	if(  entry.is_reverse_convoy()  ) {
+		str[cnt] = 'R';
+		cnt++;
+	}
+	if(  entry.is_reverse_convoi_coupling()  ) {
+		str[cnt] = 'T';
+		cnt++;
+	}
 	// there are at least one attributes.
 	if(  cnt>1  ) {
 		str[cnt] = ']';
@@ -577,7 +622,7 @@ void construct_schedule_entry_attributes(cbuffer_t& buf, schedule_entry_t const&
 void schedule_t::gimme_stop_name(cbuffer_t& buf, karte_t* welt, player_t const* const player_, schedule_entry_t const& entry, int const max_chars)
 {
 	const char *p;
-	halthandle_t halt = haltestelle_t::get_halt(entry.pos, player_);
+	halthandle_t halt = haltestelle_t::get_stoppable_halt(entry.pos, player_);
 	if(halt.is_bound()) {
 		construct_schedule_entry_attributes(buf, entry);
 		if(  max_chars <= 0  ) {
@@ -641,17 +686,17 @@ void schedule_t::set_delay_tolerance_for_all(uint16 v) {
 	}
 }
 
-schedule_entry_t* schedule_t::access_corresponding_entry(schedule_t* other, uint8 n) {
+sint16 schedule_t::get_corresponding_entry_index(const schedule_t* other, uint8 n) const {
 	if(  n >= other->get_count()  ) {
 		// out of range;
 		dbg->error("schedule_t::access_corresponding_entry", "index %d is out of range %d", n, other->get_count());
-		return NULL;
+		return -1;
 	}
 	uint8 o_idx = n;
 	// count the number of depot entries
 	for(uint8 i=0; i<n; i++) {
 		grund_t* gr = world()->lookup(other->entries[i].pos);
-		if(  gr  &&  gr->get_depot()  ) {
+		if(  gr  &&  gr->has_depot()  ) {
 			// this entry is a depot entry
 			o_idx -= 1;
 		}
@@ -660,17 +705,17 @@ schedule_entry_t* schedule_t::access_corresponding_entry(schedule_t* other, uint
 	uint8 k = 0;
 	while(  h<get_count()  ) {
 		grund_t* gr = world()->lookup(entries[h].pos);
-		if(  !gr  ||  !gr->get_depot()  ) {
+		if(  !gr  ||  !gr->has_depot()  ) {
 			// this entry is not a depot entry
 			if(  k==o_idx  ) {
-				return &entries[h];
+				return h;
 			}
 			k++;
 		}
 		h++;
 	}
 	dbg->error("schedule_t::access_corresponding_entry", "corresponding entry not found.");
-	return NULL;
+	return -1;
 }
 
 uint8 schedule_t::get_current_stop_exluding_depot() const {
@@ -730,4 +775,22 @@ sint64 schedule_t::issue_new_departure_slot_group_id() {
 	departure_slot_group_id_random *= 3141592621u;
 	const sint64 num_2 = ++departure_slot_group_id_random;
 	return ((num_2 & 0x7FFFFFFF) << 32) | num_1;
+}
+
+
+uint32 schedule_t::get_median_journey_time(uint8 index, uint32 max_speed_kmh) const {
+	const uint32 entry_journey_time = entries[index].get_median_journey_time();
+	if(  entry_journey_time>0  ) {
+		return entry_journey_time;
+	}
+	// No journey time record is available. Calculate Euclid distance / max_speed.
+	const koord3d pos = entries[index].pos;
+	const koord3d prev_pos = entries[(index+entries.get_count()-1)%entries.get_count()].pos;
+
+	/* calculate the time needed:
+	 *   tiles << (8+12) / (kmh_to_speed(max_kmh) = ticks
+	 * (derived from gui_departure_board_t::calc_ticks_until_arrival())
+	 */
+	const uint32 max_speed = max(kmh_to_speed(max_speed_kmh), 1);
+	return (koord_distance(pos, prev_pos) << 20) / max_speed;
 }

@@ -22,7 +22,6 @@ static pthread_mutex_t add_to_city_mutex = PTHREAD_MUTEX_INITIALIZER;
 #include "../display/simgraph.h"
 #include "../simhalt.h"
 #include "../gui/simwin.h"
-#include "../simcity.h"
 #include "../player/simplay.h"
 #include "../simdebug.h"
 #include "../simintr.h"
@@ -45,6 +44,7 @@ static pthread_mutex_t add_to_city_mutex = PTHREAD_MUTEX_INITIALIZER;
 #include "../dataobj/environment.h"
 
 #include "../gui/obj_info.h"
+#include "../gui/city_info.h"
 
 #include "gebaeude.h"
 
@@ -403,7 +403,11 @@ image_id gebaeude_t::get_image() const
 
 image_id gebaeude_t::get_outline_image() const
 {
-	if(env_t::hide_buildings!=0  &&  env_t::hide_with_transparency  &&  !zeige_baugrube) {
+	const bool is_city_info_opened = win_get_magic((ptrdiff_t)this->get_stadt()) != NULL;
+	const bool is_in_highlighted_city = is_building_of_city() && this->get_stadt() == city_info_t::get_highlighted_city();
+
+	if (((env_t::hide_buildings != 0 && env_t::hide_with_transparency) || (is_in_highlighted_city && is_city_info_opened)) && !zeige_baugrube)
+	{
 		// opaque houses
 		return tile->get_background( anim_frame, 0, season );
 	}
@@ -416,6 +420,10 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 {
 	uint8 colours[] = { COL_BLACK, COL_YELLOW, COL_YELLOW, COL_PURPLE, COL_RED, COL_GREEN };
 	FLAGGED_PIXVAL disp_colour = 0;
+
+	const bool is_city_info_opened = win_get_magic((ptrdiff_t)this->get_stadt()) != NULL;
+	const bool is_in_highlighted_city = is_building_of_city() && this->get_stadt() == city_info_t::get_highlighted_city();
+
 	if(env_t::hide_buildings!=env_t::NOT_HIDE) {
 		if(is_city_building()) {
 			disp_colour = color_idx_to_rgb(colours[0]) | TRANSPARENT50_FLAG | OUTLINE_FLAG;
@@ -425,13 +433,20 @@ FLAGGED_PIXVAL gebaeude_t::get_outline_colour() const
 			disp_colour = color_idx_to_rgb(colours[tile->get_desc()->get_type()]) | TRANSPARENT50_FLAG | OUTLINE_FLAG;
 		}
 	}
+	else if(  is_in_highlighted_city  &&  is_city_info_opened  ) {
+		disp_colour = color_idx_to_rgb(colours[0]) | TRANSPARENT75_FLAG | OUTLINE_FLAG;
+	}
+
 	return disp_colour;
 }
 
 
 image_id gebaeude_t::get_image(int nr) const
 {
-	if(zeige_baugrube || env_t::hide_buildings) {
+	const bool is_city_info_opened = win_get_magic((ptrdiff_t)this->get_stadt()) != NULL;
+	const bool is_in_highlighted_city = is_building_of_city() && this->get_stadt() == city_info_t::get_highlighted_city();
+
+	if(zeige_baugrube || env_t::hide_buildings || (is_in_highlighted_city  &&  is_city_info_opened)) {
 		return IMG_EMPTY;
 	}
 	else {
@@ -445,7 +460,13 @@ image_id gebaeude_t::get_front_image() const
 	if(zeige_baugrube) {
 		return IMG_EMPTY;
 	}
-	if (env_t::hide_buildings != 0   &&  (is_city_building()  ||  (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING  &&  tile->get_desc()->get_type() < building_desc_t::others))) {
+
+	const bool is_city_info_opened = win_get_magic((ptrdiff_t)this->get_stadt()) != NULL;
+	const bool is_in_highlighted_city = is_building_of_city() && this->get_stadt() == city_info_t::get_highlighted_city();
+
+	if (env_t::hide_buildings != 0   &&  (is_building_of_city()  ||  (env_t::hide_buildings == env_t::ALL_HIDDEN_BUILDING  &&  tile->get_desc()->get_type() < building_desc_t::others))) {
+		return IMG_EMPTY;
+	} else if (  is_in_highlighted_city  &&  is_city_info_opened  ) {
 		return IMG_EMPTY;
 	}
 	else {
@@ -769,8 +790,11 @@ void gebaeude_t::info(cbuffer_t & buf) const
 #ifdef DEBUG
 		buf.append( "\n\nrotation " );
 		buf.append( tile->get_layout(), 0 );
-		buf.append( " best layout " );
-		buf.append( stadt_t::orient_city_building( get_pos().get_2d() - tile->get_offset(), tile->get_desc(), koord(3,3) ), 0 );
+		if(  !env_t::networkmode  ) {
+			// Calling stadt_t::orient_city_building here in a network game causes a crash.
+			buf.append( " best layout " );
+			buf.append( stadt_t::orient_city_building( get_pos().get_2d() - tile->get_offset(), tile->get_desc(), koord(3,3) ), 0 );
+		}
 		buf.append( "\n" );
 #endif
 	}
@@ -1046,7 +1070,7 @@ void gebaeude_t::mark_images_dirty() const
 	image_id img;
 	if(  zeige_baugrube  ||
 			(!env_t::hide_with_transparency  &&
-				env_t::hide_buildings>(is_city_building() ? env_t::NOT_HIDE : env_t::SOME_HIDDEN_BUILDING))  ) {
+				env_t::hide_buildings>(is_building_of_city() ? env_t::NOT_HIDE : env_t::SOME_HIDDEN_BUILDING))) {
 		img = skinverwaltung_t::construction_site->get_image_id(0);
 	}
 	else {

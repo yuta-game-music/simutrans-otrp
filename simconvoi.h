@@ -36,6 +36,17 @@ class schedule_t;
 class cbuffer_t;
 class signal_t;
 
+// A struct to represent the directly reachable halts
+struct convoi_reachable_halt_t {
+	halthandle_t halt;
+
+	// The estimated time to reach the halt from the current stop
+	uint32 journey_time;
+
+	convoi_reachable_halt_t(halthandle_t h, uint32 t): halt(h), journey_time(t) {}
+	convoi_reachable_halt_t(): halt(halthandle_t()), journey_time(0) {}
+};
+
 /**
  * Base class for all vehicle consists. Convoys can be referenced by handles, see halthandle_t.
  */
@@ -361,6 +372,8 @@ private:
 	uint8 name_offset;
 	char name_and_id[128];
 
+	bool reversed; // true when the vehicles are in the reversed order.
+	bool is_reversing_needed;// Whether this convoy's vehicles will be arranged in reverse order.
 	/**
 	* Initialize all variables with default values.
 	* Each constructor must call this method first!
@@ -458,7 +471,49 @@ private:
 	// When this convoy requested lane crossing...
 	uint32 request_cross_ticks;
 
+	struct fetched_fresh_goods_t {
+		uint32 amount;
+		uint32 arrived_time;
+
+		fetched_fresh_goods_t(uint32 a, uint32 t): amount(a), arrived_time(t) {}
+		fetched_fresh_goods_t(): amount(0), arrived_time(0) {}
+	};
+
+	// The goods fetched with haltestelle_t::fetch_loadable_fresh_goods at the stopping halt.
+	// Used for calculating the average goods waiting time at the halt.
+	// Valid only when journey time based goods routing is enabled and the convoy is in the loading status.
+	vector_tpl<fetched_fresh_goods_t> fetched_fresh_goods;
+
+	// A sub routine of hat_gehalten()
+	// Returns the amount of the loaded goods
+	uint16 fetch_goods_and_load(vehicle_t* vehicle, const halthandle_t halt, const vector_tpl<halthandle_t> destination_halts, uint32 requested_amount);
+
+	// A sub routine of hat_gehalten()
+	// Pushes the weighed average goods waiting time to the schedule
+	// when the journey time based goods routing is enabled.
+	void push_goods_waiting_time_if_needed();
+
+	/// A sub routine of hat_gehalten()
+	/// Pushes the convoy stopping time at the current halt to the schedule
+	void push_convoy_stopping_time();
+
+	void reverse_vehicles_at_halt_if_needed();
+	void reverse_vehicles_to_go_to_depot();
+	void reverse_vehicles();
+
+	// Reverse the order of the coupling/coupled convois
+	void reverse_convoy_coupling();
+
+	// a helper function for convoi_t::drive_to()
+	koord3d calc_first_pos_of_route() const;
+
 public:
+	bool is_reversed() const { return reversed; }
+	// Reorder the vehicle array
+	// Can be executed even with a vehicle array that does not belong to convoy for UI
+	
+	void reverse_vehicles_on_user_request();
+
 	/**
 	* Convoi haelt an Haltestelle und setzt quote fuer Fracht
 	*/
@@ -973,6 +1028,7 @@ public:
 
 	void set_arrived_time(uint32 t) { arrived_time = t; }
 	uint32 get_departure_time() const { return scheduled_departure_time; } // in ticks.
+	void reset_departure_time() { scheduled_departure_time = 0; }
 	uint32 get_coupling_delay_tolerance() const { return scheduled_coupling_delay_tolerance; }
 
 	// register journey time to the current schedule entry
@@ -995,6 +1051,10 @@ public:
 	// The returned steps includes the entire tile length on which the front vehicle is.
 	static uint32 calc_available_halt_length_in_vehicle_steps(koord3d front_vehicle_pos, ribi_t::ribi front_vehicle_dir, const waytype_t waytype);
 	uint32 calc_available_halt_length_in_vehicle_steps(koord3d front_vehicle_pos, ribi_t::ribi front_vehicle_dir) const;
+
+	// Returns the root parent convoi of this convoy. Returns this convoy if not coupled.
+	// Warning: The calculation cost is O(n) where n is the number of convoys in the world.
+	convoihandle_t find_most_parent_convoi() const;
 };
 
 #endif

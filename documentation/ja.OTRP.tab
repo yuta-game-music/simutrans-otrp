@@ -159,6 +159,14 @@ Shares the departure time slot with the selected line here.
 選択された路線と発車枠を共有します。
 <new departure slot group>
 <新しい発車枠グループ>
+reverse convoy
+編成を反転する(R)
+Reverses the direction of convoy.
+編成の向きを反転します．
+reverse convoy coupling
+連結を反転する(T)
+Reverses the parents-children order of the coupled convoys.
+連結の親子関係を反転します．
 #------円表記------
 $
  円
@@ -182,11 +190,15 @@ transfer interval
 乗車区間を区切る(I)
 Passengers who boarded outside the section get off at this stop.
 区間外からの乗客はこの停留所で降車します
-#------回復運転------
+#------編成情報ウィンドウ------
 recovery
 回復運転
 Recovery operation will be carried out.
 回復運転を実施します
+Reverse
+向きを反転
+reverse the convoy's direction.
+編成の向きを反転します
 #------乗降時間制御------
 Full Get on/off Time
 乗降時間制御(G)
@@ -223,6 +235,27 @@ merge to
 併合先
 Merge
 併合する
+#------旅客経路検索ウィンドウ------
+Pax route search
+旅客経路検索
+From:
+出発:
+To:
+到着:
+Search
+検索
+Swap
+入替
+Please enter halt names and press search.
+停留所名を入力し、検索ボタンを押してください。
+No connection found!
+接続が見つかりません！
+From halt not found.
+出発停留所が見つかりません。
+To halt not found.
+到着停留所が見つかりません。
+No route found!
+経路が見つかりません！
 #------その他の翻訳------
 next stop
 次の駅へ
@@ -230,3 +263,11 @@ Max. wayobj speed:
 架線速度:
 Fetching server list...
 サーバリストを取得中...
+Allow other players to connect
+他社の接続を許可
+hl_btn_sort_throughput
+利用者数
+hl_btn_sort_waiting_percentage
+待機率
+transfers
+ご利用

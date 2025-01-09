@@ -231,6 +231,9 @@ private:
 
 	static uint32 calc_full_load_weight(const vehicle_desc_t*);
 
+	// calculates the direction of which the image should be displayed.
+	ribi_t::ribi get_image_direction() const;
+
 protected:
 	void hop(grund_t*) OVERRIDE;
 
@@ -278,6 +281,7 @@ public:
 
 	ribi_t::ribi get_previous_direction() const { return previous_direction; }
 
+	virtual void get_screen_offset( int &xoff, int &yoff, const sint16 raster_width ) const OVERRIDE;
 
 	/**
 	 * Method checks whether next tile is free to move on.
@@ -435,10 +439,10 @@ public:
 	uint16 unload_cargo(halthandle_t halt, bool all );
 
 	/**
-	 * Load freight from halt
+	 * Load the given goods
 	 * @return amount loaded
 	 */
-	uint16 load_cargo(halthandle_t halt, const vector_tpl<halthandle_t>& destination_halts);
+	uint16 load_cargo(slist_tpl<ware_t>& goods_to_load);
 
 	/**
 	* Remove freight that no longer can reach it's destination

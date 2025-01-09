@@ -240,6 +240,7 @@ schedule_gui_t::schedule_gui_t(schedule_t* schedule_, player_t* player_, convoih
 	lb_load("Full load"),
 	lb_departure_slot_group("Departure slot group"),
 	lb_max_speed("Maxspeed"),
+	lb_tbgr_waiting_time("Additional goods routing waiting time"),
 	stats(new schedule_gui_stats_t() ),
 	scrolly(stats)
 {
@@ -424,6 +425,19 @@ void schedule_gui_t::init(schedule_t* schedule_, player_t* player, convoihandle_
 		add_component(&numimp_max_speed);
 	}
 	end_table();
+
+	// Additional waiting time on goods routing, when TBGR is enabled
+	add_table(2,1);
+	{
+		add_component(&lb_tbgr_waiting_time);
+		numimp_tbgr_waiting_time.set_width( 60 );
+		numimp_tbgr_waiting_time.set_value( schedule->get_additional_base_waiting_time() );
+		numimp_tbgr_waiting_time.set_limits( 0, 999999 );
+		numimp_tbgr_waiting_time.set_increment_mode(1);
+		numimp_tbgr_waiting_time.add_listener(this);
+		add_component(&numimp_tbgr_waiting_time);
+	}
+	end_table();
 	
 	// coupling related buttons
 	add_table(2,1);
@@ -441,7 +455,25 @@ void schedule_gui_t::init(schedule_t* schedule_, player_t* player, convoihandle_
 		add_component(&bt_find_parent);
 	}	
 	end_table();
-	
+
+	// reverse setting
+	add_table(2,1);
+	{
+		bt_reverse_convoy.init(button_t::square_state, "reverse convoy");
+		bt_reverse_convoy.set_tooltip("Reverses the direction of convoy.");
+		bt_reverse_convoy.add_listener(this);
+		bt_reverse_convoy.disable();
+		add_component(&bt_reverse_convoy);
+
+		bt_reverse_coupling.init(button_t::square_state, "reverse convoy coupling");
+		bt_reverse_coupling.set_tooltip("Reverses the parents-children order of the coupled convoys.");
+		bt_reverse_coupling.add_listener(this);
+		bt_reverse_coupling.disable();
+		add_component(&bt_reverse_coupling);
+	}
+	end_table();
+
+
 	// for departure time settings
 	add_table(3,3);
 	{
@@ -623,11 +655,13 @@ void schedule_gui_t::update_selection()
 	numimp_delay_tolerance.disable();
 	bt_load_before_departure.disable();
 	bt_transfer_interval.disable();
+	bt_reverse_convoy.disable();
+	bt_reverse_coupling.disable();
 
 	if(  !schedule->empty()  ) {
 		schedule->set_current_stop( min(schedule->get_count()-1,schedule->get_current_stop()) );
 		const uint8 current_stop = schedule->get_current_stop();
-		if(  haltestelle_t::get_halt(schedule->entries[current_stop].pos, player).is_bound()  ) {
+		if(  haltestelle_t::get_stoppable_halt(schedule->entries[current_stop].pos, player).is_bound()  ) {
 			
 			const uint8 c = schedule->entries[current_stop].get_coupling_point();
 			bt_find_parent.enable();
@@ -643,6 +677,11 @@ void schedule_gui_t::update_selection()
 			bt_load_before_departure.pressed = schedule->entries[current_stop].is_load_before_departure();
 			bt_transfer_interval.enable();
 			bt_transfer_interval.pressed = schedule->entries[current_stop].is_transfer_interval();
+			bt_reverse_convoy.enable();
+			bt_reverse_convoy.pressed = schedule->entries[current_stop].is_reverse_convoy();
+			bt_reverse_coupling.enable();
+			bt_reverse_coupling.pressed = schedule->entries[current_stop].is_reverse_convoi_coupling();
+
 			
 			// wait_for_time releated things
 			const bool wft = schedule->entries[current_stop].get_wait_for_time();
@@ -801,6 +840,7 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 				schedule->entries[schedule->get_current_stop()].set_try_coupling();
 			}
 			bt_wait_for_child.pressed = false;
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(false);
 			update_selection();
 		}
 	}
@@ -812,6 +852,25 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 				schedule->entries[schedule->get_current_stop()].set_wait_for_coupling();
 			}
 			bt_find_parent.pressed = false;
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(false);
+			update_selection();
+		}
+	}
+	else if(comp == &bt_reverse_convoy) {
+		if(!schedule->empty()) {
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoy(!bt_reverse_convoy.pressed);
+			update_selection();
+		}
+	}
+	else if(comp == &bt_reverse_coupling) {
+		if(!schedule->empty()) {
+			schedule->entries[schedule->get_current_stop()].set_reverse_convoi_coupling(!bt_reverse_coupling.pressed);
+			if(  bt_wait_for_child.pressed  ) {
+				schedule->entries[schedule->get_current_stop()].reset_coupling();
+			} 
+			if(  bt_find_parent.pressed  ) {
+				schedule->entries[schedule->get_current_stop()].reset_coupling();
+			} 
 			update_selection();
 		}
 	}
@@ -953,6 +1012,9 @@ DBG_MESSAGE("schedule_gui_t::action_triggered()","comp=%p combo=%p",comp,&line_s
 	}
 	else if(comp == &numimp_max_speed) {
 		schedule->set_max_speed((uint16)p.i);
+	}
+	else if(comp == &numimp_tbgr_waiting_time) {
+		schedule->set_additional_base_waiting_time((uint32)p.i);
 	}
 	else if(comp == &bt_transfer_interval) {
 		if (!schedule->empty()) {
@@ -1209,8 +1271,12 @@ void schedule_gui_t::extract_advanced_settings(bool yesno) {
 	bt_transfer_interval.set_visible(yesno);
 	lb_departure_slot_group.set_visible(yesno);
 	departure_slot_group_selector.set_visible(yesno);
+	lb_tbgr_waiting_time.set_visible(yesno);
+	numimp_tbgr_waiting_time.set_visible(yesno);
 	
 	const bool coupling_waytype = schedule->get_waytype()!=road_wt  &&  schedule->get_waytype()!=air_wt  &&  schedule->get_waytype()!=water_wt;
 	bt_wait_for_child.set_visible(coupling_waytype  &&  yesno);
 	bt_find_parent.set_visible(coupling_waytype  &&  yesno);
+	bt_reverse_convoy.set_visible(coupling_waytype  &&  yesno);
+	bt_reverse_coupling.set_visible(coupling_waytype  &&  yesno);
 }
